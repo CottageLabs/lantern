@@ -1,0 +1,1 @@
+Put your application's static files to be served in here - things like css, js, images

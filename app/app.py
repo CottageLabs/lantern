@@ -3,10 +3,16 @@ from flask import Flask, request, abort, render_template, redirect, make_respons
 from flask.views import View
 
 from portality.core import app
+from portality.lib.webapp import custom_static
 
 @app.route("/")
 def root():
-    return render_template("app/search.html")
+    return render_template("index.html")
+
+# this allows us to override the standard static file handling with our own dynamic version
+@app.route("/static/<path:filename>")
+def static(filename):
+    return custom_static(filename)
 
 @app.errorhandler(404)
 def page_not_found(e):
