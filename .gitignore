@@ -5,6 +5,7 @@ src*
 .Python
 build/*
 dist/*
+local.cfg
 
 .idea/
 

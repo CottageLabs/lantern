@@ -1,7 +1,9 @@
 # absolute paths, or relative paths from root directory, to the desired config files (in the order you want them loaded)
 CONFIG_FILES = [
     "portentious/portality/config/webapp.py",
-    "config/dev.py"
+    "portentious/portality/modules/sherpafact/settings.py",
+    "config/dev.py",
+    "local.cfg"
 ]
 
 # absolute paths, or relative paths from root directory, to the template directories (in the order you want them looked at)
