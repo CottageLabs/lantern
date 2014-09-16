@@ -5,3 +5,8 @@
 Hello There
 
 {% endblock %}
+
+
+{% block extra_js_bottom %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/app.facetview.theme.js') }}"></script>
+{% endblock%}
