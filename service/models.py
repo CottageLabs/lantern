@@ -1,4 +1,4 @@
-from app import dao
+from service import dao
 
 class MyObject(dao.MyDAO):
     pass
