@@ -24,8 +24,8 @@ Then get the submodules for portality
 
 Create your virtualenv and activate it
 
-    virtualenv venv
-    source venv/bin/activate
+    virtualenv /path/to/venv
+    source /path/tovenv/bin/activate
 
 Install esprit and portality (in that order)
 
@@ -48,4 +48,8 @@ Update setup.py, to include your app's name and description
 
 Finally, start your app with
 
-    APP_CONFIG=config/rootcfg.py python app/app.py
+    APP_CONFIG=config/rootcfg.py python service/web.py
+    
+## Portentious
+
+For details about the modules available to you in portentions, see the [README](https://github.com/richard-jones/portentious/blob/master/README.md)
