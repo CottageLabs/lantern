@@ -48,7 +48,11 @@ Update setup.py, to include your app's name and description
 
 Finally, start your app with
 
-    APP_CONFIG=config/rootcfg.py python service/web.py
+    python service/web.py
+
+If you want to specify your own root config file, you can use
+
+    APP_CONFIG=path/to/rootcfg.py python service/web.py
     
 ## Portentious
 
