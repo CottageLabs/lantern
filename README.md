@@ -22,6 +22,11 @@ Then get the submodules for portality
     git submodule init
     git submodule update
 
+Change the origin url, so you can push code to your own repo:
+
+    git remote set-url origin <git url of new repo home>
+    git push -u origin master
+
 Create your virtualenv and activate it
 
     virtualenv /path/to/venv
