@@ -59,6 +59,20 @@ If you want to specify your own root config file, you can use
 
     APP_CONFIG=path/to/rootcfg.py python service/web.py
     
-## Portentious
+## Portality
 
-For details about the modules available to you in portentions, see the [README](https://github.com/richard-jones/portentious/blob/master/README.md)
+For details about the modules available to you in portality, see the [README](https://github.com/richard-jones/portentious/blob/master/README.md)
+
+If you want to make local modifications to your portality repo, with a view to merging them back into the master at some point in the future, then do the following
+
+    cd myapp/portentious
+    git checkout master
+    git branch myapp
+    cd ..
+    git add .
+    git commit -m "move my code onto custom portality branch"
+    git push origin master
+
+This means you will be able to modify the code locally, and push changes to the branch, without affecting the master.  From time to time you might
+want to merge the master with your branch, to keep up to date with the latest changes.  When you want to contribute code to the master, just merge
+your branch down to the master and push.

@@ -3,7 +3,7 @@ from flask import Flask, request, abort, render_template, redirect, make_respons
 from flask.views import View
 
 from portality.core import app
-from portality.lib.webapp import custom_static
+from portality.lib.webapp import custom_static, javascript_config
 from portality.runner import start_from_main
 
 import sys
@@ -16,6 +16,11 @@ def root():
 @app.route("/static/<path:filename>")
 def static(filename):
     return custom_static(filename)
+
+# this allows us to serve our standard javascript config
+@app.route("/javascript/config.js")
+def configure_javascript():
+    return javascript_config()
 
 from portality.modules.es.autocomplete import blueprint as autocomplete
 app.register_blueprint(autocomplete, url_prefix='/autocomplete')
