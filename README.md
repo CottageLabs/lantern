@@ -51,6 +51,16 @@ Update setup.py, to include your app's name and description
 
     vim setup.py
 
+Empty this README.md file, and get ready to fill it with your own amazing documentation
+
+    echo "" > README.md
+
+Now commit those changes and you're ready to begin development with a clean slate
+
+    git add .
+    git commit -m "prep app for development"
+    git push origin master
+
 Finally, start your app with
 
     python service/web.py
@@ -65,13 +75,12 @@ For details about the modules available to you in portality, see the [README](ht
 
 If you want to make local modifications to your portality repo, with a view to merging them back into the master at some point in the future, then do the following
 
+First checkout your own branch as a clone of the master branch, and push it into the portality repo:
+
     cd myapp/portentious
     git checkout master
-    git branch myapp
-    cd ..
-    git add .
-    git commit -m "move my code onto custom portality branch"
-    git push origin master
+    git checkout myapp
+    git push origin myapp
 
 This means you will be able to modify the code locally, and push changes to the branch, without affecting the master.  From time to time you might
 want to merge the master with your branch, to keep up to date with the latest changes.  When you want to contribute code to the master, just merge
