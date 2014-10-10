@@ -22,8 +22,17 @@ def static(filename):
 def configure_javascript():
     return javascript_config()
 
+# Autocomplete endpoint
 from portality.modules.es.autocomplete import blueprint as autocomplete
 app.register_blueprint(autocomplete, url_prefix='/autocomplete')
+
+# Sherpa Fact integration endpoint
+from portality.modules.sherpafact.proxy import blueprint as fact
+app.register_blueprint(fact, url_prefix="/fact")
+
+# Example usages of modules
+from portality.modules.examples.examples import blueprint as examples
+app.register_blueprint(examples, url_prefix="/examples")
 
 @app.errorhandler(404)
 def page_not_found(e):
