@@ -2,7 +2,7 @@ from flask import Flask, request, abort, render_template, redirect, make_respons
     send_from_directory
 from flask.views import View
 
-from portality.core import app
+from portality.core import app, initialise
 from portality.lib.webapp import custom_static, javascript_config
 from portality.runner import start_from_main
 
@@ -40,6 +40,8 @@ def page_not_found(e):
 
 
 if __name__ == "__main__":
+    initialise()
+
     pycharm_debug = app.config.get('DEBUG_PYCHARM', False)
     if len(sys.argv) > 1:
         if sys.argv[1] == '-d':
