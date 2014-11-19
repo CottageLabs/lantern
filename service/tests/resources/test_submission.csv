@@ -1,0 +1,21 @@
+University,PMCID,PMID,DOI,Publisher,Journal title,Article title,"Total cost of Article Processing Charge (APC), in £ ","Amount of APC charged to Wellcome OA grant, in £ (see comment)",VAT charged,COST (£),Wellcome grant ,Licence info,Notes
+A,PMC4160115,,,X,sdkfjsad,Addressing the appropriateness of elective colon resection for diverticulitis: a report from the scoap certain collaborative.,100,100,20,100,WELL/01,,An AAM example where the status must be scraped from the EPMC page
+A,PMC4132119,24641712,,X,kasdfoiwa,Stability of motor function and associated impairments between childhood and adolescence in young people with cerebral palsy in Europe.,120,120,20,120,WELL/02,,An AAM example where the status must be scraped from the EPMC page
+A,PMC4222864,,10.1186/1742-4690-11-59,X,knioweiowf,Microarray analysis reveals global modulation of endogenous retroelement transcription by microbes,140,140,20,140,WELL/03,,
+B,,25009687,,X,asdlkjiawf,,160,160,20,160,WELL/04,,
+B,,20514085,10.1080/00480169.2010.67513,Y,klsmdkwie,,180,180,20,180,WELL/05,,
+B,,,10.1093/hmg/ddu335,Y,",s.dfoaie",A population-based study of KCNH7 p.Arg394His and bipolar spectrum disorder.,200,200,20,200,WELL/06,,
+C,PMC4222712,25325349,10.1097/wnr.0000000000000278,Y,kasdfiew,,220,220,20,220,WELL/07,,
+C,,,,Y,",asmdasdf",The effects of fluorescent nano-diamonds on neuronal survival and morphogenesis,240,240,20,240,WELL/08,,"Try this one with a variation on the title, so fuzzy matching is required"
+C,,,,Y,kasldifasf,Sugar-fat seesaw: a systematic review of the evidence.,260,260,20,260,WELL/09,,"License is vague - probably is a CC BY NC, but that is not stated"
+D,PMC4217745,,,Y,laldsasdf,,280,280,20,280,WELL/10,,
+D,PMC4182926,,,Z,mmaiewliae,,300,300,20,300,WELL/11,,An AAM example where the manuscript id is in the fulltext xml; licence is not cleanly tagged - have to look in the text to know that it is CC
+D,,,10.1371/journal.pone.0020832.t001,Z,miaienfasef,Mice with a Targeted Deletion of the Type 2 Deiodinase Are Insulin Resistant and Susceptible to Diet Induced Obesity,320,320,20,320,WELL/12,,"This DOI is a table identifier, and doesn't appear explicitly in EPMC, but it /does/ appear in OAG, so we will use it as a test for a record which is not in EPMC at all, but for which we can detect a license"
+E,,23954741,,Z,kaeiwfijasa,Estrogen receptor beta in breast cancer tests,340,340,20,340,WELL/13,,
+E,-,24085376,,Z,amfes;dfe,Diffusion-weighted imaging and diagnosis of transient ischemic attack.,360,360,20,360,WELL/14,,
+E,PMC4134930,,,Z,kalsdifa'eqj,,400,400,20,400,WELL/15,,NIH AAM
+F,PMC3939357,,,Z,maldsihfa,,876,876,20,876,WELL/16,,EPMC AAM
+F,,,,Z,a;jfida;sd,Im - Perfect robustness and the adaptation of metabolic networks subject to metabolic and gene-expression regulation:marrying control engineering with metabolic control analysis,999,999,20,999,WELL/17,,
+F,,,,X,iejmclinaf;da,Increased serotonin transporter gene (SERT) DNA methylation is associated with bullying victimization and blunted cortisol response to stress in childhood: a longitudinal study of discordant monozygotic twins.,100,100,20,100,WELL/18,,
+G,PMC3936236,,,X,mfidofahoewmcm,,1,1,20,1,WELL/19,,"Potentially could consider including a couple of articles where: a) the full text is in epmc, b) it's NOT an author manuscript, c) there is no licence information, or different licence information to what is found on the publisher website. Don't think you currently have this in the test set?"
+G,PMC3935652,,,X,mascohaoshfda,,0,0,20,0,WELL/20,,"Potentially could consider including a couple of articles where: a) the full text is in epmc, b) it's NOT an author manuscript, c) there is no licence information, or different licence information to what is found on the publisher website. Don't think you currently have this in the test set?"
