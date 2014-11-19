@@ -80,7 +80,7 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
         "supporting_info" : {
             "epmc_ft_xml" : true|false,
             "aam_from_ft_xml" : true|false,
-            "aam_from_empc" : true|false,
+            "aam_from_epmc" : true|false,
             "issn" : ["<issn for this journal>"],
             "currently_in_oag" : true|false,
             "oag_pmcid" : "not_sent|sent|success|fto|error",

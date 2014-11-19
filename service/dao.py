@@ -1,5 +1,7 @@
 from octopus.modules.es import dao
-from portality.core import app
 
-class MyDAO(dao.ESDAO):
-    __type__ = 'myobj'
+class SpreadsheetJobDAO(dao.ESDAO):
+    __type__ = 'spreadsheet'
+
+class RecordDAO(dao.ESDAO):
+    __type__ = "record"
