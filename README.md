@@ -45,12 +45,12 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
 
     {
         "id" : "<opaque id of this record>",
-        "created_date" : "<date this record was created">,
+        "created_date" : "<date this record was created>",
         "last_updated" : "<date this record was last modified>",
         
         "upload" : {
             "id" : "<opaque id of spreadsheet upload>",
-            "pos" : <position of this record in the spreadsheet>
+            "pos" : "<integer: position of this record in the spreadsheet>"
         },
         
         "source" : {
@@ -73,7 +73,7 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
         "identifiers" : {
             "pmcid" : "<canonical form of pmcid>",
             "pmid" : "<canonical form of pmid>",
-            "doi" : <canonical form of doi>",
+            "doi" : "<canonical form of doi>",
             "title" : "<article title>"
         },
         
