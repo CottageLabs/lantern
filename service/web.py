@@ -1,15 +1,47 @@
 from flask import Flask, request, abort, render_template, redirect, make_response, jsonify, send_file, \
-    send_from_directory
+    send_from_directory, url_for
 from flask.views import View
+from wtforms import Form, StringField, validators, SelectField
+from werkzeug import secure_filename
+from datetime import datetime
+import os
 
 from octopus.core import app, initialise
 from octopus.lib.webapp import custom_static
+from workflow import csv_upload
 
 import sys
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in app.config["ALLOWED_EXTENSIONS"]
 
 @app.route("/")
 def root():
     return render_template("index.html")
+
+class UploadForm(Form):
+    contact_email = StringField('Email Address', [validators.DataRequired()])
+    spreadsheet_type = SelectField('Type', choices=app.config.get('SPREADSHEET_OPTIONS'))
+
+
+@app.route("/upload", methods=['GET', 'POST'])
+def upload_csv():
+    form = UploadForm(request.form)
+    if request.method == "POST" and form.validate():
+        file = request.files["upload"]
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filename = filename.split('.')
+            filename = filename[0] + '_' + unicode(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")) + '.csv'
+            contact_email = form.contact_email.data
+            csv_upload(file, file.filename, contact_email)
+            return redirect(url_for('progress', filename=filename))
+    return render_template("upload.html", form=form)
+
+@app.route("/progress/<filename>")
+def progress(filename):
+    return render_template("progress.html")
 
 # this allows us to override the standard static file handling with our own dynamic version
 @app.route("/static/<path:filename>")

@@ -20,3 +20,5 @@ ELASTIC_SEARCH_MAPPINGS = [
 # service specific config
 
 UPLOAD_DIR = "upload"
+ALLOWED_EXTENSIONS = ['csv']
+SPREADSHEET_OPTIONS = [('None', 'Type:'), ('Excel', 'Excel'), ('Google Docs', 'Google Docs'), ('Libre Office', 'Libre Office')]
