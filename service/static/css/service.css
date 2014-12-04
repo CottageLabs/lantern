@@ -51,13 +51,17 @@ body {
   border-radius: 0px;
 }
 
-.btn-default {
-    background-color: grey;
+.btn {
     color: white;
     font-family: "Times New Roman";
     font-size: 20px;
     border-radius: 0px;
     border-width: 0px;
+}
+
+.btn-default {
+    background-color: grey;
+
 }
 
 .btn-default:hover {
@@ -66,4 +70,29 @@ body {
 
 .btn-default:active {
     background-color: white;
+}
+
+.btn-primary {
+    background-color: #0e8293;
+}
+
+.btn-primary:hover {
+    background-color: #FFC805;
+    color: black;
+
+}
+
+.status {
+    background-color: #f0f0f0;
+    height: 40px;
+    text-align: center;
+    font-size: 18px;
+    line-height: 40px;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+    border-style: solid;
+    border-color: #eaeaea;
+
 }

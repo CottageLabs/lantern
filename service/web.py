@@ -25,7 +25,7 @@ class UploadForm(Form):
     spreadsheet_type = SelectField('Type', choices=app.config.get('SPREADSHEET_OPTIONS'))
 
 
-@app.route("/upload", methods=['GET', 'POST'])
+@app.route("/upload_csv", methods=['GET', 'POST'])
 def upload_csv():
     form = UploadForm(request.form)
     if request.method == "POST" and form.validate():
@@ -35,13 +35,18 @@ def upload_csv():
             filename = filename.split('.')
             filename = filename[0] + '_' + unicode(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")) + '.csv'
             contact_email = form.contact_email.data
-            csv_upload(file, file.filename, contact_email)
+            csv_upload(file, filename, contact_email)
             return redirect(url_for('progress', filename=filename))
-    return render_template("upload.html", form=form)
+    return render_template("upload_csv.html", form=form)
 
 @app.route("/progress/<filename>")
 def progress(filename):
-    return render_template("progress.html")
+    return render_template("progress.html", filename=filename)
+
+@app.route("/download/<filename>")
+def download_csv(filename):
+    return send_from_directory(app.config.get("UPLOAD_DIR"), filename, as_attachment=True)
+
 
 # this allows us to override the standard static file handling with our own dynamic version
 @app.route("/static/<path:filename>")
