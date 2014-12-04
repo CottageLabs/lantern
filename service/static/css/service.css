@@ -1,0 +1,98 @@
+/* find nice font and use as global font */
+/* <link href='http://fonts.googleapis.com/css?family=Lora' rel='stylesheet' type='text/css'> */
+
+body {
+    font-family: "Times New Roman";
+    padding-top: 0px;
+}
+
+.form-control {
+    font-family: "Times New Roman";
+}
+
+
+#navigation {
+    background-color: transparent;
+    border-style: solid;
+    border-bottom-width: 5px;
+    border-top-width: 0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-color: grey;
+}
+
+#navigation a {
+    background-color: transparent;
+    color: black;
+    height: 35px;
+    font-family: "Times New Roman";
+    font-size: 16px;
+}
+
+#navigation a:hover {
+    background-color: #FFC805;
+    color: black;
+    border-width: 0px;
+
+}
+
+.navbar-brand {
+    height: 40px;
+}
+
+.panel {
+  border-top-width: 5px;
+  border-bottom-width: 0px;
+  border-left-width: 0px;
+  border-right-width: 0px;
+  border-color: #0e8293;
+  background-color: #eaeaea;
+  height: 200px;
+  border-radius: 0px;
+}
+
+.btn {
+    color: white;
+    font-family: "Times New Roman";
+    font-size: 20px;
+    border-radius: 0px;
+    border-width: 0px;
+}
+
+.btn-default {
+    background-color: grey;
+
+}
+
+.btn-default:hover {
+    background-color: #FFC805;
+}
+
+.btn-default:active {
+    background-color: white;
+}
+
+.btn-primary {
+    background-color: #0e8293;
+}
+
+.btn-primary:hover {
+    background-color: #FFC805;
+    color: black;
+
+}
+
+.status {
+    background-color: #f0f0f0;
+    height: 40px;
+    text-align: center;
+    font-size: 18px;
+    line-height: 40px;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+    border-style: solid;
+    border-color: #eaeaea;
+
+}
