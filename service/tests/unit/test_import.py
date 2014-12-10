@@ -24,5 +24,10 @@ class TestImport(TestCase):
 
     def test_03_parse_csv(self):
         s = models.SpreadsheetJob()
+        s.filename = "test_submission.csv"
+        s.contact_email = "contact@email.com"
+        s.status_code = "submitted"
         s.id = "test_submission"
+        s.save()
+
         workflow.parse_csv(s)
