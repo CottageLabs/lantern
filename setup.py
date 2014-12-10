@@ -7,7 +7,8 @@ setup(
     install_requires = [
         "octopus==1.0.0",
         "esprit",
-        "Flask"
+        "Flask",
+        "WTForms==2.0.1"
     ],
     url = 'http://cottagelabs.com/',
     author = 'Cottage Labs',

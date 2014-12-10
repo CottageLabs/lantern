@@ -4,16 +4,19 @@ from octopus.modules.doaj import client as doaj
 from service import models, sheets, licences
 import os
 
+
+
 class WorkflowException(Exception):
     pass
 
 def csv_upload(flask_file_handle, filename, contact_email):
     # make a record of the upload
     s = models.SpreadsheetJob()
+
     s.filename = filename
     s.contact_email = contact_email
     s.status_code = "submitted"
-    s.makeid()
+    s.id = s.makeid()
 
     # find out where to put the file
     upload = app.config.get("UPLOAD_DIR")
@@ -21,7 +24,7 @@ def csv_upload(flask_file_handle, filename, contact_email):
         raise WorkflowException("UPLOAD_DIR is not set")
 
     # save the file and the record of the upload
-    flask_file_handle.save(os.path.join(upload, s.id + ".csv"))
+    flask_file_handle.save(os.path.join(upload, filename))
     s.save()
 
 def normalise_pmcid(pmcid):
