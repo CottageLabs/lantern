@@ -184,6 +184,10 @@ class Record(RecordDAO, DataObj):
     def pmcid(self, val):
         self._set_single("identifiers.pmcid", val, self._utf8_unicode())
 
+    @pmcid.deleter
+    def pmcid(self):
+        self._delete("identifiers.pmcid")
+
     @property
     def pmid(self):
         return self._get_single("identifiers.pmid", self._utf8_unicode())
@@ -192,6 +196,10 @@ class Record(RecordDAO, DataObj):
     def pmid(self, val):
         self._set_single("identifiers.pmid", val, self._utf8_unicode())
 
+    @pmid.deleter
+    def pmid(self):
+        self._delete("identifiers.pmid")
+
     @property
     def doi(self):
         return self._get_single("identifiers.doi", self._utf8_unicode())
@@ -199,6 +207,10 @@ class Record(RecordDAO, DataObj):
     @doi.setter
     def doi(self, val):
         self._set_single("identifiers.doi", val, self._utf8_unicode())
+
+    @doi.deleter
+    def doi(self):
+        self._delete("identifiers.doi")
 
     @property
     def title(self):
@@ -303,6 +315,10 @@ class Record(RecordDAO, DataObj):
     @licence_type.setter
     def licence_type(self, val):
         self._set_single("compliance.licence.type", val, self._utf8_unicode())
+
+    @licence_type.deleter
+    def licence_type(self):
+        self._delete("compliance.licence.type")
 
     @property
     def licence_source(self):

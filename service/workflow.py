@@ -186,6 +186,9 @@ def process_oag(oag_register, job):
     for e in licences.get("errors", []):
         oag_record_callback(e, oag_rerun)
 
+    # refresh the index, since this code moves faster than it can refresh itself
+    models.Record.refresh()
+
     # FIXME: in the full service, this is next bit is no good.  We will instead need to query the index
     # and determine if all the records are complete.  This might involve marking the records as complete
     # at some stage.
@@ -358,8 +361,25 @@ def extract_fulltext_licence(msg, fulltext):
             msg.record.licence_source = "epmc_xml"
             break
 
+def add_to_rerun(record, idtype, oag_rerun):
+    if idtype == "pmcid":
+        if record.doi is not None:
+            oag_rerun.append({"id" : record.doi, "type" : "doi"})
+            return
+        if record.pmid is not None:
+            oag_rerun.append({"id" : record.pmid, "type" : "pmid"})
+            return
+        return
+    elif idtype == "doi":
+        if record.pmid is not None:
+            oag_rerun.append({"id" : record.pmid, "type" : "pmid"})
+            return
+        return
+    elif idtype == "pmid":
+        return
+
 def oag_record_callback(result, oag_rerun):
-    def handle_error(record, idtype, oag_rerun):
+    def handle_error(record, idtype, error_message, oag_rerun):
         # first record an error status against the id type
         if idtype == "pmcid":
             record.oag_pmcid = "error"
@@ -367,6 +387,8 @@ def oag_record_callback(result, oag_rerun):
             record.oag_pmid = "error"
         elif idtype == "doi":
             record.oag_doi = "error"
+
+        record.add_provenance("oag", error_message)
 
         # save the record then pass it on to see if it needs to be re-submitted
         record.save()
@@ -402,23 +424,12 @@ def oag_record_callback(result, oag_rerun):
         record.save()
         return
 
-    def add_to_rerun(record, idtype, oag_rerun):
-        if idtype == "pmcid":
-            if record.doi is not None:
-                oag_rerun.append({"id" : record.doi, "type" : "doi"})
-                return
-            if record.pmid is not None:
-                oag_rerun.append({"id" : record.pmid, "type" : "pmid"})
-                return
-            return
-        elif idtype == "doi":
-            if record.pmid is not None:
-                oag_rerun.append({"id" : record.pmid, "type" : "pmid"})
-                return
-            return
-        elif idtype == "pmid":
-            return
-
+    def handle_aam(result, record):
+        aam = result.get("license", [{}])[0].get("provenance", {}).get("accepted_author_manuscript")
+        if aam is not None:
+            record.aam = aam
+            record.aam_from_epmc = True
+            record.add_provenance("oag", "Detected AAM status from EPMC web page")
 
     def process_licence(result, record, idtype, oag_rerun):
         # if the record already has a licence, we don't do anything
@@ -461,28 +472,27 @@ def oag_record_callback(result, oag_rerun):
     assert isinstance(record, models.Record)    # For pycharm type inspection
 
     # set its in_oag flag and re-save it
-    record.in_oag(False)
+    record.in_oag = False
     record.save()
 
     # FIXME: by this point we must know the type
     if type == "pmcid":
         if iserror:
-            handle_error(record, "pmcid", oag_rerun)
+            handle_error(record, "pmcid", result.get("error"), oag_rerun)
             return
         else:
             if not record.aam_from_xml:
-                # FIXME: this is where we'll get the AAM data from the OAG record once it has the update
-                pass
+                handle_aam(result, record)
             process_licence(result, record, type, oag_rerun)
     elif type == "doi":
         if iserror:
-            handle_error(record, "doi", oag_rerun)
+            handle_error(record, "doi", result.get("error"), oag_rerun)
             return
         else:
             process_licence(result, record, type, oag_rerun)
     elif type == "pmid":
         if iserror:
-            handle_error(record, "pmid", oag_rerun)
+            handle_error(record, "pmid", result.get("error"), oag_rerun)
         else:
             process_licence(result, record, type, oag_rerun)
 
