@@ -1,9 +1,10 @@
 from unittest import TestCase
-from octopus.core import app, initialise
+from octopus.core import initialise
 from service import workflow, models
 
 PMCID_SUCCESS = "PMC4219345"
 PMCID_SUCCESS_TITLE = "BORIS/CTCFL is an RNA-binding protein that associates with polysomes."
+PMCID_SUCCESS_FT_TITLE = "BORIS/CTCFL is an RNA-binding protein that associates with polysomes"
 
 PMCID_ERROR = "PMC00000000"
 
@@ -25,7 +26,7 @@ FUZZY_TITLE_PMCID = "PMC4219345"
 
 TITLE_ERROR = "Denaturalize ectype lawing kvas prothalamion. Perennial predivided aristoteles detachedly lactobacilli. Meagerly subruler recodification nonreprisal crinogenic."
 
-class TestImport(TestCase):
+class TestWorkflow(TestCase):
     def setUp(self):
         initialise()
 
@@ -114,3 +115,32 @@ class TestImport(TestCase):
         md, conf = workflow.get_epmc_md(msg)
         assert md is None
         assert conf is None
+
+    def test_02_get_fulltext_xml(self):
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+
+        # a successful fulltext retrieval
+        record.pmcid = PMCID_SUCCESS
+        ft = workflow.get_epmc_fulltext(msg)
+        assert ft is not None
+        assert ft.title == PMCID_SUCCESS_FT_TITLE, ft.title
+
+        # failed fulltext retrieval
+        record.pmcid = PMCID_ERROR
+        ft = workflow.get_epmc_fulltext(msg)
+        assert ft is None
+
+    def test_03_doaj(self):
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+
+        # An OA journal
+        record.issn = "1338-3973"
+        is_oa = workflow.doaj_lookup(msg)
+        assert is_oa is True
+
+        # a journal that we invented
+        record.issn = "1234-5678"
+        is_oa = workflow.doaj_lookup(msg)
+        assert is_oa is False

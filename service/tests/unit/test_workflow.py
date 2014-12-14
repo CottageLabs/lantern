@@ -1,17 +1,24 @@
 from octopus.modules.es import testindex
+from octopus.modules.epmc import client as epmc
 from service import workflow, models
-import time, requests, json
+import time, requests, json, os
+from lxml import etree
 
 post_counter = 0
 
-class TestImport(testindex.ESTestCase):
+EPMC_MD = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "epmc_md.json")
+EPMC_FT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "epmc_ft.xml")
+
+class TestWorkflow(testindex.ESTestCase):
     def setUp(self):
-        super(TestImport, self).setUp()
+        super(TestWorkflow, self).setUp()
         self.old_post = requests.post
+        self.old_doaj_lookup = workflow.doaj_lookup
 
     def tearDown(self):
-        super(TestImport, self).tearDown()
+        super(TestWorkflow, self).tearDown()
         requests.post = self.old_post
+        workflow.doaj_lookup = self.old_doaj_lookup
 
     def test_01_oag_rerun(self):
         record = models.Record()
@@ -758,6 +765,141 @@ class TestImport(testindex.ESTestCase):
 
         assert post_counter == 2
 
+    def test_05_populate_identifiers(self):
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
 
+        data = json.loads(open(EPMC_MD, "r").read())
+        epmc_md = epmc.EPMCMetadata(data)
 
+        workflow.populate_identifiers(msg, epmc_md)
 
+        assert record.pmcid == "PMC4219345"
+        assert record.pmid == "24279897"
+        assert record.doi == "10.1186/1471-2121-14-52"
+
+        record.pmcid = "PMC000000"
+        record.pmid = "0000000"
+        del record.doi
+
+        workflow.populate_identifiers(msg, epmc_md)
+
+        assert record.pmcid == "PMC000000"
+        assert record.pmid == "0000000"
+        assert record.doi == "10.1186/1471-2121-14-52"
+
+    def test_06_epmc_compliance_data(self):
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+
+        data = json.loads(open(EPMC_MD, "r").read())
+        epmc_md = epmc.EPMCMetadata(data)
+
+        workflow.extract_metadata(msg, epmc_md)
+
+        assert record.in_epmc is True
+        assert record.is_oa is False
+        assert len(record.issn) == 1
+        assert "1471-2121" in record.issn
+
+    def test_07_ft_info(self):
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+
+        data = open(EPMC_FT, "r").read()
+        ft = epmc.EPMCFullText(data)
+
+        workflow.extract_fulltext_info(msg, ft)
+
+        assert record.has_ft_xml is True
+        assert len(record.provenance) == 1
+        assert record.aam is True
+        assert record.aam_from_xml is True
+
+    def test_08_ft_licence(self):
+        data = open(EPMC_FT, "r").read()
+        xml = etree.fromstring(data)
+
+        l = xml.xpath("//license")
+        lp = l[0].find("license-p")
+
+        # licence in type attribute
+        l[0].set("license-type", "CC BY")
+        l[0].set("{http://www.w3.org/1999/xlink}href", "http://random.url")
+        lp.clear()
+        s = etree.tostring(xml)
+        ft = epmc.EPMCFullText(s)
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+        workflow.extract_fulltext_licence(msg, ft)
+        assert record.licence_type == "CC BY"
+        assert record.licence_source == "epmc_xml"
+        assert len(record.provenance) == 1
+
+        # licence in href attribute
+        l[0].set("license-type", "open access")
+        l[0].set("{http://www.w3.org/1999/xlink}href", "http://creativecommons.org/licenses/by-nd/3.0")
+        s = etree.tostring(xml)
+        ft = epmc.EPMCFullText(s)
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+        workflow.extract_fulltext_licence(msg, ft)
+        assert record.licence_type == "CC BY-ND"
+        assert record.licence_source == "epmc_xml"
+        assert len(record.provenance) == 1
+
+        # licence in text
+        l[0].set("license-type", "open access")
+        l[0].set("{http://www.w3.org/1999/xlink}href", "http://random.url")
+        lp.text = "licence is <a href='http://creativecommons.org/licenses/by-nc-nd/3.0'>http://creativecommons.org/licenses/by-nc-nd/3.0</a>"
+        s = etree.tostring(xml)
+        ft = epmc.EPMCFullText(s)
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+        workflow.extract_fulltext_licence(msg, ft)
+        assert record.licence_type == "CC BY-NC-ND"
+        assert record.licence_source == "epmc_xml"
+        assert len(record.provenance) == 1
+
+        # licence present but unrecognised
+        lp.text = "wibble wibble wobble"
+        s = etree.tostring(xml)
+        ft = epmc.EPMCFullText(s)
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+        workflow.extract_fulltext_licence(msg, ft)
+        assert record.licence_type is None
+        assert record.licence_source is None
+        assert len(record.provenance) == 0
+
+        # no licence element present
+        p = l[0].getparent()
+        p.remove(l[0])
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+        workflow.extract_fulltext_licence(msg, ft)
+        assert record.licence_type is None
+        assert record.licence_source is None
+        assert len(record.provenance) == 0
+
+    def test_09_hybrid_oa(self):
+        def is_hybrid_lookup(msg):
+            return False
+        def is_oa_lookup(msg):
+            return True
+
+        # Check that an OA record is correctly identified
+        workflow.doaj_lookup = is_oa_lookup
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+        workflow.hybrid_or_oa(msg)
+        assert record.journal_type == "oa"
+        assert len(record.provenance) == 1
+
+        # check that a hybrid journal is correctly identified
+        workflow.doaj_lookup = is_hybrid_lookup
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+        workflow.hybrid_or_oa(msg)
+        assert record.journal_type == "hybrid"
+        assert len(record.provenance) == 1

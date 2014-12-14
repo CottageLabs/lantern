@@ -1,0 +1,341 @@
+{"hasTextMinedTerms": "Y", "dateOfCreation": 1387152000000, "pubModel": "Electronic", "chemicalList": {
+    "chemical": [
+        {
+            "registryNumber": "0",
+            "name": "CTCFL protein, human"
+        },
+        {
+            "registryNumber": "0",
+            "name": "RNA, Messenger"
+        },
+        {
+            "registryNumber": "0",
+            "name": "RNA, Ribosomal"
+        },
+        {
+            "registryNumber": "0",
+            "name": "DNA-Binding Proteins"
+        },
+        {
+            "registryNumber": "0",
+            "name": "Protein Sorting Signals"
+        }
+    ]
+}, "authorString": "Ogunkolade BW, Jones TA, Aarum J, Szary J, Owen N, Ottaviani D, Mumin MA, Patel S, Pieri CA, Silver AR, Sheer D.", "pubTypeList": {
+    "pubType": ["Journal Article", "Research Support, Non-U.S. Gov't"]
+}, "grantsList": {
+    "grant": [
+        {
+            "orderIn": 0,
+            "agency": "Cancer Research UK",
+            "grantId": "C5321/A8318"
+        }
+    ]
+}, "id": "24279897", "inEPMC": "Y", "authorList": {
+    "author": [
+        {
+            "lastName": "Ogunkolade",
+            "fullName": "Ogunkolade BW",
+            "firstName": "Babatunji W",
+            "initials": "BW"
+        },
+        {
+            "lastName": "Jones",
+            "fullName": "Jones TA",
+            "firstName": "Tania A",
+            "initials": "TA"
+        },
+        {
+            "lastName": "Aarum",
+            "fullName": "Aarum J",
+            "firstName": "Johan",
+            "initials": "J"
+        },
+        {
+            "lastName": "Szary",
+            "fullName": "Szary J",
+            "firstName": "Jaroslaw",
+            "initials": "J"
+        },
+        {
+            "lastName": "Owen",
+            "fullName": "Owen N",
+            "firstName": "Nicholas",
+            "initials": "N"
+        },
+        {
+            "lastName": "Ottaviani",
+            "fullName": "Ottaviani D",
+            "firstName": "Diego",
+            "initials": "D"
+        },
+        {
+            "lastName": "Mumin",
+            "fullName": "Mumin MA",
+            "firstName": "Muhammad A",
+            "initials": "MA"
+        },
+        {
+            "lastName": "Patel",
+            "fullName": "Patel S",
+            "firstName": "Shyam",
+            "initials": "S"
+        },
+        {
+            "lastName": "Pieri",
+            "fullName": "Pieri CA",
+            "firstName": "Christopher A",
+            "initials": "CA"
+        },
+        {
+            "lastName": "Silver",
+            "fullName": "Silver AR",
+            "firstName": "Andrew R",
+            "initials": "AR"
+        },
+        {
+            "affiliation": "Centre for Neuroscience and Trauma, Queen Mary University of London, Blizard Institute, Barts and the London School of Medicine and Dentistry, London, E1 2AT, UK. d.sheer@qmul.ac.uk.",
+            "lastName": "Sheer",
+            "fullName": "Sheer D",
+            "firstName": "Denise",
+            "initials": "D"
+        }
+    ]
+}, "title": "BORIS/CTCFL is an RNA-binding protein that associates with polysomes.", "citedByCount": 0, "source": "MED", "pmid": "24279897", "abstractText": "BACKGROUND: BORIS (CTCFL), a paralogue of the multifunctional and ubiquitously expressed transcription factor CTCF, is best known for its role in transcriptional regulation. In the nucleus, BORIS is particularly enriched in the nucleolus, a crucial compartment for ribosomal RNA and RNA metabolism. However, little is known about cytoplasmic BORIS, which represents the major pool of BORIS protein. RESULTS: We show, firstly, that BORIS has a putative nuclear export signal in the C-terminal domain. Furthermore, BORIS associates with mRNA in both neural stem cells and young neurons. The majority of the BORIS-associated transcripts are different in the two cell types. Finally, by using polysome profiling we show that BORIS is associated with actively translating ribosomes. CONCLUSION: We have demonstrated the RNA binding properties of cellular BORIS and its association with actively translating ribosomes. We suggest that BORIS is involved in gene expression at both the transcriptional and post-transcriptional levels.", "subsetList": {
+    "subset": [
+        {
+            "code": "IM",
+            "name": "Index Medicus"
+        }
+    ]
+}, "luceneScore": "17535.967", "meshHeadingList": {
+    "meshHeading": [
+        {
+            "descriptorName": "Neurons",
+            "majorTopic_YN": "N",
+            "meshQualifierList": {
+                "meshQualifier": [
+                    {
+                        "abbreviation": "CY",
+                        "qualifierName": "cytology",
+                        "majorTopic_YN": "N"
+                    },
+                    {
+                        "abbreviation": "ME",
+                        "qualifierName": "metabolism",
+                        "majorTopic_YN": "N"
+                    }
+                ]
+            }
+        },
+        {
+            "descriptorName": "Cell Line, Tumor",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "Cell Nucleolus",
+            "majorTopic_YN": "N",
+            "meshQualifierList": {
+                "meshQualifier": [
+                    {
+                        "abbreviation": "GE",
+                        "qualifierName": "genetics",
+                        "majorTopic_YN": "Y"
+                    },
+                    {
+                        "abbreviation": "ME",
+                        "qualifierName": "metabolism",
+                        "majorTopic_YN": "N"
+                    }
+                ]
+            }
+        },
+        {
+            "descriptorName": "Cytoplasm",
+            "majorTopic_YN": "N",
+            "meshQualifierList": {
+                "meshQualifier": [
+                    {
+                        "abbreviation": "GE",
+                        "qualifierName": "genetics",
+                        "majorTopic_YN": "Y"
+                    },
+                    {
+                        "abbreviation": "ME",
+                        "qualifierName": "metabolism",
+                        "majorTopic_YN": "N"
+                    }
+                ]
+            }
+        },
+        {
+            "descriptorName": "Polyribosomes",
+            "majorTopic_YN": "N",
+            "meshQualifierList": {
+                "meshQualifier": [
+                    {
+                        "abbreviation": "GE",
+                        "qualifierName": "genetics",
+                        "majorTopic_YN": "Y"
+                    },
+                    {
+                        "abbreviation": "ME",
+                        "qualifierName": "metabolism",
+                        "majorTopic_YN": "N"
+                    }
+                ]
+            }
+        },
+        {
+            "descriptorName": "Humans",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "Protein Sorting Signals",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "DNA-Binding Proteins",
+            "majorTopic_YN": "N",
+            "meshQualifierList": {
+                "meshQualifier": [
+                    {
+                        "abbreviation": "GE",
+                        "qualifierName": "genetics",
+                        "majorTopic_YN": "Y"
+                    },
+                    {
+                        "abbreviation": "ME",
+                        "qualifierName": "metabolism",
+                        "majorTopic_YN": "N"
+                    }
+                ]
+            }
+        },
+        {
+            "descriptorName": "RNA, Messenger",
+            "majorTopic_YN": "N",
+            "meshQualifierList": {
+                "meshQualifier": [
+                    {
+                        "abbreviation": "GE",
+                        "qualifierName": "genetics",
+                        "majorTopic_YN": "Y"
+                    },
+                    {
+                        "abbreviation": "ME",
+                        "qualifierName": "metabolism",
+                        "majorTopic_YN": "N"
+                    }
+                ]
+            }
+        },
+        {
+            "descriptorName": "RNA, Ribosomal",
+            "majorTopic_YN": "N",
+            "meshQualifierList": {
+                "meshQualifier": [
+                    {
+                        "abbreviation": "GE",
+                        "qualifierName": "genetics",
+                        "majorTopic_YN": "Y"
+                    },
+                    {
+                        "abbreviation": "ME",
+                        "qualifierName": "metabolism",
+                        "majorTopic_YN": "N"
+                    }
+                ]
+            }
+        },
+        {
+            "descriptorName": "Signal Transduction",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "Protein Biosynthesis",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "Transcription, Genetic",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "Gene Expression Regulation",
+            "majorTopic_YN": "Y"
+        },
+        {
+            "descriptorName": "Amino Acid Sequence",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "Protein Structure, Tertiary",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "Protein Binding",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "Molecular Sequence Data",
+            "majorTopic_YN": "N"
+        },
+        {
+            "descriptorName": "Neural Stem Cells",
+            "majorTopic_YN": "N",
+            "meshQualifierList": {
+                "meshQualifier": [
+                    {
+                        "abbreviation": "CY",
+                        "qualifierName": "cytology",
+                        "majorTopic_YN": "N"
+                    },
+                    {
+                        "abbreviation": "ME",
+                        "qualifierName": "metabolism",
+                        "majorTopic_YN": "N"
+                    }
+                ]
+            }
+        }
+    ]
+}, "inPMC": "N", "dbCrossReferenceList": {
+    "dbName": ["UNIPROT", "ARXPR"]
+}, "hasTMAccessionNumbers": "N", "hasReferences": "Y", "doi": "10.1186/1471-2121-14-52", "isOpenAccess": "N", "pageInfo": "52", "pmcid": "PMC4219345", "hasDbCrossReferences": "Y", "hasLabsLinks": "N", "language": "eng", "dateOfCompletion": 1402873200000, "fullTextUrlList": {
+    "fullTextUrl": [
+        {
+            "url": "http://europepmc.org/articles/PMC4219345?pdf=render",
+            "documentStyle": "pdf",
+            "availability": "Open access",
+            "availabilityCode": "OA",
+            "site": "Europe_PMC"
+        },
+        {
+            "url": "http://europepmc.org/articles/PMC4219345",
+            "documentStyle": "html",
+            "availability": "Open access",
+            "availabilityCode": "OA",
+            "site": "Europe_PMC"
+        },
+        {
+            "url": "http://dx.doi.org/10.1186/1471-2121-14-52",
+            "documentStyle": "doi",
+            "availability": "Subscription required",
+            "availabilityCode": "S",
+            "site": "DOI"
+        }
+    ]
+}, "dateOfRevision": 1415145600000, "journalInfo": {
+    "journal": {
+        "medlineAbbreviation": "BMC Cell Biol",
+        "isoabbreviation": "BMC Cell Biol.",
+        "nlmid": "100966972",
+        "essn": "1471-2121",
+        "title": "BMC cell biology"
+    },
+    "monthOfPublication": 0,
+    "volume": "14",
+    "yearOfPublication": 2013,
+    "journalIssueId": 2000645,
+    "dateOfPublication": "2013 "
+}}

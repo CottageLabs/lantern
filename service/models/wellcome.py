@@ -252,6 +252,9 @@ class Record(RecordDAO, DataObj):
     def issn(self, val):
         self._set_list("supporting_info.issn", val, self._utf8_unicode())
 
+    def add_issn(self, val):
+        self._add_to_list("supporting_info.issn", val, self._utf8_unicode())
+
     @property
     def in_oag(self):
         return self._get_single("supporting_info.currently_in_oag", bool)

@@ -155,12 +155,7 @@ def process_record(msg):
         msg.record.save()
 
     # lookup the issn in the DOAJ, and record whether the journal is OA or hybrid
-    oajournal = doaj_lookup(msg)
-    msg.record.journal_type = "oa" if oajournal else "hybrid"
-    if oajournal:
-        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was found in DOAJ; assuming OA" % {"issn" : msg.record.issn})
-    else:
-        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was not found in DOAJ; assuming Hybrid" % {"issn" : msg.record.issn})
+    hybrid_or_oa(msg)
 
     # if necessary, register an identifier to be looked up in OAG
     register_with_oag(msg)
@@ -282,7 +277,7 @@ def get_epmc_fulltext(msg):
     try:
         ft = epmc.EuropePMC.fulltext(msg.record.pmcid)
         return ft
-    except epmc.EPMCFullTextException:
+    except epmc.EuropePMCException:
         return None
 
 def doaj_lookup(msg):
@@ -294,26 +289,37 @@ def doaj_lookup(msg):
     :return:    True if the journal is OA, False if hybrid
     """
     client = doaj.DOAJSearchClient()
-    journals = client.journal_by_issn(msg.record.issn)
+    journals = client.journals_by_issns(msg.record.issn)
     return len(journals) > 0
+
+def hybrid_or_oa(msg):
+    oajournal = doaj_lookup(msg)
+    msg.record.journal_type = "oa" if oajournal else "hybrid"
+    if oajournal:
+        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was found in DOAJ; assuming OA" % {"issn" : msg.record.issn})
+    else:
+        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was not found in DOAJ; assuming Hybrid" % {"issn" : msg.record.issn})
 
 def populate_identifiers(msg, epmc_md):
     """
     Any identifiers which are present in the EPMC metadata but not in the source
-    record should be copied over
+    record should be copied over.
+
+    Note that this does not check identifiers which are present in both sources for
+    discrepencies.  It is assumed that the record in the WorkflowMessage is definitive
 
     :param msg:     WorkflowMessage object
     :param epmc_md:     EPMC metadata object
     :return:
     """
     if msg.record.pmcid is None and epmc_md.pmcid is not None:
-        msg.record.pmcid = epmc_md.pmcid
+        msg.record.pmcid = normalise_pmcid(epmc_md.pmcid)
 
     if msg.record.pmid is None and epmc_md.pmid is not None:
-        msg.record.pmid = epmc_md.pmid
+        msg.record.pmid = normalise_pmid(epmc_md.pmid)
 
     if msg.record.doi is None and epmc_md.doi is not None:
-        msg.record.doi = epmc_md.doi
+        msg.record.doi = normalise_doi(epmc_md.doi)
 
 def extract_metadata(msg, epmc_md):
     """
@@ -324,13 +330,15 @@ def extract_metadata(msg, epmc_md):
     :return:
     """
     if epmc_md.in_epmc is not None:
-        msg.record.in_epmc = epmc_md.in_epmc
+        msg.record.in_epmc = epmc_md.in_epmc == "Y"
 
     if epmc_md.is_oa is not None:
-        msg.record.is_oa = epmc_md.is_oa
+        msg.record.is_oa = epmc_md.is_oa == "Y"
 
     if epmc_md.issn is not None:
-        msg.record.issn = epmc_md.issn
+        msg.record.add_issn(epmc_md.issn)
+    if epmc_md.essn is not None:
+        msg.record.add_issn(epmc_md.essn)
 
 def extract_fulltext_info(msg, fulltext):
     # record that the fulltext exists in the first place
@@ -344,17 +352,19 @@ def extract_fulltext_info(msg, fulltext):
 def extract_fulltext_licence(msg, fulltext):
     type, url, para = fulltext.get_licence_details()
 
-    if type in licences.urls.values():
+    if type in [l for u, l in licences.urls]:
         msg.record.licence_type = type
         msg.record.add_provenance("processor", "Fulltext XML specifies licence type as %(license)s" % {"license" : type})
         msg.record.licence_source = "epmc_xml"
+        return
 
-    if url in licences.urls:
-        msg.record.licence_type = licences.urls[url]
-        msg.record.add_provenance("processor", "Fulltext XML specifies licence url as %(url)s which gives us licence type %(license)s" % {"url" : url, "license" : licences.urls[url]})
+    if url in [u for u, l in licences.urls]:
+        msg.record.licence_type = [l for u, l in licences.urls if u == url][0]
+        msg.record.add_provenance("processor", "Fulltext XML specifies licence url as %(url)s which gives us licence type %(license)s" % {"url" : url, "license" : msg.record.licence_type})
         msg.record.licence_source = "epmc_xml"
+        return
 
-    for ss, t in licences.substrings.iteritems():
+    for ss, t in licences.substrings:
         if ss in para:
             msg.record.licence_type = t
             msg.record.add_provenance("processor", "Fulltext XML licence description contains the licence text $(text)s which gives us licence type %(license)s" % {"text" : ss, "license" : t})
