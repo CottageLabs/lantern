@@ -14,11 +14,17 @@ class TestWorkflow(testindex.ESTestCase):
         super(TestWorkflow, self).setUp()
         self.old_post = requests.post
         self.old_doaj_lookup = workflow.doaj_lookup
+        self.old_get_epmc_md = workflow.get_epmc_md
+        self.old_get_epmc_fulltext = workflow.get_epmc_fulltext
+        self.old_process_oag = workflow.process_oag
 
     def tearDown(self):
         super(TestWorkflow, self).tearDown()
         requests.post = self.old_post
         workflow.doaj_lookup = self.old_doaj_lookup
+        workflow.get_epmc_md = self.old_get_epmc_md
+        workflow.get_epmc_fulltext = self.old_get_epmc_fulltext
+        workflow.process_oag = self.old_process_oag
 
     def test_01_oag_rerun(self):
         record = models.Record()
@@ -903,3 +909,187 @@ class TestWorkflow(testindex.ESTestCase):
         workflow.hybrid_or_oa(msg)
         assert record.journal_type == "hybrid"
         assert len(record.provenance) == 1
+
+    def test_10_process_record_01_everything(self):
+        def mock_get_md(*args, **kwargs):
+            md = epmc.EPMCMetadata(json.loads(open(EPMC_MD, "r").read()))
+            return md, 1.0
+
+        def mock_get_ft(*args, **kwargs):
+            data = open(EPMC_FT, "r").read()
+            return epmc.EPMCFullText(data)
+
+        def mock_doaj(*args, **kwargs):
+            return False
+
+        workflow.get_epmc_md = mock_get_md
+        workflow.get_epmc_fulltext = mock_get_ft
+        workflow.doaj_lookup = mock_doaj
+
+        record = models.Record()
+        record.pmcid = "PMC4219345"
+        oag = []
+        msg = workflow.WorkflowMessage(record=record, oag_register=oag)
+        workflow.process_record(msg)
+
+        assert record.confidence == 1.0
+        assert record.pmcid == "PMC4219345"
+        assert record.pmid == "24279897"
+        assert record.doi == "10.1186/1471-2121-14-52"
+        assert record.in_epmc is True
+        assert record.is_oa is False
+        assert len(record.issn) == 1
+        assert "1471-2121" in record.issn
+        assert record.id is not None # implies it has been saved
+        assert record.has_ft_xml is True
+        assert record.aam is True
+        assert record.aam_from_xml is True
+        assert record.licence_type == "CC BY"
+        assert record.licence_source == "epmc_xml"
+        assert record.journal_type == "hybrid"
+        assert len(oag) == 0
+
+    def test_10_process_record_02_no_md(self):
+        def mock_get_md(*args, **kwargs):
+            return None, None
+
+        workflow.get_epmc_md = mock_get_md
+
+        record = models.Record()
+        record.pmcid = "PMC4219345"
+        oag = []
+        msg = workflow.WorkflowMessage(record=record, oag_register=oag)
+        workflow.process_record(msg)
+
+        assert record.confidence is None
+        assert len(record.provenance) == 1
+        assert len(oag) == 0
+
+    def test_10_process_record_03_aam_no_licence(self):
+        def mock_get_md(*args, **kwargs):
+            md = epmc.EPMCMetadata(json.loads(open(EPMC_MD, "r").read()))
+            return md, 1.0
+
+        def mock_get_ft(*args, **kwargs):
+            data = open(EPMC_FT, "r").read()
+            xml = etree.fromstring(data)
+            l = xml.xpath("//license")
+            l[0].getparent().remove(l[0])
+            s = etree.tostring(xml)
+            return epmc.EPMCFullText(s)
+
+        def mock_doaj(*args, **kwargs):
+            return True
+
+        workflow.get_epmc_md = mock_get_md
+        workflow.get_epmc_fulltext = mock_get_ft
+        workflow.doaj_lookup = mock_doaj
+
+        record = models.Record()
+        record.pmcid = "PMC4219345"
+        oag = []
+        msg = workflow.WorkflowMessage(record=record, oag_register=oag)
+        workflow.process_record(msg)
+
+        assert record.confidence == 1.0
+        assert record.pmcid == "PMC4219345"
+        assert record.pmid == "24279897"
+        assert record.doi == "10.1186/1471-2121-14-52"
+        assert record.in_epmc is True
+        assert record.is_oa is False
+        assert len(record.issn) == 1
+        assert "1471-2121" in record.issn
+        assert record.id is not None # implies it has been saved
+        assert record.has_ft_xml is True
+        assert record.aam is True
+        assert record.aam_from_xml is True
+        assert record.licence_type is None
+        assert record.licence_source is None
+        assert record.journal_type == "oa"
+        assert len(oag) == 1
+        assert oag[0]["id"] == "PMC4219345"
+        assert oag[0]["type"] == "pmcid"
+
+    def test_10_process_record_04_licence_no_aam(self):
+        def mock_get_md(*args, **kwargs):
+            md = epmc.EPMCMetadata(json.loads(open(EPMC_MD, "r").read()))
+            return md, 1.0
+
+        def mock_get_ft(*args, **kwargs):
+            data = open(EPMC_FT, "r").read()
+            xml = etree.fromstring(data)
+            aids = xml.xpath("//article-id[@pub-id-type='manuscript']")
+            aids[0].getparent().remove(aids[0])
+            s = etree.tostring(xml)
+            return epmc.EPMCFullText(s)
+
+        def mock_doaj(*args, **kwargs):
+            return True
+
+        workflow.get_epmc_md = mock_get_md
+        workflow.get_epmc_fulltext = mock_get_ft
+        workflow.doaj_lookup = mock_doaj
+
+        record = models.Record()
+        record.pmcid = "PMC4219345"
+        oag = []
+        msg = workflow.WorkflowMessage(record=record, oag_register=oag)
+        workflow.process_record(msg)
+
+        assert record.confidence == 1.0
+        assert record.pmcid == "PMC4219345"
+        assert record.pmid == "24279897"
+        assert record.doi == "10.1186/1471-2121-14-52"
+        assert record.in_epmc is True
+        assert record.is_oa is False
+        assert len(record.issn) == 1
+        assert "1471-2121" in record.issn
+        assert record.id is not None # implies it has been saved
+        assert record.has_ft_xml is True
+        assert record.aam is False
+        assert record.aam_from_xml is True
+        assert record.licence_type == "CC BY"
+        assert record.licence_source == "epmc_xml"
+        assert record.journal_type == "oa"
+        assert len(oag) == 0
+
+    def test_10_process_record_05_no_ft(self):
+        def mock_get_md(*args, **kwargs):
+            md = epmc.EPMCMetadata(json.loads(open(EPMC_MD, "r").read()))
+            return md, 1.0
+
+        def mock_get_ft(*args, **kwargs):
+            return None
+
+        def mock_doaj(*args, **kwargs):
+            return False
+
+        workflow.get_epmc_md = mock_get_md
+        workflow.get_epmc_fulltext = mock_get_ft
+        workflow.doaj_lookup = mock_doaj
+
+        record = models.Record()
+        record.pmcid = "PMC4219345"
+        oag = []
+        msg = workflow.WorkflowMessage(record=record, oag_register=oag)
+        workflow.process_record(msg)
+
+        assert record.confidence == 1.0
+        assert record.pmcid == "PMC4219345"
+        assert record.pmid == "24279897"
+        assert record.doi == "10.1186/1471-2121-14-52"
+        assert record.in_epmc is True
+        assert record.is_oa is False
+        assert len(record.issn) == 1
+        assert "1471-2121" in record.issn
+        assert record.id is not None # implies it has been saved
+        assert record.has_ft_xml is False
+        assert record.aam is None
+        assert record.aam_from_xml is False
+        assert record.licence_type is None
+        assert record.licence_source is None
+        assert record.journal_type == "hybrid"
+        assert len(oag) == 1
+        assert oag[0]["id"] == "PMC4219345"
+        assert oag[0]["type"] == "pmcid"
+

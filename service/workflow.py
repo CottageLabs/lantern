@@ -352,24 +352,25 @@ def extract_fulltext_info(msg, fulltext):
 def extract_fulltext_licence(msg, fulltext):
     type, url, para = fulltext.get_licence_details()
 
-    if type in [l for u, l in licences.urls]:
+    if type is not None and type in [l for u, l in licences.urls]:
         msg.record.licence_type = type
         msg.record.add_provenance("processor", "Fulltext XML specifies licence type as %(license)s" % {"license" : type})
         msg.record.licence_source = "epmc_xml"
         return
 
-    if url in [u for u, l in licences.urls]:
+    if url is not None and url in [u for u, l in licences.urls]:
         msg.record.licence_type = [l for u, l in licences.urls if u == url][0]
         msg.record.add_provenance("processor", "Fulltext XML specifies licence url as %(url)s which gives us licence type %(license)s" % {"url" : url, "license" : msg.record.licence_type})
         msg.record.licence_source = "epmc_xml"
         return
 
-    for ss, t in licences.substrings:
-        if ss in para:
-            msg.record.licence_type = t
-            msg.record.add_provenance("processor", "Fulltext XML licence description contains the licence text $(text)s which gives us licence type %(license)s" % {"text" : ss, "license" : t})
-            msg.record.licence_source = "epmc_xml"
-            break
+    if para is not None:
+        for ss, t in licences.substrings:
+            if ss in para:
+                msg.record.licence_type = t
+                msg.record.add_provenance("processor", "Fulltext XML licence description contains the licence text $(text)s which gives us licence type %(license)s" % {"text" : ss, "license" : t})
+                msg.record.licence_source = "epmc_xml"
+                break
 
 def add_to_rerun(record, idtype, oag_rerun):
     if idtype == "pmcid":
