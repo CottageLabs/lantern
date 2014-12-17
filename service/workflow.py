@@ -28,6 +28,9 @@ def csv_upload(flask_file_handle, filename, contact_email):
     flask_file_handle.save(os.path.join(upload, s.id + ".csv"))
     s.save()
 
+    # return the job that was created, in case the caller wants to do something with it
+    return s
+
 def normalise_pmcid(pmcid):
     return pmcid
 

@@ -18,7 +18,8 @@ class TestWorkflow(testindex.ESTestCase):
     def setUp(self):
         super(TestWorkflow, self).setUp()
         self.old_upload_dir = app.config.get("UPLOAD_DIR")
-        os.mkdir(UPLOAD_DIR)
+        if not os.path.exists(UPLOAD_DIR):
+            os.mkdir(UPLOAD_DIR)
         app.config["UPLOAD_DIR"] = UPLOAD_DIR
 
     def tearDown(self):
@@ -30,10 +31,15 @@ class TestWorkflow(testindex.ESTestCase):
     def test_01_full(self):
         # first pretend to do the file upload, using the test submission
         fh = FileHandle(open(TEST_SUBMISSION, "r").read())
-        workflow.csv_upload(fh, "test_submission.csv", "contact@email.com")
+        job = workflow.csv_upload(fh, "test_submission.csv", "contact@email.com")
         time.sleep(2)
 
         # now call the overall job processor
         workflow.process_jobs()
+
+        # once the job processor is finished, we can export the csv for the job we ran
+        csvcontent = workflow.output_csv(job)
+        with codecs.open(os.path.join(UPLOAD_DIR, "output.csv"), "wb") as f:
+            f.write(csvcontent)
 
 
