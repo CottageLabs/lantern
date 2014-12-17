@@ -305,11 +305,11 @@ class Record(RecordDAO, DataObj):
 
     @property
     def aam(self):
-        return self._get_single("compliance.epmc_aap", bool)
+        return self._get_single("compliance.epmc_aam", bool)
 
     @aam.setter
     def aam(self, val):
-        self._set_single("compliance.epmc_aap", val, bool)
+        self._set_single("compliance.epmc_aam", val, bool)
 
     @property
     def licence_type(self):

@@ -6,6 +6,7 @@ src*
 build/*
 dist/*
 local.cfg
+service/tests/resources/tmpupload
 
 .idea/
 

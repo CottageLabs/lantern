@@ -1,0 +1,39 @@
+from octopus.modules.es import testindex
+from octopus.core import app
+from service import workflow
+import codecs, os, time
+
+TEST_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "test_submission.csv")
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "tmpupload")
+
+class FileHandle(object):
+    def __init__(self, content):
+        self.content = content
+
+    def save(self, path):
+        with codecs.open(path, "wb") as out:
+            out.write(self.content)
+
+class TestWorkflow(testindex.ESTestCase):
+    def setUp(self):
+        super(TestWorkflow, self).setUp()
+        self.old_upload_dir = app.config.get("UPLOAD_DIR")
+        os.mkdir(UPLOAD_DIR)
+        app.config["UPLOAD_DIR"] = UPLOAD_DIR
+
+    def tearDown(self):
+        # FIXME: for the moment this test doesn't tear down, because we're interested in
+        # dissecting the results
+        # super(TestWorkflow, self).tearDown()
+        app.config["UPLOAD_DIR"] = self.old_upload_dir
+
+    def test_01_full(self):
+        # first pretend to do the file upload, using the test submission
+        fh = FileHandle(open(TEST_SUBMISSION, "r").read())
+        workflow.csv_upload(fh, "test_submission.csv", "contact@email.com")
+        time.sleep(2)
+
+        # now call the overall job processor
+        workflow.process_jobs()
+
+

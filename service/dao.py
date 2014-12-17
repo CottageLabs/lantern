@@ -24,8 +24,8 @@ class RecordDAO(dao.ESDAO):
     __type__ = "record"
 
     @classmethod
-    def list_by_upload(cls, sheet_id):
-        q = RecordSheetQuery(sheet_id)
+    def list_by_upload(cls, sheet_id, page_size=10000):
+        q = RecordSheetQuery(sheet_id, page_size)
         return cls.object_query(q.query())
 
     @classmethod
@@ -49,12 +49,14 @@ class RecordIdentifierQuery(object):
         }
 
 class RecordSheetQuery(object):
-    def __init__(self, sheet_id):
-        self.sheet = sheet_id
+    def __init__(self, sheet_id, page_size=10000):
+        self.sheet_id = sheet_id
+        self.page_size = page_size
 
     def query(self):
         return {
             "query" : {
                 "term" : {"upload.id.exact" : self.sheet_id}
-            }
+            },
+            "size" : self.page_size
         }

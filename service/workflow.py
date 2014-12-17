@@ -24,7 +24,7 @@ def csv_upload(flask_file_handle, filename, contact_email):
         raise WorkflowException("UPLOAD_DIR is not set")
 
     # save the file and the record of the upload
-    flask_file_handle.save(os.path.join(upload, filename))
+    flask_file_handle.save(os.path.join(upload, s.id + ".csv"))
     s.save()
 
 def normalise_pmcid(pmcid):
@@ -37,12 +37,16 @@ def normalise_doi(doi):
     return doi
 
 def parse_csv(job):
+    app.logger.info("Loading records from " + job.id)
+
     # find out where to get the file
     upload = app.config.get("UPLOAD_DIR")
     if upload is None or upload == "":
         raise WorkflowException("UPLOAD_DIR is not set")
 
     path = os.path.join(upload, job.id + ".csv")
+
+    # FIXME: what happens if the sheet can't be read
     sheet = sheets.MasterSheet(path)
 
     i = 0
@@ -63,7 +67,7 @@ def parse_csv(job):
 
         if obj.get("pmid") is not None and obj.get("pmid") != "":
             r.pmid = normalise_pmid(obj.get("pmid"))
-            note = "normalised PMCD %(source)s to %(target)s" % {"source" : obj.get("pmid"), "target" : r.pmid }
+            note = "normalised PMID %(source)s to %(target)s" % {"source" : obj.get("pmid"), "target" : r.pmid }
             r.add_provenance("importer", note)
 
         if obj.get("doi") is not None and obj.get("doi") != "":
@@ -75,6 +79,11 @@ def parse_csv(job):
             r.title = obj.get("article_title")
 
         r.save()
+
+    app.logger.info("Loaded " + str(i) + " records from spreadsheet")
+
+    # refresh the index so the data is ready to use
+    models.Record.refresh()
 
 
 class WorkflowMessage(object):
@@ -88,9 +97,11 @@ def process_jobs():
     Process all of the jobs in the index which are of status "submitted"
     :return:nothing
     """
+    app.logger.info("Processing spreadsheet jobs")
     jobs = models.SpreadsheetJob.list_by_status("submitted")
     for job in jobs:
         process_job(job)
+    app.logger.info("Processing run complete")
 
 def process_job(job):
     """
@@ -100,9 +111,14 @@ def process_job(job):
     :return:    nothing
     """
 
+    app.logger.info("Processing spreadsheet job " + job.id)
+
     # start by switching the status of the job so it is active
     job.status_code = "processing"
     job.save()
+
+    # now we want to parse the csv itself to our record index
+    parse_csv(job)
 
     # list all of the records, and work through them one by one doing all the processing
     records = models.Record.list_by_upload(job.id)
@@ -116,6 +132,7 @@ def process_job(job):
 
     # beyond this point all the processing is handled asynchronously, so this function
     # is now complete
+    app.logger.info("Processing spreadsheet " + job.id + " complete")
 
 def process_record(msg):
     """
@@ -124,6 +141,9 @@ def process_record(msg):
     :param msg:  WorkflowMessage object containing the record to process
     :return:
     """
+
+    app.logger.info("Processing record " + msg.record.id)
+
     # get the epmc metadata for this record
     epmc_md, confidence = get_epmc_md(msg)
     if epmc_md is None:
@@ -164,8 +184,12 @@ def process_record(msg):
     msg.record.save()
 
     # after this, all additional work will be picked up by the OAG processing chain, asynchronously
+    app.logger.info("Record processed")
 
 def process_oag(oag_register, job):
+
+    app.logger.info("Running " + str(len(oag_register)) + " identifiers through OAG")
+
     # delayed imports because this function is a prototype and we'll wholesale replace it in the full service
     import json, requests
     postdata = json.dumps(oag_register)
@@ -201,30 +225,41 @@ def process_oag(oag_register, job):
 def get_epmc_md(msg):
     # look using the pmcid first
     if msg.record.pmcid is not None:
+        app.logger.info("Requesting EPMC metadata by PMCID " + msg.record.pmcid)
         mds = epmc.EuropePMC.get_by_pmcid(msg.record.pmcid)
         if len(mds) == 1:
+            app.logger.info("EPMC metadata found")
             return mds[0], 1.0
 
     # if we find 0 or > 1 via the pmcid, try again with the pmid
     if msg.record.pmid is not None:
+        app.logger.info("Requesting EPMC metadata by PMID " + msg.record.pmid)
         mds = epmc.EuropePMC.get_by_pmid(msg.record.pmid)
         if len(mds) == 1:
+            app.logger.info("EPMC metadata found")
             return mds[0], 1.0
 
     # if we find 0 or > 1 via the pmid, try again with the doi
     if msg.record.doi is not None:
+        app.logger.info("Requesting EPMC metadata by DOI " + msg.record.doi)
         mds = epmc.EuropePMC.get_by_doi(msg.record.doi)
         if len(mds) == 1:
+            app.logger.info("EPMC metadata found")
             return mds[0], 1.0
 
     if msg.record.title is not None:
+        app.logger.info("Requesting EPMC metadata by exact Title " + msg.record.title)
         mds = epmc.EuropePMC.title_exact(msg.record.title)
         if len(mds) == 1:
+            app.logger.info("EPMC metadata found")
             return mds[0], 0.9
+        app.logger.info("Requesting EPMC metadata by fuzzy Title " + msg.record.title)
         mds = epmc.EuropePMC.title_approximate(msg.record.title)
         if len(mds) == 1:
+            app.logger.info("EPMC metadata found")
             return mds[0], 0.7
 
+    app.logger.info("EPMC metadata not found by any means available")
     return None, None
 
 
@@ -233,8 +268,10 @@ def register_with_oag(msg):
     # has not been retrieved yet
     if msg.record.pmcid is not None:
         if msg.record.aam_from_xml and msg.record.licence_type is not None:
+            app.logger.info("No need to process record with OAG " + msg.record.id)
             return
         else:
+            app.logger.info("Sending PMCID " + msg.record.pmcid + " to OAG for record " + msg.record.id)
             msg.oag_register.append({"id" : msg.record.pmcid, "type" : "pmcid"})
             msg.record.in_oag = True
             msg.record.oag_pmcid = "sent"
@@ -243,10 +280,12 @@ def register_with_oag(msg):
 
     # in all other cases, if the licence has already been detected, we don't need to do any more
     if msg.record.licence_type is not None:
+        app.logger.info("No need to process record with OAG " + msg.record.id)
         return
 
     # next priority is to send a doi if there is one
     if msg.record.doi is not None:
+        app.logger.info("Sending DOI " + msg.record.doi + " to OAG for record " + msg.record.id)
         msg.oag_register.append({"id" : msg.record.doi, "type" : "doi"})
         msg.record.in_oag = True
         msg.record.oag_doi = "sent"
@@ -255,6 +294,7 @@ def register_with_oag(msg):
 
     # lowest priority is to send the pmid if there is one
     if msg.record.pmid is not None:
+        app.logger.info("Sending PMID " + msg.record.pmid + " to OAG for record " + msg.record.id)
         msg.oag_register.append({"id" : msg.record.pmid, "type" : "pmid"})
         msg.record.in_oag = True
         msg.record.oag_pmid = "sent"
@@ -262,6 +302,7 @@ def register_with_oag(msg):
         return
 
     # if we get to here, then something is wrong with this record, and we can't send it to OAG
+    app.logger.info("No need to process record with OAG " + msg.record.id)
     return
 
 
@@ -271,13 +312,18 @@ def get_epmc_fulltext(msg):
     :param msg: WorkflowMessage object
     :return: EPMCFulltext object or None if not found
     """
+    app.logger.info("Looking for EPMC fulltext for " + msg.record.id)
+
     if msg.record.pmcid is None:
+        app.logger.info("Fulltext not available")
         return None
 
     try:
         ft = epmc.EuropePMC.fulltext(msg.record.pmcid)
+        app.logger.info("Fulltext found for " + msg.record.id)
         return ft
     except epmc.EuropePMCException:
+        app.logger.info("Fulltext not available")
         return None
 
 def doaj_lookup(msg):
@@ -288,6 +334,7 @@ def doaj_lookup(msg):
     :param msg: WorkflowMessage object
     :return:    True if the journal is OA, False if hybrid
     """
+    app.logger.info("Looking up record in DOAJ " + msg.record.id)
     client = doaj.DOAJSearchClient()
     journals = client.journals_by_issns(msg.record.issn)
     return len(journals) > 0
@@ -296,9 +343,9 @@ def hybrid_or_oa(msg):
     oajournal = doaj_lookup(msg)
     msg.record.journal_type = "oa" if oajournal else "hybrid"
     if oajournal:
-        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was found in DOAJ; assuming OA" % {"issn" : msg.record.issn})
+        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was found in DOAJ; assuming OA" % {"issn" : ",".join(msg.record.issn)})
     else:
-        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was not found in DOAJ; assuming Hybrid" % {"issn" : msg.record.issn})
+        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was not found in DOAJ; assuming Hybrid" % {"issn" : ",".join(msg.record.issn)})
 
 def populate_identifiers(msg, epmc_md):
     """
@@ -475,8 +522,10 @@ def oag_record_callback(result, oag_rerun):
     # a) extending OAGR to allow us to store arbitrary metadata along with the state
     # b) storing an explicit relationship between the OAGR state and the spreadsheet job in another table
     if id is None or type is None:
-        print "insufficient data to relate OAG response to"
+        app.logger.info("insufficient data to relate OAG response to record")
         return
+
+    app.logger.info("handling OAG response for " + id)
 
     # now locate the related record
     record = models.Record.get_by_identifier(type, id)

@@ -12,7 +12,7 @@ D,PMC4217745,,,Y,laldsasdf,,280,280,20,280,WELL/10,,
 D,PMC4182926,,,Z,mmaiewliae,,300,300,20,300,WELL/11,,An AAM example where the manuscript id is in the fulltext xml; licence is not cleanly tagged - have to look in the text to know that it is CC
 D,,,10.1371/journal.pone.0020832.t001,Z,miaienfasef,Mice with a Targeted Deletion of the Type 2 Deiodinase Are Insulin Resistant and Susceptible to Diet Induced Obesity,320,320,20,320,WELL/12,,"This DOI is a table identifier, and doesn't appear explicitly in EPMC, but it /does/ appear in OAG, so we will use it as a test for a record which is not in EPMC at all, but for which we can detect a license"
 E,,23954741,,Z,kaeiwfijasa,Estrogen receptor beta in breast cancer tests,340,340,20,340,WELL/13,,
-E,-,24085376,,Z,amfes;dfe,Diffusion-weighted imaging and diagnosis of transient ischemic attack.,360,360,20,360,WELL/14,,
+E,,24085376,,Z,amfes;dfe,Diffusion-weighted imaging and diagnosis of transient ischemic attack.,360,360,20,360,WELL/14,,
 E,PMC4134930,,,Z,kalsdifa'eqj,,400,400,20,400,WELL/15,,NIH AAM
 F,PMC3939357,,,Z,maldsihfa,,876,876,20,876,WELL/16,,EPMC AAM
 F,,,,Z,a;jfida;sd,Im - Perfect robustness and the adaptation of metabolic networks subject to metabolic and gene-expression regulation:marrying control engineering with metabolic control analysis,999,999,20,999,WELL/17,,
