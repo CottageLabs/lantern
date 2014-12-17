@@ -90,6 +90,7 @@ class TestWorkflow(testindex.ESTestCase):
         record.pmcid = "PMC1234"
         record.aam_from_xml = True
         record.licence_type = "CC BY"
+        record.id = record.makeid()
         oag = []
         msg = workflow.WorkflowMessage(record=record, oag_register=oag)
         workflow.register_with_oag(msg)
@@ -928,6 +929,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         record = models.Record()
         record.pmcid = "PMC4219345"
+        record.id = record.makeid()
         oag = []
         msg = workflow.WorkflowMessage(record=record, oag_register=oag)
         workflow.process_record(msg)
@@ -957,6 +959,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         record = models.Record()
         record.pmcid = "PMC4219345"
+        record.id = record.makeid()
         oag = []
         msg = workflow.WorkflowMessage(record=record, oag_register=oag)
         workflow.process_record(msg)
@@ -987,6 +990,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         record = models.Record()
         record.pmcid = "PMC4219345"
+        record.id = record.makeid()
         oag = []
         msg = workflow.WorkflowMessage(record=record, oag_register=oag)
         workflow.process_record(msg)
@@ -1032,6 +1036,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         record = models.Record()
         record.pmcid = "PMC4219345"
+        record.id = record.makeid()
         oag = []
         msg = workflow.WorkflowMessage(record=record, oag_register=oag)
         workflow.process_record(msg)
@@ -1070,6 +1075,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         record = models.Record()
         record.pmcid = "PMC4219345"
+        record.id = record.makeid()
         oag = []
         msg = workflow.WorkflowMessage(record=record, oag_register=oag)
         workflow.process_record(msg)
@@ -1083,7 +1089,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert len(record.issn) == 1
         assert "1471-2121" in record.issn
         assert record.id is not None # implies it has been saved
-        assert record.has_ft_xml is False
+        assert record.has_ft_xml is None
         assert record.aam is None
         assert record.aam_from_xml is False
         assert record.licence_type is None

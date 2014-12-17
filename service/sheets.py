@@ -15,11 +15,42 @@ class MasterSheet(object):
         u'COST (\xa3)' : "total_cost",
         u'Wellcome grant' : "grant_code",
         u'Licence info' : "licence_info",
-        u'Notes' : "notes"
+        u'Notes' : "notes",
+
+        # values used exclusively in the output
+        u"Fulltext in EPMC?" : "ft_in_epmc",
+        u"AAM?" : "aam",
+        u"Open Access?" : "open_access",
+        u"Licence" : "licence",
+        u"Licence Source" : "licence_source",
+        u"Journal Type" : "journal_type",
+        u"Correct Article Confidence" : "confidence"
     }
 
-    def __init__(self, path):
-        self._sheet = clcsv.ClCsv(path)
+    OUTPUT_ORDER = [
+        "pmcid", "pmid", "doi", "article_title", "ft_in_epmc", "aam", "open_access",
+        "licence", "licence_source", "journal_type", "confidence", "notes"
+    ]
+
+    def __init__(self, path=None, writer=None):
+        if path is not None:
+            self._sheet = clcsv.ClCsv(path)
+        elif writer is not None:
+            self._sheet = clcsv.ClCsv(writer=writer)
+            self._set_headers()
+
+    def _set_headers(self):
+        headers = []
+        for o in self.OUTPUT_ORDER:
+            found = False
+            for k, v in self.HEADERS.iteritems():
+                if v == o:
+                    headers.append(k)
+                    found = True
+                    break
+            if not found:
+                headers.append(o)
+        self._sheet.set_headers(headers)
 
     def objects(self):
         for o in self._sheet.objects():
@@ -27,3 +58,15 @@ class MasterSheet(object):
             for key, val in o.iteritems():
                 no[self.HEADERS.get(key.strip())] = val
             yield no
+
+    def add_object(self, obj):
+        no = {}
+        for k, v in obj.iteritems():
+            for k1, v1 in self.HEADERS.iteritems():
+                if k == v1:
+                    no[k1] = v
+                    break
+        self._sheet.add_object(no)
+
+    def save(self):
+        self._sheet.save(close=False)

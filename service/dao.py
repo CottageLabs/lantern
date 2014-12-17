@@ -58,5 +58,6 @@ class RecordSheetQuery(object):
             "query" : {
                 "term" : {"upload.id.exact" : self.sheet_id}
             },
-            "size" : self.page_size
+            "size" : self.page_size,
+            "sort" : [{"upload.pos" : {"order" : "asc"}}]
         }

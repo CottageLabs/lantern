@@ -222,7 +222,8 @@ class Record(RecordDAO, DataObj):
 
     @property
     def has_ft_xml(self):
-        return self._get_single("supporting_info.epmc_ft_xml", bool, default=False)
+        # return self._get_single("supporting_info.epmc_ft_xml", bool, default=False)
+        return self._get_single("supporting_info.epmc_ft_xml", bool)
 
     @has_ft_xml.setter
     def has_ft_xml(self, val):

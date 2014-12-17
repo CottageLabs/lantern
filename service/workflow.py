@@ -3,6 +3,7 @@ from octopus.modules.epmc import client as epmc
 from octopus.modules.doaj import client as doaj
 from service import models, sheets, licences
 import os
+from StringIO import StringIO
 
 
 
@@ -85,6 +86,41 @@ def parse_csv(job):
     # refresh the index so the data is ready to use
     models.Record.refresh()
 
+def output_csv(job):
+    def serialise_provenance(r):
+        s = ""
+        first = True
+        for by, when, what in r.provenance:
+            if not first:
+                s += "\n\n"
+            else:
+                first = False
+            s += "[%(when)s %(by)s] %(what)s" % {"when" : when, "by" : by, "what" : what}
+        return s
+
+    s = StringIO()
+    sheet = sheets.MasterSheet(writer=s)
+    records = models.Record.list_by_upload(job.id)
+    for r in records:
+        assert isinstance(r, models.Record)
+        obj = {
+            "pmcid" : r.pmcid,
+            "pmid" : r.pmid,
+            "doi" : r.doi,
+            "article_title" : r.title,
+            "ft_in_epmc" : r.has_ft_xml,
+            "aam" : r.aam,
+            "open_access" : r.is_oa,
+            "licence" : r.licence_type,
+            "licence_source" : r.licence_source,
+            "journal_type" : r.journal_type,
+            "confidence" : r.confidence,
+            "notes" : serialise_provenance(r)
+        }
+        sheet.add_object(obj)
+    sheet.save()
+
+    return s.getvalue()
 
 class WorkflowMessage(object):
     def __init__(self, job=None, record=None, oag_register=None):
