@@ -189,6 +189,7 @@ def process_record(msg):
         # if no metadata, then we have to give up
         note = "unable to locate any metadata record in EPMC for the combination of identifiers/title; giving up"
         msg.record.add_provenance("processor", note)
+        msg.record.save()
         return
 
     # set the confidence that we have accurately identified this record
@@ -212,6 +213,8 @@ def process_record(msg):
 
         # since we have extracted data, and are about to do another external request, save again
         msg.record.save()
+    else:
+        msg.record.has_ft_xml = False
 
     # lookup the issn in the DOAJ, and record whether the journal is OA or hybrid
     hybrid_or_oa(msg)
@@ -382,9 +385,9 @@ def hybrid_or_oa(msg):
     oajournal = doaj_lookup(msg)
     msg.record.journal_type = "oa" if oajournal else "hybrid"
     if oajournal:
-        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was found in DOAJ; assuming OA" % {"issn" : ",".join(msg.record.issn)})
+        msg.record.add_provenance("processor", "Journal with ISSN %(issn)s was found in DOAJ; assuming OA" % {"issn" : ",".join(msg.record.issn)})
     else:
-        msg.record.add_provenance("processor", "Journal with ISSN $(issn)s was not found in DOAJ; assuming Hybrid" % {"issn" : ",".join(msg.record.issn)})
+        msg.record.add_provenance("processor", "Journal with ISSN %(issn)s was not found in DOAJ; assuming Hybrid" % {"issn" : ",".join(msg.record.issn)})
 
 def populate_identifiers(msg, epmc_md):
     """
@@ -454,7 +457,7 @@ def extract_fulltext_licence(msg, fulltext):
         for ss, t in licences.substrings:
             if ss in para:
                 msg.record.licence_type = t
-                msg.record.add_provenance("processor", "Fulltext XML licence description contains the licence text $(text)s which gives us licence type %(license)s" % {"text" : ss, "license" : t})
+                msg.record.add_provenance("processor", "Fulltext XML licence description contains the licence text %(text)s which gives us licence type %(license)s" % {"text" : ss, "license" : t})
                 msg.record.licence_source = "epmc_xml"
                 break
 
