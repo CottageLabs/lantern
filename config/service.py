@@ -13,7 +13,8 @@ ELASTIC_SEARCH_INDEX = "wellcome"
 # Classes from which to retrieve ES mappings to be used in this application
 ELASTIC_SEARCH_MAPPINGS = [
     "service.dao.SpreadsheetJobDAO",
-    "service.dao.RecordDAO"
+    "service.dao.RecordDAO",
+    "octopus.modules.oag.dao.JobsDAO"
 ]
 
 ##########################################
