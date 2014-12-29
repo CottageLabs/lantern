@@ -1,6 +1,7 @@
 from octopus.core import app
 from octopus.modules.epmc import client as epmc
 from octopus.modules.doaj import client as doaj
+from octopus.modules.identifiers import pmid, doi, pmcid
 from service import models, sheets, licences
 import os
 from StringIO import StringIO
@@ -31,14 +32,17 @@ def csv_upload(flask_file_handle, filename, contact_email):
     # return the job that was created, in case the caller wants to do something with it
     return s
 
-def normalise_pmcid(pmcid):
-    return pmcid
+def normalise_pmcid(identifier):
+    identifier = pmcid.normalise(identifier)
+    return identifier
 
-def normalise_pmid(pmid):
-    return pmid
+def normalise_pmid(identifier):
+    identifier = pmid.normalise(identifier)
+    return identifier
 
-def normalise_doi(doi):
-    return doi
+def normalise_doi(identifier):
+    identifier = doi.normalise(identifier)
+    return identifier
 
 def parse_csv(job):
     app.logger.info("Loading records from " + job.id)
