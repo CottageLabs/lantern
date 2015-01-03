@@ -17,6 +17,17 @@ ELASTIC_SEARCH_MAPPINGS = [
     "octopus.modules.oag.dao.JobsDAO"
 ]
 
+QUERY_ROUTE = {
+    "query" : {
+        "oagr" : {
+            "auth" : False,
+            "role" : None,
+            "filters" : [],
+            "dao" : "octopus.modules.oag.dao.JobsDAO"
+        }
+    }
+}
+
 ##########################################
 # service specific config
 

@@ -61,6 +61,14 @@ app.register_blueprint(configjs)
 from octopus.modules.es.autocomplete import blueprint as autocomplete
 app.register_blueprint(autocomplete, url_prefix='/autocomplete')
 
+# OAGR monitor endpoint
+from octopus.modules.oag.monitor import blueprint as oagmonitor
+app.register_blueprint(oagmonitor, url_prefix='/oagr')
+
+# Query Endpoint
+from octopus.modules.es.query import blueprint as query
+app.register_blueprint(query, url_prefix="/query")
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('errors/404.html'), 404

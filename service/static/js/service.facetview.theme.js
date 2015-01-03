@@ -7,16 +7,16 @@ jQuery(document).ready(function($) {
 
     function discoveryRecordView(options, record) {
         var result = options.resultwrap_start;
-        result += "<div class='row-fluid' style='margin-top: 10px; margin-bottom: 10px'>"
-        result += "<div class='span12'>"
-        result += "<strong style='font-size: 150%'>" + record["id"] + "</strong><br>"
-        result += "</div></div>"
+        result += "<div class='row-fluid' style='margin-top: 10px; margin-bottom: 10px'>";
+        result += "<div class='span12'>";
+        result += "<strong style='font-size: 150%'>" + record["id"] + "</strong><br>";
+        result += "</div></div>";
         result += options.resultwrap_end;
         return result;
     }
 
-    var facets = []
-    facets.push({'field': 'last_updated', 'display': 'Last Updated'})
+    var facets = [];
+    facets.push({'field': 'last_updated', 'display': 'Last Updated'});
 
     $('#facetview').facetview({
         debug: false,

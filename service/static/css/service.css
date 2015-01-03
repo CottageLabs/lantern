@@ -51,9 +51,9 @@ body {
 .btn {
     color: white;
     font-family: "Times New Roman";
-    font-size: 20px;
-    border-radius: 0px;
-    border-width: 0px;
+    /*font-size: 20px;*/
+    /*border-radius: 0px;*/
+    /*border-width: 0px;*/
 }
 
 .btn-default {
