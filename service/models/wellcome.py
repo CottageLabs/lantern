@@ -56,6 +56,11 @@ class SpreadsheetJob(SpreadsheetJobDAO, DataObj):
         self.status_code = code
         self.status_message = message
 
+    @classmethod
+    def query_by_filename(cls, filename):
+        return cls.object_query(terms={"filename.exact": filename})
+
+
 class Record(RecordDAO, DataObj):
     """
     {

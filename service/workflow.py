@@ -2,6 +2,7 @@ from octopus.core import app
 from octopus.modules.epmc import client as epmc
 from octopus.modules.doaj import client as doaj
 from octopus.modules.identifiers import pmid, doi, pmcid
+from octopus.lib import mail
 from service import models, sheets, licences
 import os
 from StringIO import StringIO
@@ -31,6 +32,11 @@ def csv_upload(flask_file_handle, filename, contact_email):
 
     # return the job that was created, in case the caller wants to do something with it
     return s
+
+def email_submitter(contact_email, url):
+    text = "Thank you for your upload. You can view the progress of your upload at " + url
+    return mail.send_mail(to=[contact_email], fro="mail", subject="Successful upload", text=text)
+
 
 def normalise_pmcid(identifier):
     identifier = pmcid.normalise(identifier)
