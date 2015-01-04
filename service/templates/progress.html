@@ -2,14 +2,14 @@
 
 {% block content %}
 <div class="container col-md-12" style="padding: 20px; padding-top:0px; height: 500px;">
-    <h1 style="text-align:center;"><small>Progress for: </small> {{filename}}</h1>
+    <h1 style="text-align:center;"><small>Progress for: </small> {{job.filename}}</h1>
     <div class="col-md-12 panel" >
             <div class="row" style="padding-top: 75px;">
-                    <a href="{{url_for('download_csv', filename=filename)}}" class="btn btn-primary col-md-3">Download original</a>
+                    <a href="{{url_for('download_csv', filename=job.filename)}}" class="btn btn-primary col-md-3">Download original</a>
 
                 <div class="container status col-md-3">
                     Upload:
-                    Queued
+                    {{job.status_code}}
                 </div>
                 <div class="container status col-md-3">
                     Process:

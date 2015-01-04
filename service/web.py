@@ -6,11 +6,14 @@ from werkzeug import secure_filename
 from datetime import datetime
 import os
 
+from service import models
+
 from octopus.core import app, initialise
 from octopus.lib.webapp import custom_static
-from workflow import csv_upload
+from workflow import csv_upload, email_submitter
 
 import sys
+
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -36,12 +39,17 @@ def upload_csv():
             filename = filename[0] + '_' + unicode(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")) + '.csv'
             contact_email = form.contact_email.data
             csv_upload(file, filename, contact_email)
+            url_root = request.url_root
+            if url_root.endswith("/"):
+                url_root = url_root[:-1]
+            email_submitter(contact_email=contact_email, url=url_root + url_for('progress', filename=filename))
             return redirect(url_for('progress', filename=filename))
     return render_template("upload_csv.html", form=form)
 
 @app.route("/progress/<filename>")
 def progress(filename):
-    return render_template("progress.html", filename=filename)
+    job = models.SpreadsheetJob.query_by_filename(filename=filename)[0]
+    return render_template("progress.html", filename=filename, job=job)
 
 @app.route("/download/<filename>")
 def download_csv(filename):
