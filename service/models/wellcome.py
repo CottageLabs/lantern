@@ -1,4 +1,4 @@
-from service.dao import SpreadsheetJobDAO, RecordDAO
+from service.dao import SpreadsheetJobDAO, RecordDAO, OAGRLinkDAO
 from datetime import datetime
 from octopus.lib.dataobj import DataObj
 
@@ -381,3 +381,20 @@ class Record(RecordDAO, DataObj):
         obj["when"] = when
 
         self._add_to_list("provenance", obj)
+
+class OAGRLink(OAGRLinkDAO, DataObj):
+    @property
+    def oagrjob_id(self):
+        return self._get_single("oagrjob_id", self._utf8_unicode())
+
+    @oagrjob_id.setter
+    def oagrjob_id(self, val):
+        self._set_single("oagrjob_id", val, self._utf8_unicode())
+
+    @property
+    def spreadsheet_id(self):
+        return self._get_single("spreadsheet_id", self._utf8_unicode())
+
+    @spreadsheet_id.setter
+    def spreadsheet_id(self, val):
+        self._set_single("spreadsheet_id", val, self._utf8_unicode())

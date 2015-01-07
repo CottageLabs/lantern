@@ -20,6 +20,8 @@ class SpreadsheetStatusQuery(object):
             "sort" : [{"created_date" : {"order" : "asc"}}]
         }
 
+######################################################
+
 class RecordDAO(dao.ESDAO):
     __type__ = "record"
 
@@ -61,3 +63,32 @@ class RecordSheetQuery(object):
             "size" : self.page_size,
             "sort" : [{"upload.pos" : {"order" : "asc"}}]
         }
+
+###############################################
+
+class OAGRLinkDAO(dao.ESDAO):
+    __type__ = "oagrlink"
+
+    @classmethod
+    def by_oagr_id(cls, oagr_id):
+        q = OAGRLinkQuery(oagr_id)
+        res = cls.object_query(q.query())
+        if len(res) > 0:
+            return res[0]
+        return None
+
+class OAGRLinkQuery(object):
+    def __init__(self, oagr_id):
+        self.oagr_id = oagr_id
+
+    def query(self):
+        return {
+            "query" : {
+                "bool" :{
+                    "must" : [
+                        {"term" : {"oagrjob_id.exact" : self.oagr_id}}
+                    ]
+                }
+            }
+        }
+
