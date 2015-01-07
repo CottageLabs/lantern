@@ -7,8 +7,6 @@ from service import models, sheets, licences
 import os
 from StringIO import StringIO
 
-
-
 class WorkflowException(Exception):
     pass
 
@@ -239,6 +237,26 @@ def process_record(msg):
     app.logger.info("Record processed")
 
 def process_oag(oag_register, job):
+    app.logger.info("Running " + str(len(oag_register)) + " identifiers through OAG")
+
+    from octopus.modules.oag import client, oagr
+    from datetime import datetime, timedelta
+
+    # first create and set going the oagrjob after a short delay
+    # FIXME: note that OAGR doesn't work with the id type - will this be a problem later?
+    req = client.RequestState([o.get("id") for o in oag_register], start=datetime.now() + timedelta(seconds=10))
+    oagrjob = oagr.JobRunner.make_job(req)
+
+    # now create a link between the spreadsheet job and the oagr job
+    oagrlink = models.OAGRLink()
+    oagrlink.oagrjob_id = oagrjob.id
+    oagrlink.spreadsheet_id = job.id
+    oagrlink.save()
+
+    # and that's all we can do from here - the OAGR system will run our callback on any data it gets back, you can find
+    # that defined at the bottom of this file and in the OAGR_RUNNER_CALLBACK_CLOSURE config option
+
+def process_oag_direct(oag_register, job):
 
     app.logger.info("Running " + str(len(oag_register)) + " identifiers through OAG")
 
@@ -487,6 +505,39 @@ def add_to_rerun(record, idtype, oag_rerun):
         return
     elif idtype == "pmid":
         return
+
+#################################################################
+
+def oag_callback_closure():
+    def oag_callback(state):
+        # a register of identifiers which need to be re-run
+        oag_rerun = []
+
+        # handle the successes
+        successes = state.flush_success()
+        for s in successes:
+            oag_record_callback(s, oag_rerun)
+
+        # handle the errors
+        errors = state.flush_error()
+        for e in errors:
+            oag_record_callback(e, oag_rerun)
+
+        # if there is anything to reprocess, do that
+        if len(oag_rerun) > 0:
+            # follow the link over to the related spreadsheet
+            oagrlink = models.OAGRLink.by_oagr_id(state.id)
+            ssjob = models.SpreadsheetJob.pull(oagrlink.spreadsheet_id)
+
+            # put anything that needs to be reprocessed back on the job queue
+            process_oag(oag_rerun, ssjob)
+
+        else:
+            # it's possible that the spreadsheet job has finished, so we need
+            # to annotate it
+            pass
+
+    return oag_callback
 
 def oag_record_callback(result, oag_rerun):
     def handle_error(record, idtype, error_message, oag_rerun):
