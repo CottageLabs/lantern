@@ -10,11 +10,15 @@ THREADED = True
 ELASTIC_SEARCH_HOST = "http://localhost:9200"
 ELASTIC_SEARCH_INDEX = "wellcome"
 
+# FIXME: shortcut for testing with OAGR
+ELASTIC_SEARCH_TEST_INDEX = "wellcome"
+
 # Classes from which to retrieve ES mappings to be used in this application
 ELASTIC_SEARCH_MAPPINGS = [
     "service.dao.SpreadsheetJobDAO",
     "service.dao.RecordDAO",
-    "octopus.modules.oag.dao.JobsDAO"
+    "octopus.modules.oag.dao.JobsDAO",
+    "service.dao.OAGRLinkDAO"
 ]
 
 QUERY_ROUTE = {
@@ -27,6 +31,8 @@ QUERY_ROUTE = {
         }
     }
 }
+
+OAGR_RUNNER_CALLBACK_CLOSURE = "service.workflow.oag_callback_closure"
 
 ##########################################
 # service specific config
