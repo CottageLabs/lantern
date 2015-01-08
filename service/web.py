@@ -4,13 +4,14 @@ from flask.views import View
 from wtforms import Form, StringField, validators, SelectField
 from werkzeug import secure_filename
 from datetime import datetime
+from StringIO import StringIO
 import os
 
 from service import models
 
 from octopus.core import app, initialise
 from octopus.lib.webapp import custom_static
-from workflow import csv_upload, email_submitter
+from workflow import csv_upload, email_submitter, output_csv
 
 import sys
 
@@ -35,26 +36,33 @@ def upload_csv():
         file = request.files["upload"]
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            filename = filename.split('.')
-            filename = filename[0] + '_' + unicode(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")) + '.csv'
             contact_email = form.contact_email.data
-            csv_upload(file, filename, contact_email)
+            job = csv_upload(file, filename, contact_email)
             url_root = request.url_root
             if url_root.endswith("/"):
                 url_root = url_root[:-1]
-            email_submitter(contact_email=contact_email, url=url_root + url_for('progress', filename=filename))
-            return redirect(url_for('progress', filename=filename))
+            email_submitter(contact_email=contact_email, url=url_root + url_for('progress', job_id=job.id))
+            return redirect(url_for('progress', job_id=job.id))
     return render_template("upload_csv.html", form=form)
 
-@app.route("/progress/<filename>")
-def progress(filename):
-    job = models.SpreadsheetJob.query_by_filename(filename=filename)[0]
-    return render_template("progress.html", filename=filename, job=job)
+@app.route("/progress/<job_id>")
+def progress(job_id):
+    job = models.SpreadsheetJob.pull(job_id)
+    return render_template("progress.html", filename=job.filename, job=job)
 
-@app.route("/download/<filename>")
-def download_csv(filename):
-    return send_from_directory(app.config.get("UPLOAD_DIR"), filename, as_attachment=True)
+@app.route("/download_original/<job_id>")
+def download_original_csv(job_id):
+    job = models.SpreadsheetJob.pull(job_id)
+    original_name = job.filename
+    filename = job_id + ".csv"
+    return send_from_directory(os.path.abspath(app.config.get("UPLOAD_DIR")), filename, as_attachment=True, attachment_filename=original_name)
 
+@app.route("/download_progress/<job_id>")
+def download_progress_csv(job_id):
+    job = models.SpreadsheetJob.pull(job_id)
+    spreadsheet = StringIO(output_csv(job))
+    filename = "processed_" + job.filename
+    return send_file(spreadsheet, attachment_filename=filename, as_attachment=True)
 
 # this allows us to override the standard static file handling with our own dynamic version
 @app.route("/static/<path:filename>")
