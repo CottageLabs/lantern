@@ -32,8 +32,7 @@ def csv_upload(flask_file_handle, filename, contact_email):
     return s
 
 def email_submitter(contact_email, url):
-    text = "Thank you for your upload. You can view the progress of your upload at " + url
-    return mail.send_mail(to=[contact_email], fro="mail", subject="Successful upload", text=text)
+    return mail.send_mail(to=[contact_email], fro="mail", subject="Successful upload", template_name="upload_email_template.txt", url=url)
 
 
 def normalise_pmcid(identifier):
