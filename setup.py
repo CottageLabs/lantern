@@ -8,7 +8,8 @@ setup(
         "octopus==1.0.0",
         "esprit",
         "Flask",
-        "WTForms==2.0.1"
+        "WTForms==2.0.1",
+        "flask_mail"
     ],
     url = 'http://cottagelabs.com/',
     author = 'Cottage Labs',
