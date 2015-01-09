@@ -9,7 +9,7 @@ setup(
         "esprit",
         "Flask",
         "WTForms==2.0.1",
-        "flask_mail"
+        "flask_mail==0.9.1"
     ],
     url = 'http://cottagelabs.com/',
     author = 'Cottage Labs',
