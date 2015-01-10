@@ -226,6 +226,9 @@ def process_record(msg):
     # lookup the issn in the DOAJ, and record whether the journal is OA or hybrid
     hybrid_or_oa(msg)
 
+    # at this stage, all the epmc lookup work has completed
+    msg.record.epmc_complete = True
+
     # if necessary, register an identifier to be looked up in OAG
     register_with_oag(msg)
 
@@ -338,6 +341,7 @@ def register_with_oag(msg):
     if msg.record.pmcid is not None:
         if msg.record.aam_from_xml and msg.record.licence_type is not None:
             app.logger.info("No need to process record with OAG " + msg.record.id)
+            msg.record.oag_complete = True
             return
         else:
             app.logger.info("Sending PMCID " + msg.record.pmcid + " to OAG for record " + msg.record.id)
@@ -350,6 +354,7 @@ def register_with_oag(msg):
     # in all other cases, if the licence has already been detected, we don't need to do any more
     if msg.record.licence_type is not None:
         app.logger.info("No need to process record with OAG " + msg.record.id)
+        msg.record.oag_complete = True
         return
 
     # next priority is to send a doi if there is one
@@ -372,6 +377,7 @@ def register_with_oag(msg):
 
     # if we get to here, then something is wrong with this record, and we can't send it to OAG
     app.logger.info("No need to process record with OAG " + msg.record.id)
+    msg.record.oag_complete = True
     return
 
 
@@ -474,11 +480,14 @@ def extract_fulltext_licence(msg, fulltext):
         msg.record.licence_source = "epmc_xml"
         return
 
-    if url is not None and url in [u for u, l in licences.urls]:
-        msg.record.licence_type = [l for u, l in licences.urls if u == url][0]
-        msg.record.add_provenance("processor", "Fulltext XML specifies licence url as %(url)s which gives us licence type %(license)s" % {"url" : url, "license" : msg.record.licence_type})
-        msg.record.licence_source = "epmc_xml"
-        return
+    if url is not None:
+        urls = [u for u, l in licences.urls]
+        for u in urls:
+            if url.startswith(u):
+                msg.record.licence_type = [l for u2, l in licences.urls if u == u2][0]
+                msg.record.add_provenance("processor", "Fulltext XML specifies licence url as %(url)s which gives us licence type %(license)s" % {"url" : url, "license" : msg.record.licence_type})
+                msg.record.licence_source = "epmc_xml"
+                return
 
     if para is not None:
         for ss, t in licences.substrings:
@@ -492,18 +501,18 @@ def add_to_rerun(record, idtype, oag_rerun):
     if idtype == "pmcid":
         if record.doi is not None:
             oag_rerun.append({"id" : record.doi, "type" : "doi"})
-            return
+            return True
         if record.pmid is not None:
             oag_rerun.append({"id" : record.pmid, "type" : "pmid"})
-            return
-        return
+            return True
+        return False
     elif idtype == "doi":
         if record.pmid is not None:
             oag_rerun.append({"id" : record.pmid, "type" : "pmid"})
-            return
-        return
+            return True
+        return False
     elif idtype == "pmid":
-        return
+        return False
 
 #################################################################
 
@@ -552,7 +561,9 @@ def oag_record_callback(result, oag_rerun):
 
         # save the record then pass it on to see if it needs to be re-submitted
         record.save()
-        add_to_rerun(record, idtype, oag_rerun)
+        added = add_to_rerun(record, idtype, oag_rerun)
+        if not added:
+            record.oag_complete = True
 
 
     def handle_fto(record, idtype, oag_rerun):
@@ -566,7 +577,9 @@ def oag_record_callback(result, oag_rerun):
 
         # save the record then pass it on to see if it needs to be re-submitted
         record.save()
-        add_to_rerun(record, idtype, oag_rerun)
+        added = add_to_rerun(record, idtype, oag_rerun)
+        if not added:
+            record.oag_complete = True
 
     def handle_success(result, record, idtype):
         # first record an error status against the id type
@@ -581,6 +594,7 @@ def oag_record_callback(result, oag_rerun):
             record.licence_source = "publisher"
 
         record.licence_type = result.get("license", [{}])[0].get("type")
+        record.oag_complete = True
         record.save()
         return
 

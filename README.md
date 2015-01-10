@@ -86,6 +86,8 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
             "oag_pmcid" : "not_sent|sent|success|fto|error",
             "oag_doi" : "not_sent|sent|success|fto|error",
             "oag_pmid" : "not_sent|sent|success|fto|error",
+            "epmc_complete" : true|false,
+            "oag_complete" : true|false
         },
         
         "compliance" : {

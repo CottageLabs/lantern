@@ -56,10 +56,6 @@ class SpreadsheetJob(SpreadsheetJobDAO, DataObj):
         self.status_code = code
         self.status_message = message
 
-    @classmethod
-    def query_by_filename(cls, filename):
-        return cls.object_query(terms={"filename.exact": filename})
-
 
 class Record(RecordDAO, DataObj):
     """
@@ -106,6 +102,8 @@ class Record(RecordDAO, DataObj):
             "oag_pmcid" : "not_sent|sent|success|fto|error",
             "oag_doi" : "not_sent|sent|success|fto|error",
             "oag_pmid" : "not_sent|sent|success|fto|error",
+            "epmc_complete" : true|false,
+            "oag_complete" : true|false
         },
 
         "compliance" : {
@@ -294,6 +292,22 @@ class Record(RecordDAO, DataObj):
         self._set_single("supporting_info.oag_pmid", val, self._utf8_unicode(), allowed_values=self.OAG_STATES)
 
     @property
+    def epmc_complete(self):
+        return self._get_single("supporting_info.epmc_complete", bool, default=False)
+
+    @epmc_complete.setter
+    def epmc_complete(self, val):
+        self._set_single("supporting_info.epmc_complete", val, bool)
+
+    @property
+    def oag_complete(self):
+        return self._get_single("supporting_info.oag_complete", bool, default=False)
+
+    @oag_complete.setter
+    def oag_complete(self, val):
+        self._set_single("supporting_info.oag_complete", val, bool)
+
+    @property
     def in_epmc(self):
         return self._get_single("compliance.in_epmc", bool)
 
@@ -381,6 +395,13 @@ class Record(RecordDAO, DataObj):
         obj["when"] = when
 
         self._add_to_list("provenance", obj)
+
+    def prep(self):
+        # ensure that both the epmc_complete and oag_complete fields are truly set
+        # (this weird bit of code will ensure that they are set to their current values
+        # or their default value)
+        self.epmc_complete = self.epmc_complete
+        self.oag_complete = self.oag_complete
 
 class OAGRLink(OAGRLinkDAO, DataObj):
     @property

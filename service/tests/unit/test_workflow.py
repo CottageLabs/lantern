@@ -639,6 +639,8 @@ class TestWorkflow(testindex.ESTestCase):
         assert len(provs) == 1
         assert "broken!" in provs
 
+    """
+    THIS TEST IS NOW DEFUNCT, AS THE CODE IT TESTS IS NO LONGER IN USE
     def test_04_process_oag_prototype(self):
         def mock_post(*args, **kwargs):
             # fall back to original requests module
@@ -742,7 +744,7 @@ class TestWorkflow(testindex.ESTestCase):
         ]
 
         time.sleep(2)
-        workflow.process_oag(oag_register, job)
+        workflow.process_oag_direct(oag_register, job)
 
         assert job.status_code == "complete"
 
@@ -771,6 +773,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r4.oag_pmid == "error"
 
         assert post_counter == 2
+    """
 
     def test_05_populate_identifiers(self):
         record = models.Record()
@@ -831,7 +834,7 @@ class TestWorkflow(testindex.ESTestCase):
         lp = l[0].find("license-p")
 
         # licence in type attribute
-        l[0].set("license-type", "CC BY")
+        l[0].set("license-type", "cc-by")
         l[0].set("{http://www.w3.org/1999/xlink}href", "http://random.url")
         lp.clear()
         s = etree.tostring(xml)
@@ -839,7 +842,7 @@ class TestWorkflow(testindex.ESTestCase):
         record = models.Record()
         msg = workflow.WorkflowMessage(record=record)
         workflow.extract_fulltext_licence(msg, ft)
-        assert record.licence_type == "CC BY"
+        assert record.licence_type == "cc-by"
         assert record.licence_source == "epmc_xml"
         assert len(record.provenance) == 1
 
@@ -851,7 +854,7 @@ class TestWorkflow(testindex.ESTestCase):
         record = models.Record()
         msg = workflow.WorkflowMessage(record=record)
         workflow.extract_fulltext_licence(msg, ft)
-        assert record.licence_type == "CC BY-ND"
+        assert record.licence_type == "cc-by-nd"
         assert record.licence_source == "epmc_xml"
         assert len(record.provenance) == 1
 
@@ -864,7 +867,7 @@ class TestWorkflow(testindex.ESTestCase):
         record = models.Record()
         msg = workflow.WorkflowMessage(record=record)
         workflow.extract_fulltext_licence(msg, ft)
-        assert record.licence_type == "CC BY-NC-ND"
+        assert record.licence_type == "cc-by-nc-nd"
         assert record.licence_source == "epmc_xml"
         assert len(record.provenance) == 1
 
@@ -946,7 +949,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert record.has_ft_xml is True
         assert record.aam is True
         assert record.aam_from_xml is True
-        assert record.licence_type == "CC BY"
+        assert record.licence_type == "cc-by"
         assert record.licence_source == "epmc_xml"
         assert record.journal_type == "hybrid"
         assert len(oag) == 0
@@ -1053,7 +1056,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert record.has_ft_xml is True
         assert record.aam is False
         assert record.aam_from_xml is True
-        assert record.licence_type == "CC BY"
+        assert record.licence_type == "cc-by"
         assert record.licence_source == "epmc_xml"
         assert record.journal_type == "oa"
         assert len(oag) == 0
@@ -1089,7 +1092,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert len(record.issn) == 1
         assert "1471-2121" in record.issn
         assert record.id is not None # implies it has been saved
-        assert record.has_ft_xml is None
+        assert record.has_ft_xml is False
         assert record.aam is None
         assert record.aam_from_xml is False
         assert record.licence_type is None
