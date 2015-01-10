@@ -116,24 +116,41 @@ class OAGRLinkDAO(dao.ESDAO):
 
     @classmethod
     def by_oagr_id(cls, oagr_id):
-        q = OAGRLinkQuery(oagr_id)
+        q = OAGRLinkQuery(oagr_id=oagr_id)
+        res = cls.object_query(q.query())
+        if len(res) > 0:
+            return res[0]
+        return None
+
+    @classmethod
+    def by_spreadsheet_id(cls, spreadsheet_id):
+        q = OAGRLinkQuery(spreadsheet_id=spreadsheet_id)
         res = cls.object_query(q.query())
         if len(res) > 0:
             return res[0]
         return None
 
 class OAGRLinkQuery(object):
-    def __init__(self, oagr_id):
+    def __init__(self, oagr_id=None, spreadsheet_id=None):
         self.oagr_id = oagr_id
+        self.spreadsheet_id = spreadsheet_id
 
     def query(self):
-        return {
+        q = {
             "query" : {
                 "bool" :{
                     "must" : [
-                        {"term" : {"oagrjob_id.exact" : self.oagr_id}}
+
                     ]
                 }
             }
         }
+
+        if self.oagr_id is not None:
+            q["query"]["bool"]["must"].append({"term" : {"oagrjob_id.exact" : self.oagr_id}})
+
+        if self.spreadsheet_id is not None:
+            q["query"]["bool"]["must"].append({"term" : {"spreadsheet_id.exact" : self.spreadsheet_id}})
+
+        return q
 

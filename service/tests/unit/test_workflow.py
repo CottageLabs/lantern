@@ -1,5 +1,6 @@
 from octopus.modules.es import testindex
 from octopus.modules.epmc import client as epmc
+from octopus.modules.oag import oagr
 from service import workflow, models
 import time, requests, json, os
 from lxml import etree
@@ -31,16 +32,18 @@ class TestWorkflow(testindex.ESTestCase):
 
         # PMCID sent, no DOI or PMID
         oag = []
-        workflow.add_to_rerun(record, "pmcid", oag)
+        added = workflow.add_to_rerun(record, "pmcid", oag)
         assert len(oag) == 0
+        assert added is False
 
         # PMCID sent, PMID only
         record.pmid = "1234"
         oag = []
-        workflow.add_to_rerun(record, "pmcid", oag)
+        added = workflow.add_to_rerun(record, "pmcid", oag)
         assert len(oag) == 1
         assert oag[0]["id"] == "1234"
         assert oag[0]["type"] == "pmid"
+        assert added is True
 
         # PMCID sent, DOI only
         del record.pmid
@@ -639,6 +642,32 @@ class TestWorkflow(testindex.ESTestCase):
         assert len(provs) == 1
         assert "broken!" in provs
 
+    def test_04_process_oag(self):
+        job = models.SpreadsheetJob()
+        job.save()
+
+        oag_register = [
+            {"id" : "PMC1234", "type" : "pmcid"},
+            {"id" : "10.1234", "type" : "doi"},
+            {"id" : "10.5678", "type" : "doi"},
+            {"id" : "abcd", "type" : "pmid"}
+        ]
+
+        workflow.process_oag(oag_register, job)
+
+        time.sleep(2)
+
+        link = models.OAGRLink.by_spreadsheet_id(job.id)
+        assert link is not None
+        assert link.spreadsheet_id == job.id
+        assert link.oagrjob_id is not None
+
+        oj = oagr.dao.JobsDAO.pull(link.oagrjob_id)
+        assert oj is not None
+        state = oj.state()
+        assert len(state.pending) == 4
+
+
     """
     THIS TEST IS NOW DEFUNCT, AS THE CODE IT TESTS IS NO LONGER IN USE
     def test_04_process_oag_prototype(self):
@@ -1102,3 +1131,11 @@ class TestWorkflow(testindex.ESTestCase):
         assert oag[0]["id"] == "PMC4219345"
         assert oag[0]["type"] == "pmcid"
 
+    def test_11_oag_callback(self):
+        cb = workflow.oag_callback_closure()
+        assert cb is not None
+
+        import types
+        assert type(cb) == types.FunctionType
+
+        # FIXME: more testing required
