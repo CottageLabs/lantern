@@ -7,7 +7,7 @@ setup(
     install_requires = [
         "octopus==1.0.0",
         "esprit",
-        "Flask",
+        "Flask==0.9",
         "WTForms==2.0.1",
         "flask_mail==0.9.1"
     ],
