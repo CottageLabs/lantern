@@ -63,7 +63,7 @@ class RecordDAO(dao.ESDAO):
 
         oag = {}
         for f in res.get("facets", {}).get("oag", {}).get("terms", []):
-           epmc[f.get("term")] = f.get("count", 0)
+           oag[f.get("term")] = f.get("count", 0)
 
         return total, epmc, oag
 

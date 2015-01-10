@@ -1,9 +1,13 @@
-from unittest import TestCase
-from service.models import Record, SpreadsheetJob
+from octopus.modules.es.testindex import ESTestCase
+from service.models import Record, SpreadsheetJob, OAGRLink
+import time
 
-class TestModels(TestCase):
-    def setUp(self): pass
-    def tearDown(self): pass
+class TestModels(ESTestCase):
+    def setUp(self):
+        super(TestModels, self).setUp()
+
+    def tearDown(self):
+        super(TestModels, self).tearDown()
 
     def test_01_spreadsheet(self):
         s = SpreadsheetJob()
@@ -86,6 +90,68 @@ class TestModels(TestCase):
         for by, when, note in p:
             assert by in ["richard", "wellcome"]
             assert note in ["provenance 1", "provenance 2"]
+
+    def test_03_oagrlink(self):
+        l = OAGRLink()
+        l.spreadsheet_id = "1234"
+        l.oagrjob_id = "9876"
+
+        assert l.spreadsheet_id == "1234"
+        assert l.oagrjob_id == "9876"
+
+        l.save()
+        time.sleep(1)
+
+        l2 = OAGRLink.by_oagr_id("9876")
+
+        assert l2.spreadsheet_id == "1234"
+        assert l2.oagrjob_id == "9876"
+
+    def test_04_pc_complete(self):
+        job = SpreadsheetJob()
+        job.save()
+
+        # a record with no completeness
+        r = Record()
+        r.upload_id = job.id
+        r.save()
+
+        # a record with epmc complete
+        r2 = Record()
+        r2.upload_id = job.id
+        r2.epmc_complete = True
+        r2.save()
+
+        # a record with both complete
+        r3 = Record()
+        r3.upload_id = job.id
+        r3.epmc_complete = True
+        r3.oag_complete = True
+        r3.save()
+
+        time.sleep(1)
+
+        comp = job.pc_complete
+        assert int(comp) == 50
+
+        r.epmc_complete = True
+        r.save()
+
+        time.sleep(1)
+
+        comp = job.pc_complete
+        assert int(comp) == 66
+
+        r.oag_complete = True
+        r2.oag_complete = True
+        r.save()
+        r2.save()
+
+        time.sleep(1)
+
+        comp = job.pc_complete
+        assert int(comp) == 100
+
 
 
 

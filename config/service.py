@@ -11,7 +11,7 @@ ELASTIC_SEARCH_HOST = "http://localhost:9200"
 ELASTIC_SEARCH_INDEX = "wellcome"
 
 # FIXME: shortcut for testing with OAGR
-ELASTIC_SEARCH_TEST_INDEX = "wellcome"
+# ELASTIC_SEARCH_TEST_INDEX = "wellcome"
 
 # Classes from which to retrieve ES mappings to be used in this application
 ELASTIC_SEARCH_MAPPINGS = [
