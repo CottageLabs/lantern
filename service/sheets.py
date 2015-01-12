@@ -52,11 +52,19 @@ class MasterSheet(object):
                 headers.append(o)
         self._sheet.set_headers(headers)
 
+    def _header_key_map(self, key):
+        for k, v in self.HEADERS.iteritems():
+            if key.strip().lower() == k.lower():
+                return v
+        return None
+
     def objects(self):
         for o in self._sheet.objects():
             no = {}
             for key, val in o.iteritems():
-                no[self.HEADERS.get(key.strip())] = val
+                k = self._header_key_map(key)
+                if k is not None:
+                    no[k] = val
             yield no
 
     def add_object(self, obj):

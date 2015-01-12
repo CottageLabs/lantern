@@ -36,16 +36,25 @@ def email_submitter(contact_email, url):
 
 
 def normalise_pmcid(identifier):
-    identifier = pmcid.normalise(identifier)
-    return identifier
+    try:
+        identifier = pmcid.normalise(identifier)
+        return identifier
+    except ValueError:
+        return None
 
 def normalise_pmid(identifier):
-    identifier = pmid.normalise(identifier)
-    return identifier
+    try:
+        identifier = pmid.normalise(identifier)
+        return identifier
+    except ValueError:
+        return None
 
 def normalise_doi(identifier):
-    identifier = doi.normalise(identifier)
-    return identifier
+    try:
+        identifier = doi.normalise(identifier)
+        return identifier
+    except ValueError:
+        return None
 
 def parse_csv(job):
     app.logger.info("Loading records from " + job.id)
@@ -72,18 +81,31 @@ def parse_csv(job):
         # and used for lookup
 
         if obj.get("pmcid") is not None and obj.get("pmcid") != "":
-            r.pmcid = normalise_pmcid(obj.get("pmcid"))
-            note = "normalised PMCID %(source)s to %(target)s" % {"source" : obj.get("pmcid"), "target" : r.pmcid }
+            npmicd = normalise_pmcid(obj.get("pmcid"))
+            if npmicd is not None:
+                r.pmcid = npmicd
+                note = "normalised PMCID %(source)s to %(target)s" % {"source" : obj.get("pmcid"), "target" : r.pmcid }
+            else:
+                note = "PMCID %(source)s was syntactically invalid, so ignoring" % {"source" : obj.get("pmcid")}
+
             r.add_provenance("importer", note)
 
         if obj.get("pmid") is not None and obj.get("pmid") != "":
-            r.pmid = normalise_pmid(obj.get("pmid"))
-            note = "normalised PMID %(source)s to %(target)s" % {"source" : obj.get("pmid"), "target" : r.pmid }
+            npmid = normalise_pmid(obj.get("pmid"))
+            if npmid is not None:
+                r.pmid = npmid
+                note = "normalised PMID %(source)s to %(target)s" % {"source" : obj.get("pmid"), "target" : r.pmid }
+            else:
+                note = "PMID %(source)s was syntactically invalid, so ignoring" % {"source" : obj.get("pmid")}
             r.add_provenance("importer", note)
 
         if obj.get("doi") is not None and obj.get("doi") != "":
-            r.doi = normalise_doi(obj.get("doi"))
-            note = "normalised DOI %(source)s to %(target)s" % {"source" : obj.get("doi"), "target" : r.doi }
+            ndoi = normalise_doi(obj.get("doi"))
+            if ndoi is not None:
+                r.doi = ndoi
+                note = "normalised DOI %(source)s to %(target)s" % {"source" : obj.get("doi"), "target" : r.doi }
+            else:
+                note = "DOI %(source)s was syntactically invalid, so ignoring" % {"source" : obj.get("doi")}
             r.add_provenance("importer", note)
 
         if obj.get("article_title") is not None and obj.get("article_title") != "":
@@ -298,38 +320,59 @@ def get_epmc_md(msg):
     # look using the pmcid first
     if msg.record.pmcid is not None:
         app.logger.info("Requesting EPMC metadata by PMCID " + msg.record.pmcid)
-        mds = epmc.EuropePMC.get_by_pmcid(msg.record.pmcid)
-        if len(mds) == 1:
-            app.logger.info("EPMC metadata found")
-            return mds[0], 1.0
+        try:
+            mds = epmc.EuropePMC.get_by_pmcid(msg.record.pmcid)
+            if len(mds) == 1:
+                app.logger.info("EPMC metadata found")
+                return mds[0], 1.0
+        except epmc.EuropePMCException:
+            # just try the next one
+            pass
 
     # if we find 0 or > 1 via the pmcid, try again with the pmid
     if msg.record.pmid is not None:
         app.logger.info("Requesting EPMC metadata by PMID " + msg.record.pmid)
-        mds = epmc.EuropePMC.get_by_pmid(msg.record.pmid)
-        if len(mds) == 1:
-            app.logger.info("EPMC metadata found")
-            return mds[0], 1.0
+        try:
+            mds = epmc.EuropePMC.get_by_pmid(msg.record.pmid)
+            if len(mds) == 1:
+                app.logger.info("EPMC metadata found")
+                return mds[0], 1.0
+        except epmc.EuropePMCException:
+            # just try the next one
+            pass
 
     # if we find 0 or > 1 via the pmid, try again with the doi
     if msg.record.doi is not None:
         app.logger.info("Requesting EPMC metadata by DOI " + msg.record.doi)
-        mds = epmc.EuropePMC.get_by_doi(msg.record.doi)
-        if len(mds) == 1:
-            app.logger.info("EPMC metadata found")
-            return mds[0], 1.0
+        try:
+            mds = epmc.EuropePMC.get_by_doi(msg.record.doi)
+            if len(mds) == 1:
+                app.logger.info("EPMC metadata found")
+                return mds[0], 1.0
+        except epmc.EuropePMCException:
+            # just try the next one
+            pass
 
     if msg.record.title is not None:
         app.logger.info("Requesting EPMC metadata by exact Title " + msg.record.title)
-        mds = epmc.EuropePMC.title_exact(msg.record.title)
-        if len(mds) == 1:
-            app.logger.info("EPMC metadata found")
-            return mds[0], 0.9
+        try:
+            mds = epmc.EuropePMC.title_exact(msg.record.title)
+            if len(mds) == 1:
+                app.logger.info("EPMC metadata found")
+                return mds[0], 0.9
+        except epmc.EuropePMCException:
+            # just try the next one
+            pass
+
         app.logger.info("Requesting EPMC metadata by fuzzy Title " + msg.record.title)
-        mds = epmc.EuropePMC.title_approximate(msg.record.title)
-        if len(mds) == 1:
-            app.logger.info("EPMC metadata found")
-            return mds[0], 0.7
+        try:
+            mds = epmc.EuropePMC.title_approximate(msg.record.title)
+            if len(mds) == 1:
+                app.logger.info("EPMC metadata found")
+                return mds[0], 0.7
+        except epmc.EuropePMCException:
+            # oh well, we did our best
+            pass
 
     app.logger.info("EPMC metadata not found by any means available")
     return None, None
