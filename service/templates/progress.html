@@ -13,11 +13,18 @@
                     {{job.status_code}}
                  </div>
             </div>
-            <div class="row">
-                {% if job.status_code != "submitted" %}
-                    <a href="{{url_for('download_progress_csv', job_id=job.id)}}" class="btn btn-primary col-md-12" style="padding: 10px;">{% if job.status_code == "completed" %} Download final result {% else %} Download current stage {% endif %}</a>
-                {% endif %}
+        {% if job.status_code != "submitted" %}
+            <div class="row" style="padding: 10px;">
+                <div class="container status col-md-12">
+                    Processing progress:
+                    {{int(job.pc_complete)}}
+                 </div>
             </div>
+            <div class="row">
+                    <a href="{{url_for('download_progress_csv', job_id=job.id)}}" class="btn btn-primary col-md-12" style="padding: 10px;">{% if job.status_code == "completed" %} Download final result {% else %} Download current stage {% endif %}</a>
+
+            </div>
+        {% endif %}
 
 
 
