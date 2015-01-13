@@ -218,6 +218,8 @@ def process_record(msg):
         # if no metadata, then we have to give up
         note = "unable to locate any metadata record in EPMC for the combination of identifiers/title; giving up"
         msg.record.add_provenance("processor", note)
+        msg.record.epmc_complete = True
+        msg.record.oag_complete = True
         msg.record.save()
         return
 
@@ -624,10 +626,10 @@ def oag_record_callback(result, oag_rerun, ssjob):
         record.add_provenance("oag", error_message)
 
         # save the record then pass it on to see if it needs to be re-submitted
-        record.save()
         added = add_to_rerun(record, idtype, oag_rerun)
         if not added:
             record.oag_complete = True
+        record.save()
 
     def handle_fto(record, idtype, oag_rerun):
         # first record an error status against the id type
@@ -639,10 +641,10 @@ def oag_record_callback(result, oag_rerun, ssjob):
             record.oag_doi = "fto"
 
         # save the record then pass it on to see if it needs to be re-submitted
-        record.save()
         added = add_to_rerun(record, idtype, oag_rerun)
         if not added:
             record.oag_complete = True
+        record.save()
 
     def handle_success(result, record, idtype):
         # first record an error status against the id type
@@ -671,6 +673,7 @@ def oag_record_callback(result, oag_rerun, ssjob):
     def process_licence(result, record, idtype, oag_rerun):
         # if the record already has a licence, we don't do anything
         if record.licence_type is not None:
+            record.oag_complete = True
             record.save()
             return
 
