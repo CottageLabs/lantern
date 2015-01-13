@@ -173,7 +173,7 @@ def process_jobs():
 
 def process_job(job):
     """
-    Process the spreadsheet job in its entirity
+    Process the spreadsheet job in its entirety
 
     :param job: models.SpreadsheetJob object
     :return:    nothing

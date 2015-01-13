@@ -13,11 +13,17 @@
                     {{job.status_code}}
                  </div>
             </div>
-        {% if job.status_code != "submitted" %}
+        {% if job.status_code == "submitted" %}
+        <div class="row" style="padding: 10px;">
+                <div class="container status col-md-12">
+                    Your spreadsheet has been uploaded. Processing will start shortly.
+                 </div>
+            </div>
+        {% else %}
             <div class="row" style="padding: 10px;">
                 <div class="container status col-md-12">
                     Processing progress:
-                    {{int(job.pc_complete)}}%
+                    {{job.pc_complete}}%
                  </div>
             </div>
             <div class="row">

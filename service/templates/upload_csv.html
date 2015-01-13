@@ -11,6 +11,9 @@
                 <div class="form-group input-lg" style="padding-top: 50px; padding-bottom: 40px;">
                     <div class="input-group">
                         <input  type="file" name="upload" id="upload-csv">
+                        {% if invalid_file == True %}
+                         <div style="color: red;">Please upload a valid CSV file.</div>
+                        {% endif %}
                         <!-- Add this to the input field above when dropdown is implemented -->
                         <!--class="col-md-7"-->
 
@@ -23,8 +26,14 @@
                  <div class="form-group input-lg">
                      <div class="input-group col-md-12">
                          {{form.contact_email(class="form-control", placeholder="Email (Required)")}}
+                         {% if form.contact_email.errors %}
+                               {% for error in form.contact_email.errors %}
+                               <p style="color: red;">{{error}}</p>
+                               {% endfor %}
+                            {% endif %}
                      </div>
                  </div>
+
             </div>
         </div>
         <div class="container col-md-12">
