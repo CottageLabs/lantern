@@ -170,10 +170,15 @@ class TestWorkflow(testindex.ESTestCase):
         assert len(oag) == 0
 
     def test_03_handle_oag_response_01_pmcid_success(self):
-        # first make ourselves a record that we want to enhance
+        # first make ourselves a job/record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.pmcid = "PMC1234"
         record.save()
+
         time.sleep(2)
 
         # construct the OAG response object, which has detected a licence
@@ -193,7 +198,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # should not have added anything to the rerun
         assert len(oag_rerun) == 0
@@ -201,7 +206,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("pmcid", "PMC1234")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
         assert isinstance(r2, models.Record)
         assert r2.id == record.id
         assert r2.pmcid == "PMC1234"
@@ -219,7 +224,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_02_pmcid_fto(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.pmcid = "PMC1234"
         record.doi = "10.1234"
         record.save()
@@ -242,7 +251,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # should have added the DOI to the re-run
         assert len(oag_rerun) == 1
@@ -252,7 +261,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("pmcid", "PMC1234")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
         assert isinstance(r2, models.Record)
 
         # provenance added, pmcid=fto, aam set
@@ -267,7 +276,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_03_pmcid_no_aam(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.pmcid = "PMC1234"
         record.save()
         time.sleep(2)
@@ -289,7 +302,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # should not have added anything to the rerun
         assert len(oag_rerun) == 0
@@ -297,7 +310,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("pmcid", "PMC1234")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
         assert isinstance(r2, models.Record)
 
         # expecting no licence or aam
@@ -313,7 +326,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_04_pmcid_no_change(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.pmcid = "PMC1234"
         record.licence_type = "CC BY"
         record.aam = True
@@ -338,7 +355,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # should not have added anything to the rerun
         assert len(oag_rerun) == 0
@@ -346,7 +363,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("pmcid", "PMC1234")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
         assert isinstance(r2, models.Record)
 
         # expecting no changes
@@ -360,7 +377,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_05_pmcid_error(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.pmcid = "PMC1234"
         record.pmid = "1234"
         record.save()
@@ -377,7 +398,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # should have added the PMID to the re-run
         assert len(oag_rerun) == 1
@@ -387,7 +408,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("pmcid", "PMC1234")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
         assert isinstance(r2, models.Record)
 
         # provenance added, pmcid=error, pmid reprocess
@@ -399,7 +420,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_06_doi_success(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.doi = "10.1234"
         record.save()
         time.sleep(2)
@@ -420,7 +445,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # should not have added anything to the rerun
         assert len(oag_rerun) == 0
@@ -428,7 +453,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("doi", "10.1234")
+        r2 = models.Record.get_by_identifier("10.1234", job.id) # leave out the "doi" type just for the hell of it
         assert isinstance(r2, models.Record)
 
         # licence added, source=publisher, doi=success, provenance added
@@ -442,7 +467,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_07_doi_fto(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.doi = "10.1234"
         record.pmid = "1234"
         record.save()
@@ -464,7 +493,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # should have added the DOI to the re-run
         assert len(oag_rerun) == 1
@@ -474,7 +503,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("doi", "10.1234")
+        r2 = models.Record.get_by_identifier("10.1234", job.id)
         assert isinstance(r2, models.Record)
 
         # provenance added, doi=fto, pmid reprocess
@@ -487,7 +516,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_08_doi_error(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.doi = "10.1234"
         record.save()
         time.sleep(2)
@@ -503,7 +536,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # nothing to re-run
         assert len(oag_rerun) == 0
@@ -511,7 +544,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("doi", "10.1234")
+        r2 = models.Record.get_by_identifier("10.1234", job.id)
         assert isinstance(r2, models.Record)
 
         # provenance added, pmcid=error, pmid reprocess
@@ -523,7 +556,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_09_pmid_success(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.pmid = "1234"
         record.save()
         time.sleep(2)
@@ -544,7 +581,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # should not have added anything to the rerun
         assert len(oag_rerun) == 0
@@ -552,7 +589,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("pmid", "1234")
+        r2 = models.Record.get_by_identifier("1234", job.id, "pmid")
         assert isinstance(r2, models.Record)
 
         # licence added, source=publisher, doi=success, provenance added
@@ -566,7 +603,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_10_pmid_fto(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.pmid = "1234"
         record.save()
         time.sleep(2)
@@ -587,7 +628,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # nothing left to re-run
         assert len(oag_rerun) == 0
@@ -595,7 +636,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("pmid", "1234")
+        r2 = models.Record.get_by_identifier("1234", job.id, "pmid")
         assert isinstance(r2, models.Record)
 
         # provenance added, doi=fto, pmid reprocess
@@ -608,7 +649,11 @@ class TestWorkflow(testindex.ESTestCase):
 
     def test_03_handle_oag_response_11_pmid_error(self):
         # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
         record = models.Record()
+        record.upload_id = job.id
         record.pmid = "1234"
         record.save()
         time.sleep(2)
@@ -624,7 +669,7 @@ class TestWorkflow(testindex.ESTestCase):
 
         # call the oag record callback
         oag_rerun = []
-        workflow.oag_record_callback(oag_result, oag_rerun)
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
 
         # nothing to re-run
         assert len(oag_rerun) == 0
@@ -632,7 +677,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("pmid", "1234")
+        r2 = models.Record.get_by_identifier("1234", job.id, "pmid")
         assert isinstance(r2, models.Record)
 
         # provenance added, pmcid=error, pmid reprocess
