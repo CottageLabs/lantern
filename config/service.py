@@ -4,6 +4,8 @@ PORT = 5017
 SSL = False
 THREADED = True
 
+MAIL_FROM_ADDRESS = "sysadmin@cottagelabs.com"
+
 # important overrides for the ES module
 
 # elasticsearch back-end connection settings
@@ -37,6 +39,7 @@ OAGR_RUNNER_CALLBACK_CLOSURE = "service.workflow.oag_callback_closure"
 ##########################################
 # service specific config
 
+SERVICE_BASE_URL = "http://oacwellcome.ooz.cottagelabs.com"
 UPLOAD_DIR = "upload"
 ALLOWED_EXTENSIONS = ['csv']
 SPREADSHEET_OPTIONS = [('None', 'Type:'), ('Excel', 'Excel'), ('Google Docs', 'Google Docs'), ('Libre Office', 'Libre Office')]

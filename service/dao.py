@@ -43,8 +43,11 @@ class RecordDAO(dao.ESDAO):
         return cls.object_query(q.query())
 
     @classmethod
-    def get_by_identifier(cls, type, identifier):
-        q = RecordIdentifierQuery(type, identifier)
+    def get_by_identifier(cls, identifier, upload, type=None):
+        if type is not None:
+            q = RecordTypedIdentifierQuery(identifier, type, upload)
+        else:
+            q = RecordUntypedIdentifierQuery(identifier, upload)
         res = cls.object_query(q.query())
         if len(res) > 0:
             return res[0]
@@ -67,17 +70,45 @@ class RecordDAO(dao.ESDAO):
 
         return total, epmc, oag
 
-class RecordIdentifierQuery(object):
-    def __init__(self, type, identifier):
+class RecordTypedIdentifierQuery(object):
+    def __init__(self, identifier, type, upload):
         self.type = type
         self.identifier = identifier
+        self.upload = upload
 
     def query(self):
         return {
             "query" : {
-                "term" : {"identifiers." + self.type + ".exact" : self.identifier}
+                "bool" :{
+                    "must" : [
+                        {"term" : {"identifiers." + self.type + ".exact" : self.identifier}},
+                        {"term" : {"upload.id.exact" :  self.upload}}
+                    ]
+                }
             }
         }
+
+class RecordUntypedIdentifierQuery(object):
+    def __init__(self, identifier, upload):
+        self.identifier = identifier
+        self.upload = upload
+
+    def query(self):
+        return {
+            "query" : {
+                "bool" :{
+                    "must" : [
+                        {"term" : {"upload.id.exact" :  self.upload}}
+                    ],
+                    "should" : [
+                        {"term" : {"identifiers.pmcid.exact" : self.identifier}},
+                        {"term" : {"identifiers.pmid.exact" : self.identifier}},
+                        {"term" : {"identifiers.doi.exact" : self.identifier}}
+                    ]
+                }
+            }
+        }
+
 
 class RecordSheetQuery(object):
     def __init__(self, sheet_id, page_size=10000):

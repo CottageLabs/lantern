@@ -8,7 +8,8 @@ UPLOAD_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "re
 
 # Note, we have a couple of options here, just picking the big one for the time being.
 # See the resources directory for alternatives
-FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "apc_2012_2013.csv")
+# FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "apc_2012_2013.csv")
+FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "test_submission.csv")
 
 class FileHandle(object):
     def __init__(self, content):

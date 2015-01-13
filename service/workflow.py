@@ -4,7 +4,7 @@ from octopus.modules.doaj import client as doaj
 from octopus.modules.identifiers import pmid, doi, pmcid
 from octopus.lib import mail
 from service import models, sheets, licences
-import os
+import os, time
 from StringIO import StringIO
 
 class WorkflowException(Exception):
@@ -32,7 +32,7 @@ def csv_upload(flask_file_handle, filename, contact_email):
     return s
 
 def email_submitter(contact_email, url):
-    return mail.send_mail(to=[contact_email], fro="mail", subject="Successful upload", template_name="upload_email_template.txt", url=url)
+    return mail.send_mail(to=[contact_email], subject="[oac] Successful upload", template_name="emails/upload_email_template.txt", url=url)
 
 
 def normalise_pmcid(identifier):
@@ -564,33 +564,54 @@ def oag_callback_closure():
         # a register of identifiers which need to be re-run
         oag_rerun = []
 
+        # follow the link over to the related spreadsheet
+        oagrlink = models.OAGRLink.by_oagr_id(state.id)
+        ssjob = models.SpreadsheetJob.pull(oagrlink.spreadsheet_id)
+
         # handle the successes
         successes = state.flush_success()
         for s in successes:
-            oag_record_callback(s, oag_rerun)
+            oag_record_callback(s, oag_rerun, ssjob)
 
         # handle the errors
         errors = state.flush_error()
         for e in errors:
-            oag_record_callback(e, oag_rerun)
+            oag_record_callback(e, oag_rerun, ssjob)
 
         # if there is anything to reprocess, do that
         if len(oag_rerun) > 0:
-            # follow the link over to the related spreadsheet
-            oagrlink = models.OAGRLink.by_oagr_id(state.id)
-            ssjob = models.SpreadsheetJob.pull(oagrlink.spreadsheet_id)
-
             # put anything that needs to be reprocessed back on the job queue
             process_oag(oag_rerun, ssjob)
 
         else:
             # it's possible that the spreadsheet job has finished, so we need
-            # to annotate it
-            pass
+            # to check and update if so
+            time.sleep(2)   # just to give the index a bit of time to refresh
+            pc = ssjob.pc_complete
+            if int(pc) == 100:
+                ssjob.status_code = "complete"
+                ssjob.save()
+                send_complete_mail(ssjob)
 
     return oag_callback
 
-def oag_record_callback(result, oag_rerun):
+def send_complete_mail(job):
+    from flask import url_for
+    url_root = app.config.get("SERVICE_BASE_URL")
+
+    try:
+        url = url_root + url_for("progress", job_id=job.id)
+    except:
+        from service.web import app as a2
+        ctx = a2.test_request_context()
+        ctx.push()
+        url = url_root + url_for("progress", job_id=job.id)
+        ctx.pop()
+
+    mail.send_mail(to=[job.contact_email], subject="[oac] Processing complete", template_name="emails/complete_email_template.txt", url=url)
+
+def oag_record_callback(result, oag_rerun, ssjob):
+
     def handle_error(record, idtype, error_message, oag_rerun):
         # first record an error status against the id type
         if idtype == "pmcid":
@@ -607,7 +628,6 @@ def oag_record_callback(result, oag_rerun):
         added = add_to_rerun(record, idtype, oag_rerun)
         if not added:
             record.oag_complete = True
-
 
     def handle_fto(record, idtype, oag_rerun):
         # first record an error status against the id type
@@ -675,26 +695,42 @@ def oag_record_callback(result, oag_rerun):
         id = ident.get("id")
         type = ident.get("type")
 
-    # FIXME: in the full service we need to find a way to ensure that we always can find the type or the record
-    # based only on the identifier, and also that we are looking at the identifier in the context of the correct sheet.
-    # This probably means either:
-    # a) extending OAGR to allow us to store arbitrary metadata along with the state
-    # b) storing an explicit relationship between the OAGR state and the spreadsheet job in another table
-    if id is None or type is None:
-        app.logger.info("insufficient data to relate OAG response to record")
+    # if there's no id, there's nothing we can do
+    if id is None:
+        app.logger.info("insufficient data to relate OAG response to record: no ID")
         return
 
-    app.logger.info("handling OAG response for " + id)
+    # OAG may represent pmcid as epmc as an identifier type
+    if type == "epmc":
+        type = "pmcid"
 
-    # now locate the related record
-    record = models.Record.get_by_identifier(type, id)
+    # try to get a record from the id, job id, and type
+    record = models.Record.get_by_identifier(id, ssjob.id, type)
+
+    # if we didn't find a unique record, we can't do anything
+    if record is None:
+        app.logger.info("was unable to relate OAG response to record")
+        return
+
     assert isinstance(record, models.Record)    # For pycharm type inspection
+
+    app.logger.info("handling OAG response for " + id)
 
     # set its in_oag flag and re-save it
     record.in_oag = False
     record.save()
 
-    # FIXME: by this point we must know the type
+    # by this point we must know the type
+    if type is None:
+        if id == record.pmcid:
+            type = "pmcid"
+        elif id == record.pmid:
+            type = "pmid"
+        elif id == record.doi:
+            type = "doi"
+        else:
+            app.logger.info("unable to determine the type for " + str(id))
+
     if type == "pmcid":
         if iserror:
             handle_error(record, "pmcid", result.get("error"), oag_rerun)
@@ -714,6 +750,8 @@ def oag_record_callback(result, oag_rerun):
             handle_error(record, "pmid", result.get("error"), oag_rerun)
         else:
             process_licence(result, record, type, oag_rerun)
+    else:
+        app.logger.info("type of id was not one of pmcid, doi, pmid")
 
 
 
