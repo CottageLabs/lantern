@@ -65,9 +65,11 @@ def download_original_csv(job_id):
 @app.route("/download_progress/<job_id>")
 def download_progress_csv(job_id):
     job = models.SpreadsheetJob.pull(job_id)
-    spreadsheet = StringIO(str(output_csv(job)))
+    spreadsheet = output_csv(job)
+    if type(spreadsheet) == unicode:
+        spreadsheet = spreadsheet.encode('utf-8', 'ignore')
     filename = "processed_" + job.filename
-    return send_file(spreadsheet, attachment_filename=filename, as_attachment=True)
+    return send_file(StringIO(spreadsheet), attachment_filename=filename, as_attachment=True)
 
 # this allows us to override the standard static file handling with our own dynamic version
 @app.route("/static/<path:filename>")
