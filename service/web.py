@@ -21,9 +21,9 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config["ALLOWED_EXTENSIONS"]
 
-# @app.route("/")
-# def root():
-#     return render_template("index.html")
+@app.route("/")
+def root():
+    return redirect(url_for('upload_csv'))
 
 class UploadForm(Form):
     contact_email = EmailField('Email Address', [validators.DataRequired(), validators.Email()])
@@ -65,7 +65,7 @@ def download_original_csv(job_id):
 @app.route("/download_progress/<job_id>")
 def download_progress_csv(job_id):
     job = models.SpreadsheetJob.pull(job_id)
-    spreadsheet = StringIO(output_csv(job))
+    spreadsheet = StringIO(str(output_csv(job)))
     filename = "processed_" + job.filename
     return send_file(spreadsheet, attachment_filename=filename, as_attachment=True)
 
