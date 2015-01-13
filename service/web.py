@@ -2,6 +2,7 @@ from flask import Flask, request, abort, render_template, redirect, make_respons
     send_from_directory, url_for
 from flask.views import View
 from wtforms import Form, StringField, validators, SelectField
+from wtforms.fields.html5 import EmailField
 from werkzeug import secure_filename
 from datetime import datetime
 from StringIO import StringIO
@@ -20,18 +21,20 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config["ALLOWED_EXTENSIONS"]
 
-@app.route("/")
-def root():
-    return render_template("index.html")
+# @app.route("/")
+# def root():
+#     return render_template("index.html")
 
 class UploadForm(Form):
-    contact_email = StringField('Email Address', [validators.DataRequired()])
+    contact_email = EmailField('Email Address', [validators.DataRequired(), validators.Email()])
     spreadsheet_type = SelectField('Type', choices=app.config.get('SPREADSHEET_OPTIONS'))
 
 
+@app.route("/", methods=['GET', 'POST'])
 @app.route("/upload_csv", methods=['GET', 'POST'])
 def upload_csv():
     form = UploadForm(request.form)
+    invalid_file = False
     if request.method == "POST" and form.validate():
         file = request.files["upload"]
         if file and allowed_file(file.filename):
@@ -43,7 +46,9 @@ def upload_csv():
                 url_root = url_root[:-1]
             email_submitter(contact_email=contact_email, url=url_root + url_for('progress', job_id=job.id))
             return redirect(url_for('progress', job_id=job.id))
-    return render_template("upload_csv.html", form=form)
+        else:
+            invalid_file = True
+    return render_template("upload_csv.html", form=form, invalid_file=invalid_file)
 
 @app.route("/progress/<job_id>")
 def progress(job_id):
