@@ -23,6 +23,10 @@ body {
     color: black;
     height: 35px;
     font-family: "Times New Roman";
+
+}
+
+#navigation a:not(.navbar-brand) {
     font-size: 16px;
 }
 
@@ -35,6 +39,7 @@ body {
 
 .navbar-brand {
     height: 40px;
+    font-size: 30px;
 }
 
 .panel {
@@ -57,7 +62,7 @@ body {
 }
 
 [class^="facetview_"] .btn {
-    font-size: 16px;
+    font-size: 14px;
     border-color: rgb(173, 173, 173);
     border-radius: 4px;
     border-width: 1px;
