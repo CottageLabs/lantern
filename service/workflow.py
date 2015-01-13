@@ -432,7 +432,7 @@ def get_epmc_fulltext(msg):
     :param msg: WorkflowMessage object
     :return: EPMCFulltext object or None if not found
     """
-    app.logger.info("Looking for EPMC fulltext for " + msg.record.id)
+    app.logger.info("Looking for EPMC fulltext for " + str(msg.record.id))
 
     if msg.record.pmcid is None:
         app.logger.info("Fulltext not available")
@@ -440,7 +440,7 @@ def get_epmc_fulltext(msg):
 
     try:
         ft = epmc.EuropePMC.fulltext(msg.record.pmcid)
-        app.logger.info("Fulltext found for " + msg.record.id)
+        app.logger.info("Fulltext found for " + str(msg.record.id))
         return ft
     except epmc.EuropePMCException:
         app.logger.info("Fulltext not available")
@@ -454,7 +454,7 @@ def doaj_lookup(msg):
     :param msg: WorkflowMessage object
     :return:    True if the journal is OA, False if hybrid
     """
-    app.logger.info("Looking up record in DOAJ " + msg.record.id)
+    app.logger.info("Looking up record in DOAJ " + str(msg.record.id))
     client = doaj.DOAJSearchClient()
     journals = client.journals_by_issns(msg.record.issn)
     return len(journals) > 0
