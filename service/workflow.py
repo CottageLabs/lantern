@@ -165,11 +165,11 @@ def process_jobs():
     Process all of the jobs in the index which are of status "submitted"
     :return:nothing
     """
-    app.logger.info("Processing spreadsheet jobs")
+    app.logger.debug("Processing spreadsheet jobs")
     jobs = models.SpreadsheetJob.list_by_status("submitted")
     for job in jobs:
         process_job(job)
-    app.logger.info("Processing run complete")
+    app.logger.debug("Processing run complete")
 
 def process_job(job):
     """
