@@ -18,7 +18,8 @@ class MasterSheet(object):
         u'Notes' : "notes",
 
         # values used exclusively in the output
-        u"Fulltext in EPMC?" : "ft_in_epmc",
+        u"Fulltext in EPMC?" : "in_epmc",
+        u"XML Fulltext?" : "xml_ft_in_epmc",
         u"AAM?" : "aam",
         u"Open Access?" : "open_access",
         u"Licence" : "licence",
@@ -26,19 +27,20 @@ class MasterSheet(object):
         u"Journal Type" : "journal_type",
         u"Correct Article Confidence" : "confidence",
         u"Standard Compliance?" : "standard_compliance",
-        u"Deluxe Compliance?" : "deluxe_compliance"
+        u"Deluxe Compliance?" : "deluxe_compliance",
+        u"ISSN" : "issn"
     }
 
     OUTPUT_ORDER = [
-        "university", "pmcid", "pmid", "doi", "publisher", "journal_title", "article_title", "apc", "wellcome_apc",
-        "vat", "total_cost", "grant_code", "licence_info", "ft_in_epmc", "aam", "open_access",
+        "university", "pmcid", "pmid", "doi", "publisher", "journal_title", "issn", "article_title", "apc", "wellcome_apc",
+        "vat", "total_cost", "grant_code", "licence_info", "in_epmc", "xml_ft_in_epmc", "aam", "open_access",
         "licence", "licence_source", "journal_type", "confidence", "standard_compliance", "deluxe_compliance", "notes"
     ]
 
-    #OUTPUT_ORDER = [
-    #    "pmcid", "pmid", "doi", "article_title", "ft_in_epmc", "aam", "open_access",
-    #    "licence", "licence_source", "journal_type", "confidence", "notes"
-    #]
+    DEFAULT_VALUES = {
+        "aam" : "unknown",
+        "licence" : "unknown"
+    }
 
     def __init__(self, path=None, writer=None, spec=None):
         if path is not None:
@@ -77,6 +79,11 @@ class MasterSheet(object):
                 return v
         return None
 
+    def _value(self, field, value):
+        if (value is None or value == "") and field in self.DEFAULT_VALUES:
+            return self.DEFAULT_VALUES.get(field, "")
+        return value
+
     def objects(self):
         for o in self._sheet.objects():
             no = {}
@@ -91,7 +98,7 @@ class MasterSheet(object):
         for k, v in obj.iteritems():
             for k1, v1 in self.HEADERS.iteritems():
                 if k == v1:
-                    no[k1] = v
+                    no[k1] = self._value(k, v)
                     break
         self._sheet.add_object(no)
 
