@@ -21,10 +21,7 @@ class TestImport(testindex.ESTestCase):
         for o in sheet.objects():
             assert o is not None
 
-    def test_02_master_sheet(self):
-        pass
-
-    def test_03_parse_csv(self):
+    def test_02_parse_csv(self):
         s = models.SpreadsheetJob()
         s.filename = "test_submission.csv"
         s.contact_email = "contact@email.com"
