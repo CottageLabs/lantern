@@ -28,20 +28,35 @@ class MasterSheet(object):
     }
 
     OUTPUT_ORDER = [
-        "pmcid", "pmid", "doi", "article_title", "ft_in_epmc", "aam", "open_access",
+        "university", "pmcid", "pmid", "doi", "publisher", "journal_title", "article_title", "apc", "wellcome_apc",
+        "vat", "total_cost", "grant_code", "licence_info", "ft_in_epmc", "aam", "open_access",
         "licence", "licence_source", "journal_type", "confidence", "notes"
     ]
 
-    def __init__(self, path=None, writer=None):
+    #OUTPUT_ORDER = [
+    #    "pmcid", "pmid", "doi", "article_title", "ft_in_epmc", "aam", "open_access",
+    #    "licence", "licence_source", "journal_type", "confidence", "notes"
+    #]
+
+    def __init__(self, path=None, writer=None, spec=None):
         if path is not None:
             self._sheet = clcsv.ClCsv(path)
         elif writer is not None:
             self._sheet = clcsv.ClCsv(writer=writer)
-            self._set_headers()
+            self._set_headers(spec)
 
-    def _set_headers(self):
+    def _set_headers(self, spec=None):
         headers = []
-        for o in self.OUTPUT_ORDER:
+
+        # only write headers which are in the object spec
+        if spec is not None:
+            oo = [x for x in self.OUTPUT_ORDER if x in spec]
+        else:
+            oo = self.OUTPUT_ORDER
+
+        # write the headers in the correct order, ensuring they exist in the
+        # Master spreadsheet header definitions
+        for o in oo:
             found = False
             for k, v in self.HEADERS.iteritems():
                 if v == o:
@@ -50,6 +65,8 @@ class MasterSheet(object):
                     break
             if not found:
                 headers.append(o)
+
+        # finally write the filtered, sanitised headers
         self._sheet.set_headers(headers)
 
     def _header_key_map(self, key):

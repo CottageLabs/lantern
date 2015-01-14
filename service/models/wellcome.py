@@ -150,6 +150,10 @@ class Record(RecordDAO, DataObj):
     def upload_pos(self, val):
         self._set_single("upload.pos", val, int)
 
+    @property
+    def source(self):
+        return self._get_single("source")
+
     def set_source_data(self, university=None,
                                 pmcid=None,
                                 pmid=None,

@@ -6,6 +6,7 @@ from octopus.lib import mail
 from service import models, sheets, licences
 import os, time
 from StringIO import StringIO
+from copy import deepcopy
 
 class WorkflowException(Exception):
     pass
@@ -130,16 +131,15 @@ def output_csv(job):
             s += "[%(when)s %(by)s] %(what)s" % {"when" : when, "by" : by, "what" : what}
         return s
 
-    s = StringIO()
-    sheet = sheets.MasterSheet(writer=s)
-    records = models.Record.list_by_upload(job.id)
-    for r in records:
-        assert isinstance(r, models.Record)
+    def objectify(r):
         obj = {
+            # the identifiers
             "pmcid" : r.pmcid,
             "pmid" : r.pmid,
             "doi" : r.doi,
             "article_title" : r.title,
+
+            # the results of the run
             "ft_in_epmc" : r.has_ft_xml,
             "aam" : r.aam,
             "open_access" : r.is_oa,
@@ -149,7 +149,36 @@ def output_csv(job):
             "confidence" : r.confidence,
             "notes" : serialise_provenance(r)
         }
+
+        # add the original data if present
+        original = deepcopy(r.source)
+        if "pmcid" in original:
+            del original["pmcid"]
+        if "pmid" in original:
+            del original["pmid"]
+        if "doi" in original:
+            del original["doi"]
+        if "article_title" in original:
+            del original["article_title"]
+        obj.update(original)
+
+        return obj
+
+    # get the records and work out what shape they are
+    # (makes the assumption that all records have the same spec, which /should/ be true)
+    records = models.Record.list_by_upload(job.id)
+    spec = objectify(records[0])
+
+    # create a master spreadsheet with the right shape
+    s = StringIO()
+    sheet = sheets.MasterSheet(writer=s, spec=spec.keys())
+
+    # for each record, objectify it and add to the sheet
+    for r in records:
+        assert isinstance(r, models.Record)
+        obj = objectify(r)
         sheet.add_object(obj)
+
     sheet.save()
 
     return s.getvalue()
