@@ -361,9 +361,14 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 1.0
-        except epmc.EuropePMCException:
-            # just try the next one
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for PMCID " + msg.record.pmcid + " - unable to uniquely identify by this identifier"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for " + msg.record.pmcid)
+            msg.record.add_provenance("processor", "Received error from EPMC on request for " + msg.record.pmcid)
 
     # if we find 0 or > 1 via the pmcid, try again with the pmid
     if msg.record.pmid is not None:
@@ -373,9 +378,14 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 1.0
-        except epmc.EuropePMCException:
-            # just try the next one
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for PMID " + msg.record.pmid + " - unable to uniquely identify by this identifier"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for " + msg.record.pmid)
+            msg.record.add_provenance("processor", "Received error from EPMC on request for " + msg.record.pmid)
 
     # if we find 0 or > 1 via the pmid, try again with the doi
     if msg.record.doi is not None:
@@ -385,9 +395,14 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 1.0
-        except epmc.EuropePMCException:
-            # just try the next one
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for DOI " + msg.record.doi + " - unable to uniquely identify by this identifier"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for " + msg.record.doi)
+            msg.record.add_provenance("processor", "Received error from EPMC on request for " + msg.record.doi)
 
     if msg.record.title is not None:
         app.logger.info("Requesting EPMC metadata by exact Title " + msg.record.title)
@@ -396,9 +411,14 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 0.9
-        except epmc.EuropePMCException:
-            # just try the next one
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for exact title match - unable to uniquely identify by this string"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for exact title")
+            msg.record.add_provenance("processor", "Received error from EPMC on request for exact title")
 
         app.logger.info("Requesting EPMC metadata by fuzzy Title " + msg.record.title)
         try:
@@ -406,11 +426,17 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 0.7
-        except epmc.EuropePMCException:
-            # oh well, we did our best
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for fuzzy title match - unable to uniquely identify by this method"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for fuzzy title")
+            msg.record.add_provenance("processor", "Received error from EPMC on request for fuzzy title")
 
     app.logger.info("EPMC metadata not found by any means available")
+    msg.record.add_provenance("processor", "EPMC metadata not found by any means available")
     return None, None
 
 
