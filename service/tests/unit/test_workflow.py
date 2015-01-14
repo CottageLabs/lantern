@@ -1184,3 +1184,42 @@ class TestWorkflow(testindex.ESTestCase):
         assert type(cb) == types.FunctionType
 
         # FIXME: more testing required
+
+    def test_12_licence_translate(self):
+        assert workflow.translate_licence_type("free-to-read") == "non-standard-licence"
+
+        # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
+        record = models.Record()
+        record.upload_id = job.id
+        record.pmcid = "PMC1234"
+        record.save()
+        time.sleep(2)
+
+        # construct the OAG response object, which has detected a licence
+        oag_result = {
+            "identifier" : [{
+                "id" : "PMC1234",
+                "type" : "pmcid"
+            }],
+            "license" : [{
+                "type" : "free-to-read",
+                "provenance" : {
+                    "accepted_author_manuscript" : False,   # FIXME: provisional
+                    "description" : "FtR PMC1234"
+                }
+            }]
+        }
+
+        oag_rerun = []
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
+
+        # give the index a moment to catch up
+        time.sleep(2)
+
+        r2 = models.Record.get_by_identifier("PMC1234", job.id)
+        assert isinstance(r2, models.Record)
+
+        assert r2.licence_type == "non-standard-licence"

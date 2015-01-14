@@ -646,6 +646,16 @@ def send_complete_mail(job):
 
     mail.send_mail(to=[job.contact_email], subject="[oac] Processing complete", template_name="emails/complete_email_template.txt", url=url)
 
+TYPE_MAP = {
+    "free-to-read" : "non-standard-licence",
+    "cc-nc-nd" : "cc-by-nc-nd"
+}
+
+def translate_licence_type(ltype):
+    if ltype in TYPE_MAP:
+        return TYPE_MAP.get(ltype)
+    return ltype
+
 def oag_record_callback(result, oag_rerun, ssjob):
 
     def handle_error(record, idtype, error_message, oag_rerun):
@@ -692,7 +702,7 @@ def oag_record_callback(result, oag_rerun, ssjob):
             record.oag_doi = "success"
             record.licence_source = "publisher"
 
-        record.licence_type = result.get("license", [{}])[0].get("type")
+        record.licence_type = translate_licence_type(result.get("license", [{}])[0].get("type"))
         record.oag_complete = True
         record.save()
         return
