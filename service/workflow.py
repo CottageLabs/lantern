@@ -140,7 +140,8 @@ def output_csv(job):
             "article_title" : r.title,
 
             # the results of the run
-            "ft_in_epmc" : r.has_ft_xml,
+            "in_epmc" : r.in_epmc,
+            "xml_ft_in_epmc" : r.has_ft_xml,
             "aam" : r.aam,
             "open_access" : r.is_oa,
             "licence" : r.licence_type,
@@ -149,7 +150,8 @@ def output_csv(job):
             "confidence" : r.confidence,
             "standard_compliance" : r.standard_compliance,
             "deluxe_compliance" : r.deluxe_compliance,
-            "notes" : serialise_provenance(r)
+            "notes" : serialise_provenance(r),
+            "issn" : ", ".join(r.issn)
         }
 
         # add the original data if present

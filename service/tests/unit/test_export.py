@@ -37,6 +37,7 @@ class TestImport(testindex.ESTestCase):
         r1.add_provenance("test", "provenance", now)
         r1.upload_id = job.id
         r1.upload_pos = 1
+        r1.issn = ["1234-5678", "9876-5432"]
         r1.save()
 
         r2 = models.Record()
@@ -67,10 +68,10 @@ class TestImport(testindex.ESTestCase):
         rows = [r for r in reader]
 
         assert len(rows) == 4
-        assert rows[0] == ['PMCID', 'PMID', 'DOI', 'Article title', 'Fulltext in EPMC?', 'AAM?', 'Open Access?', 'Licence', 'Licence Source', 'Journal Type', 'Correct Article Confidence', 'Standard Compliance?', 'Deluxe Compliance?', 'Notes']
-        assert rows[1] == ['PMC1234', '1234', '10.1234', 'The Title', 'True', 'True', 'True', 'CC0', 'publisher', 'hybrid', '0.9', "True", "True", '[' + now + ' test] provenance']
-        assert rows[2] == ["PMC9876", "", "", "", "", "", "", "", "", "", "", "False", "False", ""]
-        assert rows[3] == ["", "9876", "", "", "", "", "", "", "", "", "", "False", "False", '[' + now + ' test] provenance\n\n[' + now + ' test] more']
+        assert rows[0] == ['PMCID', 'PMID', 'DOI', "ISSN", 'Article title', "Fulltext in EPMC?", 'XML Fulltext?', 'AAM?', 'Open Access?', 'Licence', 'Licence Source', 'Journal Type', 'Correct Article Confidence', 'Standard Compliance?', 'Deluxe Compliance?', 'Notes']
+        assert rows[1] == ['PMC1234', '1234', '10.1234', "1234-5678, 9876-5432", 'The Title', "True", 'True', 'True', 'True', 'CC0', 'publisher', 'hybrid', '0.9', "True", "True", '[' + now + ' test] provenance']
+        assert rows[2] == ["PMC9876", "", "", "", "", "", "", "unknown", "", "unknown", "", "", "", "False", "False", ""]
+        assert rows[3] == ["", "9876", "", "", "", "", "", "unknown", "", "unknown", "", "", "", "False", "False", '[' + now + ' test] provenance\n\n[' + now + ' test] more']
 
 
 

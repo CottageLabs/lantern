@@ -153,3 +153,20 @@ class TestImport(testindex.ESTestCase):
         assert len(rows) == 2
         assert rows[0] == ["University", "PMCID", "Journal title"]
         assert rows[1] == ["A", "a", "1"]
+
+    def test_05_defaults(self):
+        s = StringIO()
+        ms = sheets.MasterSheet(writer=s)
+        ms.add_object({
+            "aam" : None,
+            "licence" : "",
+            "university" : "A"
+        })
+
+        size = 0
+        for o in ms.objects():
+            size += 1
+            assert o.get("aam") == "unknown"
+            assert o.get("licence") == "unknown"
+            assert o.get("university") == "A"
+        assert size == 1
