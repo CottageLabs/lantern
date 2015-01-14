@@ -36,6 +36,14 @@ QUERY_ROUTE = {
 
 OAGR_RUNNER_CALLBACK_CLOSURE = "service.workflow.oag_callback_closure"
 
+# NOTE: we may want to modify these parameters in particular when we tune the running
+
+# maximim number of seconds to wait between requests for identifiers, irrespective of the back-off rules
+OAG_STATE_MAX_BACK_OFF = 120
+
+# maximum number of times to retry an identifier
+OAG_STATE_MAX_RETRIES = None
+
 ##########################################
 # service specific config
 

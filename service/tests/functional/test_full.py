@@ -8,9 +8,10 @@ UPLOAD_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "re
 
 # Note, we have a couple of options here, just pick whichever one you want to work with
 # See the resources directory for alternatives
-# FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "test_submission.csv")
-# FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "apc_2012_2013.csv")
-FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "compliance_pubmed_mar14.csv")
+#FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "test_submission.csv")
+FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "apc_2012_2013.csv")
+#FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "compliance_pubmed_mar14.csv")
+#FULL_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "compliance_pmc_mar14.csv")
 
 
 class FileHandle(object):
