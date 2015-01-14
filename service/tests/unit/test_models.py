@@ -152,6 +152,97 @@ class TestModels(ESTestCase):
         comp = job.pc_complete
         assert int(comp) == 100
 
+    def test_05_compliance(self):
+        record = Record()
 
+        # Truth table for standard and deluxe compliance
+        #
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 0             0       0           0                   0           0       0
+        # 0             0       1           0                   0           0       0
+        # 1             0       0           0                   0           0       0
+        # 1             0       0           0                   1           0       0
+        # 1             0       0           1                   1           0       0
+        # 1             0       1           0                   0           1       0
+        # 1             0       1           1                   1           1       1
+        # 1             1       0           0                   0           1       1
+        # 1             1       1           0                   0           1       1
+        # 1             1       1           1                   1           1       1
 
+        # check the default values, before we've done anything to the record
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
 
+        # set the various switches, and then check the results
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 0             0       0           0                   0           0       0
+        record.in_epmc = False
+        record.aam = False
+        record.licence_type = "Other"
+        record.licence_source = "publisher"
+        record.is_oa = False
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 0             0       1           0                   0           0       0
+        record.licence_type = "cc-by"
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       0           0                   0           0       0
+        record.in_epmc = True
+        record.licence_type = "Other"
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       0           0                   1           0       0
+        record.is_oa = True
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       0           1                   1           0       0
+        record.licence_source = "epmc_xml"
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       1           0                   0           1       0
+        record.licence_type = "CC BY"
+        record.licence_source = "publisher"
+        record.is_oa = False
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is True
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       1           1                   1           1       1
+        record.licence_type = "cc-by"
+        record.licence_source = "epmc"
+        record.is_oa = True
+        assert record.deluxe_compliance is True
+        assert record.standard_compliance is True
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             1       0           0                   0           1       1
+        record.aam = True
+        record.licence_type = "Other"
+        record.licence_source = "publisher"
+        assert record.deluxe_compliance is True
+        assert record.standard_compliance is True
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             1       1           0                   0           1       1
+        record.licence_type = "CC-BY"
+        assert record.deluxe_compliance is True
+        assert record.standard_compliance is True
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             1       1           1                   1           1       1
+        record.licence_source = "epmc_xml"
+        record.is_oa = True
+        assert record.deluxe_compliance is True
+        assert record.standard_compliance is True

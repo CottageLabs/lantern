@@ -147,20 +147,23 @@ def output_csv(job):
             "licence_source" : r.licence_source,
             "journal_type" : r.journal_type,
             "confidence" : r.confidence,
+            "standard_compliance" : r.standard_compliance,
+            "deluxe_compliance" : r.deluxe_compliance,
             "notes" : serialise_provenance(r)
         }
 
         # add the original data if present
-        original = deepcopy(r.source)
-        if "pmcid" in original:
-            del original["pmcid"]
-        if "pmid" in original:
-            del original["pmid"]
-        if "doi" in original:
-            del original["doi"]
-        if "article_title" in original:
-            del original["article_title"]
-        obj.update(original)
+        if r.source is not None:
+            original = deepcopy(r.source)
+            if "pmcid" in original:
+                del original["pmcid"]
+            if "pmid" in original:
+                del original["pmid"]
+            if "doi" in original:
+                del original["doi"]
+            if "article_title" in original:
+                del original["article_title"]
+            obj.update(original)
 
         return obj
 
