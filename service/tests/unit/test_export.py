@@ -27,7 +27,8 @@ class TestImport(testindex.ESTestCase):
         r1.doi = "10.1234"
         r1.title = "The Title"
         r1.has_ft_xml = True
-        r1.aam = False
+        r1.in_epmc = True
+        r1.aam = True
         r1.is_oa = True
         r1.licence_type = "CC0"
         r1.licence_source = "publisher"
@@ -66,10 +67,10 @@ class TestImport(testindex.ESTestCase):
         rows = [r for r in reader]
 
         assert len(rows) == 4
-        assert rows[0] == ['PMCID', 'PMID', 'DOI', 'Article title', 'Fulltext in EPMC?', 'AAM?', 'Open Access?', 'Licence', 'Licence Source', 'Journal Type', 'Correct Article Confidence', 'Notes']
-        assert rows[1] == ['PMC1234', '1234', '10.1234', 'The Title', 'True', 'False', 'True', 'CC0', 'publisher', 'hybrid', '0.9', '[' + now + ' test] provenance']
-        assert rows[2] == ["PMC9876", "", "", "", "", "", "", "", "", "", "", ""]
-        assert rows[3] == ["", "9876", "", "", "", "", "", "", "", "", "", '[' + now + ' test] provenance\n\n[' + now + ' test] more']
+        assert rows[0] == ['PMCID', 'PMID', 'DOI', 'Article title', 'Fulltext in EPMC?', 'AAM?', 'Open Access?', 'Licence', 'Licence Source', 'Journal Type', 'Correct Article Confidence', 'Standard Compliance?', 'Deluxe Compliance?', 'Notes']
+        assert rows[1] == ['PMC1234', '1234', '10.1234', 'The Title', 'True', 'True', 'True', 'CC0', 'publisher', 'hybrid', '0.9', "True", "True", '[' + now + ' test] provenance']
+        assert rows[2] == ["PMC9876", "", "", "", "", "", "", "", "", "", "", "False", "False", ""]
+        assert rows[3] == ["", "9876", "", "", "", "", "", "", "", "", "", "False", "False", '[' + now + ' test] provenance\n\n[' + now + ' test] more']
 
 
 

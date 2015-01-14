@@ -24,13 +24,15 @@ class MasterSheet(object):
         u"Licence" : "licence",
         u"Licence Source" : "licence_source",
         u"Journal Type" : "journal_type",
-        u"Correct Article Confidence" : "confidence"
+        u"Correct Article Confidence" : "confidence",
+        u"Standard Compliance?" : "standard_compliance",
+        u"Deluxe Compliance?" : "deluxe_compliance"
     }
 
     OUTPUT_ORDER = [
         "university", "pmcid", "pmid", "doi", "publisher", "journal_title", "article_title", "apc", "wellcome_apc",
         "vat", "total_cost", "grant_code", "licence_info", "ft_in_epmc", "aam", "open_access",
-        "licence", "licence_source", "journal_type", "confidence", "notes"
+        "licence", "licence_source", "journal_type", "confidence", "standard_compliance", "deluxe_compliance", "notes"
     ]
 
     #OUTPUT_ORDER = [
