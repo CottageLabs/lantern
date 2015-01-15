@@ -416,7 +416,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.oag_pmcid == "error"
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "broken!" in provs
+        assert "PMC1234 - broken!" in provs
 
     def test_03_handle_oag_response_06_doi_success(self):
         # first make ourselves a record that we want to enhance
@@ -552,7 +552,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.oag_doi == "error"
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "broken!" in provs
+        assert "10.1234 - broken!" in provs
 
     def test_03_handle_oag_response_09_pmid_success(self):
         # first make ourselves a record that we want to enhance
@@ -685,7 +685,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.oag_pmid == "error"
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "broken!" in provs
+        assert "1234 - broken!" in provs
 
     def test_04_process_oag(self):
         job = models.SpreadsheetJob()
