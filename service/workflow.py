@@ -575,12 +575,13 @@ def extract_fulltext_info(msg, fulltext):
 def extract_fulltext_licence(msg, fulltext):
     type, url, para = fulltext.get_licence_details()
 
-    # if there is a type, and it is one of the ones we know about
-    if type is not None and type in [l for u, l in licences.urls]:
-        msg.record.licence_type = type
-        msg.record.add_provenance("processor", "Fulltext XML specifies licence type as %(license)s" % {"license" : type})
-        msg.record.licence_source = "epmc_xml"
-        return
+    if type is not None:
+        for t, c in licences.types.iteritems():
+            if type == t:
+                msg.record.licence_type = c
+                msg.record.add_provenance("processor", "Fulltext XML specifies licence type as %(license)s" % {"license" : type})
+                msg.record.licence_source = "epmc_xml"
+                return
 
     # if there is a url, and it begins with one of the urls we know about (so we can capture multiple cc licence versions with one url)
     if url is not None:
@@ -679,11 +680,15 @@ def send_complete_mail(job):
 
     mail.send_mail(to=[job.contact_email], subject="[oac] Processing complete", template_name="emails/complete_email_template.txt", url=url)
 
+# create the type map which maps OAG licences to the way we want to represent them internally
 TYPE_MAP = {
     "free-to-read" : "non-standard-licence",
     "cc-nc-nd" : "cc-by-nc-nd",
     "other-closed" : "non-standard-licence"
 }
+
+# add to the type map the known EPMC licence types, with their canonical forms, so we get uniform representation
+TYPE_MAP.update(licences.types)
 
 def translate_licence_type(ltype):
     if ltype in TYPE_MAP:
