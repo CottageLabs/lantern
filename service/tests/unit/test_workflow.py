@@ -952,13 +952,15 @@ class TestWorkflow(testindex.ESTestCase):
         record = models.Record()
         msg = workflow.WorkflowMessage(record=record)
         workflow.extract_fulltext_licence(msg, ft)
-        assert record.licence_type is None
-        assert record.licence_source is None
-        assert len(record.provenance) == 0
+        assert record.licence_type == "non-standard-licence"
+        assert record.licence_source == "epmc_xml"
+        assert len(record.provenance) == 1
 
         # no licence element present
         p = l[0].getparent()
         p.remove(l[0])
+        s = etree.tostring(xml)
+        ft = epmc.EPMCFullText(s)
         record = models.Record()
         msg = workflow.WorkflowMessage(record=record)
         workflow.extract_fulltext_licence(msg, ft)
