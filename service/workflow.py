@@ -681,7 +681,8 @@ def send_complete_mail(job):
 
 TYPE_MAP = {
     "free-to-read" : "non-standard-licence",
-    "cc-nc-nd" : "cc-by-nc-nd"
+    "cc-nc-nd" : "cc-by-nc-nd",
+    "other-closed" : "non-standard-licence"
 }
 
 def translate_licence_type(ltype):
