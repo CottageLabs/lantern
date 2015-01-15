@@ -758,9 +758,18 @@ def oag_record_callback(result, oag_rerun, ssjob):
             record.save()
             return
 
+        # get the id that resulted in the success
+        success_id = ""
+        if idtype == "pmcid":
+            success_id = record.pmcid
+        elif idtype == "pmid":
+            success_id = record.pmid
+        elif idtype == "doi":
+            success_id = record.doi
+
         # get the OAG provenance description and put it into the record
         prov = result.get("license", [{}])[0].get("provenance", {}).get("description")
-        record.add_provenance("oag", prov)
+        record.add_provenance("oag", success_id + " - " + prov)
 
         if result.get("license", [{}])[0].get("type") == "failed-to-obtain-license":
             handle_fto(record, idtype, oag_rerun)

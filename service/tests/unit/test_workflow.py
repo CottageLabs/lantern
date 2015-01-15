@@ -219,7 +219,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is True
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 2
-        assert "Provenance PMC1234" in provs
+        assert "PMC1234 - Provenance PMC1234" in provs
         assert "Detected AAM status from EPMC web page" in provs
 
     def test_03_handle_oag_response_02_pmcid_fto(self):
@@ -271,7 +271,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is True
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 2
-        assert "FTO PMC1234" in provs
+        assert "PMC1234 - FTO PMC1234" in provs
         assert "Detected AAM status from EPMC web page" in provs
 
     def test_03_handle_oag_response_03_pmcid_no_aam(self):
@@ -321,7 +321,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is False
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 2
-        assert "No Licence PMC1234" in provs
+        assert "PMC1234 - No Licence PMC1234" in provs
         assert "Detected AAM status from EPMC web page" in provs
 
     def test_03_handle_oag_response_04_pmcid_no_change(self):
@@ -463,7 +463,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is None
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "Provenance 10.1234" in provs
+        assert "10.1234 - Provenance 10.1234" in provs
 
     def test_03_handle_oag_response_07_doi_fto(self):
         # first make ourselves a record that we want to enhance
@@ -512,7 +512,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is None
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "FTO 10.1234" in provs
+        assert "10.1234 - FTO 10.1234" in provs
 
     def test_03_handle_oag_response_08_doi_error(self):
         # first make ourselves a record that we want to enhance
@@ -599,7 +599,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is None
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "Provenance 1234" in provs
+        assert "1234 - Provenance 1234" in provs
 
     def test_03_handle_oag_response_10_pmid_fto(self):
         # first make ourselves a record that we want to enhance
@@ -645,7 +645,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is None
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "FTO 1234" in provs
+        assert "1234 - FTO 1234" in provs
 
     def test_03_handle_oag_response_11_pmid_error(self):
         # first make ourselves a record that we want to enhance
