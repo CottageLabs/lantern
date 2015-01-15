@@ -579,12 +579,14 @@ def extract_fulltext_info(msg, fulltext):
 def extract_fulltext_licence(msg, fulltext):
     type, url, para = fulltext.get_licence_details()
 
+    # if there is a type, and it is one of the ones we know about
     if type is not None and type in [l for u, l in licences.urls]:
         msg.record.licence_type = type
         msg.record.add_provenance("processor", "Fulltext XML specifies licence type as %(license)s" % {"license" : type})
         msg.record.licence_source = "epmc_xml"
         return
 
+    # if there is a url, and it begins with one of the urls we know about (so we can capture multiple cc licence versions with one url)
     if url is not None:
         urls = [u for u, l in licences.urls]
         for u in urls:
@@ -594,13 +596,22 @@ def extract_fulltext_licence(msg, fulltext):
                 msg.record.licence_source = "epmc_xml"
                 return
 
+    # if there is some text, and we can find one of our substrings in it
     if para is not None:
         for ss, t in licences.substrings:
             if ss in para:
                 msg.record.licence_type = t
                 msg.record.add_provenance("processor", "Fulltext XML licence description contains the licence text %(text)s which gives us licence type %(license)s" % {"text" : ss, "license" : t})
                 msg.record.licence_source = "epmc_xml"
-                break
+                return
+
+    # finally, if there is licence information, but we can't recognise it, then record a non-standard licence
+    if type is not None or url is not None or para is not None:
+        msg.record.licence_type = "non-standard-licence"
+        msg.record.add_provenance("processor", "Fulltext XML contained licence information, but we could not recognise it as a standard open licence; recording non-standard-licence")
+        msg.record.licence_source = "epmc_xml"
+        return
+
 
 def add_to_rerun(record, idtype, oag_rerun):
     if idtype == "pmcid":
