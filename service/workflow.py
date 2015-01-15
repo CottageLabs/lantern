@@ -697,14 +697,18 @@ def oag_record_callback(result, oag_rerun, ssjob):
 
     def handle_error(record, idtype, error_message, oag_rerun):
         # first record an error status against the id type
+        problem_id = ""
         if idtype == "pmcid":
             record.oag_pmcid = "error"
+            problem_id = record.pmcid
         elif idtype == "pmid":
             record.oag_pmid = "error"
+            problem_id = record.pmid
         elif idtype == "doi":
             record.oag_doi = "error"
+            problem_id = record.doi
 
-        record.add_provenance("oag", error_message)
+        record.add_provenance("oag", problem_id + " - " + error_message)
 
         # save the record then pass it on to see if it needs to be re-submitted
         added = add_to_rerun(record, idtype, oag_rerun)
