@@ -28,13 +28,14 @@ class MasterSheet(object):
         u"Correct Article Confidence" : "confidence",
         u"Standard Compliance?" : "standard_compliance",
         u"Deluxe Compliance?" : "deluxe_compliance",
-        u"ISSN" : "issn"
+        u"ISSN" : "issn",
+        u"Compliance Processing Ouptut" : "provenance"
     }
 
     OUTPUT_ORDER = [
         "university", "pmcid", "pmid", "doi", "publisher", "journal_title", "issn", "article_title", "apc", "wellcome_apc",
-        "vat", "total_cost", "grant_code", "licence_info", "in_epmc", "xml_ft_in_epmc", "aam", "open_access",
-        "licence", "licence_source", "journal_type", "confidence", "standard_compliance", "deluxe_compliance", "notes"
+        "vat", "total_cost", "grant_code", "licence_info", "notes", "in_epmc", "xml_ft_in_epmc", "aam", "open_access",
+        "licence", "licence_source", "journal_type", "confidence", "standard_compliance", "deluxe_compliance", "provenance"
     ]
 
     DEFAULT_VALUES = {

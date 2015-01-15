@@ -150,21 +150,17 @@ def output_csv(job):
             "confidence" : r.confidence,
             "standard_compliance" : r.standard_compliance,
             "deluxe_compliance" : r.deluxe_compliance,
-            "notes" : serialise_provenance(r),
+            "provenance" : serialise_provenance(r),
             "issn" : ", ".join(r.issn)
         }
 
-        # add the original data if present
+        # add the original data if present, being careful not to overwrite the data we have produced
         if r.source is not None:
+            overwrite = obj.keys()
             original = deepcopy(r.source)
-            if "pmcid" in original:
-                del original["pmcid"]
-            if "pmid" in original:
-                del original["pmid"]
-            if "doi" in original:
-                del original["doi"]
-            if "article_title" in original:
-                del original["article_title"]
+            for k in overwrite:
+                if k in original:
+                    del original[k]
             obj.update(original)
 
         return obj
