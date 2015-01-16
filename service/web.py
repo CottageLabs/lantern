@@ -55,6 +55,12 @@ def progress(job_id):
     job = models.SpreadsheetJob.pull(job_id)
     return render_template("progress.html", filename=job.filename, job=job)
 
+@app.route("/progress/<job_id>/pc")
+def percentage(job_id):
+    job = models.SpreadsheetJob.pull(job_id)
+    pc = str(job.pc_complete)
+    return pc
+
 @app.route("/download_original/<job_id>")
 def download_original_csv(job_id):
     job = models.SpreadsheetJob.pull(job_id)

@@ -4,40 +4,41 @@
 <div class="container col-md-12" style="padding: 20px; padding-top:0px; height: 500px;">
     <h1 style="text-align:center;"><small>Progress for: </small> {{job.filename}}</h1>
     <div class="col-md-offset-3 col-md-6 panel" >
-            <div class="row" style="padding: 10px;">
+            <div class="row" style="padding: 10px; padding-bottom: 0px;">
                     <a href="{{url_for('download_original_csv', job_id=job.id)}}" class="btn btn-primary col-md-12">Download original</a>
             </div>
-            <div class="row" style="padding: 10px;">
+            <div class="row" style="padding: 10px; padding-bottom: 0px;">
                 <div class="container status col-md-12">
                     Spreadsheet status:
                     {{job.status_code}}
                  </div>
             </div>
         {% if job.status_code == "submitted" %}
-        <div class="row" style="padding: 10px;">
+        <div class="row" style="padding: 10px; padding-bottom: 0px;">
                 <div class="container status col-md-12">
                     Your spreadsheet has been uploaded. Processing will start shortly.
                  </div>
             </div>
         {% else %}
-            <div class="row" style="padding: 10px;">
+            <div class="row" style="padding: 10px; padding-bottom: 0px;">
                 <div class="container status col-md-12">
                     Processing progress:
-                    {{job.pc_complete}}%
+                    <span id="pc_container">{{job.pc_complete}}</span>%
                  </div>
             </div>
-            <div class="row">
-                    <a href="{{url_for('download_progress_csv', job_id=job.id)}}" class="btn btn-primary col-md-12" style="padding: 10px;">{% if job.status_code == "completed" %} Download final result {% else %} Download current stage {% endif %}</a>
-
+            <div class="row" style="padding: 10px; padding-bottom: 0px;">
+                    <a href="{{url_for('download_progress_csv', job_id=job.id)}}" class="btn btn-primary col-md-12">{% if job.status_code == "complete" %} Download final result {% else %} Download current stage {% endif %}</a>
             </div>
         {% endif %}
-
-
-
      </div>
 </div>
 
 
 
 {% endblock %}
+{% block extra_js_bottom %}
+<script type="text/javascript">var job_id = "{{job.id}}";</script>
+<script type="text/javascript" src="{{url_for('static', filename='js/progress.js')}}"></script>
+
+{% endblock extra_js_bottom %}
 
