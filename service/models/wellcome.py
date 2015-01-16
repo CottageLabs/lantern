@@ -150,6 +150,10 @@ class Record(RecordDAO, DataObj):
     def upload_pos(self, val):
         self._set_single("upload.pos", val, int)
 
+    @property
+    def source(self):
+        return self._get_single("source")
+
     def set_source_data(self, university=None,
                                 pmcid=None,
                                 pmid=None,
@@ -314,6 +318,7 @@ class Record(RecordDAO, DataObj):
     @in_epmc.setter
     def in_epmc(self, val):
         self._set_single("compliance.in_epmc", val, bool)
+        self._calculate_compliance()
 
     @property
     def is_oa(self):
@@ -322,6 +327,7 @@ class Record(RecordDAO, DataObj):
     @is_oa.setter
     def is_oa(self, val):
         self._set_single("compliance.epmc_is_oa", val, bool)
+        self._calculate_compliance()
 
     @property
     def aam(self):
@@ -330,6 +336,7 @@ class Record(RecordDAO, DataObj):
     @aam.setter
     def aam(self, val):
         self._set_single("compliance.epmc_aam", val, bool)
+        self._calculate_compliance()
 
     @property
     def licence_type(self):
@@ -338,10 +345,12 @@ class Record(RecordDAO, DataObj):
     @licence_type.setter
     def licence_type(self, val):
         self._set_single("compliance.licence.type", val, self._utf8_unicode())
+        self._calculate_compliance()
 
     @licence_type.deleter
     def licence_type(self):
         self._delete("compliance.licence.type")
+        self._calculate_compliance()
 
     @property
     def licence_source(self):
@@ -350,6 +359,7 @@ class Record(RecordDAO, DataObj):
     @licence_source.setter
     def licence_source(self, val):
         self._set_single("compliance.licence_source", val, self._utf8_unicode(), allowed_values=self.LICENCE_SOURCES)
+        self._calculate_compliance()
 
     @property
     def journal_type(self):
@@ -369,7 +379,7 @@ class Record(RecordDAO, DataObj):
 
     @property
     def standard_compliance(self):
-        return self._get_single("compliance.standard", bool)
+        return self._get_single("compliance.standard", bool, default=False)
 
     @standard_compliance.setter
     def standard_compliance(self, val):
@@ -377,7 +387,7 @@ class Record(RecordDAO, DataObj):
 
     @property
     def deluxe_compliance(self):
-        return self._get_single("compliance.deluxe", bool)
+        return self._get_single("compliance.deluxe", bool, default=False)
 
     @deluxe_compliance.setter
     def deluxe_compliance(self, val):
@@ -396,12 +406,47 @@ class Record(RecordDAO, DataObj):
 
         self._add_to_list("provenance", obj)
 
+    def _calculate_compliance(self):
+        # calculate (if possible) the standard and deluxe compliance
+        # Standard Compliance
+        # IF full-text is in Europe PMC AND it is an author manuscript THEN compliance = YES
+        # IF full-text is in Europe PMC AND the licence (in any location) is CC BY THEN compliance = YES
+        #
+        # Deluxe Compliance
+        # IF full-text is in Europe PMC AND it is an author manuscript THEN compliance = YES
+        # IF full-text is in Europe PMC AND the licence as present in Europe PMC is CC BY AND the article is in the open access subset THEN compliance = YES
+
+        sc = False
+        dc = False
+
+        if self.in_epmc:    # minimum requirement for either kind of compliance is to be in EPMC
+
+            if self.aam:    # if this is the AAM then this is both standard and deluxe
+                sc = True
+                dc = True
+
+            if self.licence_type is not None and self.licence_type.lower().strip() in ["cc-by", "cc by"]: # if this is CC BY
+                sc = True     # this is sufficient for standard compliance
+
+                if self.licence_source is not None and self.licence_source in ["epmc_xml", "epmc"] and self.is_oa:  # for deluxe compliance licence must be known in EPMC and be in the OA subset
+                    dc = True
+
+        self.standard_compliance = sc
+        self.deluxe_compliance = dc
+
     def prep(self):
         # ensure that both the epmc_complete and oag_complete fields are truly set
         # (this weird bit of code will ensure that they are set to their current values
         # or their default value)
         self.epmc_complete = self.epmc_complete
         self.oag_complete = self.oag_complete
+
+        # ensure that compliance is calculated
+        self._calculate_compliance()
+
+        # ensure compliance values are set for real
+        self.standard_compliance = self.standard_compliance
+        self.deluxe_compliance = self.deluxe_compliance
 
 class OAGRLink(OAGRLinkDAO, DataObj):
     @property
