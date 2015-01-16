@@ -6,6 +6,7 @@ from octopus.lib import mail
 from service import models, sheets, licences
 import os, time
 from StringIO import StringIO
+from copy import deepcopy
 
 class WorkflowException(Exception):
     pass
@@ -130,26 +131,55 @@ def output_csv(job):
             s += "[%(when)s %(by)s] %(what)s" % {"when" : when, "by" : by, "what" : what}
         return s
 
-    s = StringIO()
-    sheet = sheets.MasterSheet(writer=s)
-    records = models.Record.list_by_upload(job.id)
-    for r in records:
-        assert isinstance(r, models.Record)
+    def objectify(r):
         obj = {
+            # the identifiers
             "pmcid" : r.pmcid,
             "pmid" : r.pmid,
             "doi" : r.doi,
             "article_title" : r.title,
-            "ft_in_epmc" : r.has_ft_xml,
+
+            # the results of the run
+            "in_epmc" : r.in_epmc,
+            "xml_ft_in_epmc" : r.has_ft_xml,
             "aam" : r.aam,
             "open_access" : r.is_oa,
             "licence" : r.licence_type,
             "licence_source" : r.licence_source,
             "journal_type" : r.journal_type,
             "confidence" : r.confidence,
-            "notes" : serialise_provenance(r)
+            "standard_compliance" : r.standard_compliance,
+            "deluxe_compliance" : r.deluxe_compliance,
+            "provenance" : serialise_provenance(r),
+            "issn" : ", ".join(r.issn)
         }
+
+        # add the original data if present, being careful not to overwrite the data we have produced
+        if r.source is not None:
+            overwrite = obj.keys()
+            original = deepcopy(r.source)
+            for k in overwrite:
+                if k in original:
+                    del original[k]
+            obj.update(original)
+
+        return obj
+
+    # get the records and work out what shape they are
+    # (makes the assumption that all records have the same spec, which /should/ be true)
+    records = models.Record.list_by_upload(job.id)
+    spec = objectify(records[0])
+
+    # create a master spreadsheet with the right shape
+    s = StringIO()
+    sheet = sheets.MasterSheet(writer=s, spec=spec.keys())
+
+    # for each record, objectify it and add to the sheet
+    for r in records:
+        assert isinstance(r, models.Record)
+        obj = objectify(r)
         sheet.add_object(obj)
+
     sheet.save()
 
     return s.getvalue()
@@ -327,9 +357,14 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 1.0
-        except epmc.EuropePMCException:
-            # just try the next one
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for PMCID " + msg.record.pmcid + " - unable to uniquely identify by this identifier"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for " + msg.record.pmcid)
+            msg.record.add_provenance("processor", "Received error from EPMC on request for " + msg.record.pmcid)
 
     # if we find 0 or > 1 via the pmcid, try again with the pmid
     if msg.record.pmid is not None:
@@ -339,9 +374,14 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 1.0
-        except epmc.EuropePMCException:
-            # just try the next one
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for PMID " + msg.record.pmid + " - unable to uniquely identify by this identifier"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for " + msg.record.pmid)
+            msg.record.add_provenance("processor", "Received error from EPMC on request for " + msg.record.pmid)
 
     # if we find 0 or > 1 via the pmid, try again with the doi
     if msg.record.doi is not None:
@@ -351,9 +391,14 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 1.0
-        except epmc.EuropePMCException:
-            # just try the next one
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for DOI " + msg.record.doi + " - unable to uniquely identify by this identifier"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for " + msg.record.doi)
+            msg.record.add_provenance("processor", "Received error from EPMC on request for " + msg.record.doi)
 
     if msg.record.title is not None:
         app.logger.info("Requesting EPMC metadata by exact Title " + msg.record.title)
@@ -362,9 +407,14 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 0.9
-        except epmc.EuropePMCException:
-            # just try the next one
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for exact title match - unable to uniquely identify by this string"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for exact title")
+            msg.record.add_provenance("processor", "Received error from EPMC on request for exact title")
 
         app.logger.info("Requesting EPMC metadata by fuzzy Title " + msg.record.title)
         try:
@@ -372,11 +422,17 @@ def get_epmc_md(msg):
             if len(mds) == 1:
                 app.logger.info("EPMC metadata found")
                 return mds[0], 0.7
-        except epmc.EuropePMCException:
-            # oh well, we did our best
-            pass
+            else:
+                err = str(len(mds)) + " metadata records found for fuzzy title match - unable to uniquely identify by this method"
+                app.logger.info(err)
+                msg.record.add_provenance("processor", err)
+        except epmc.EuropePMCException as e:
+            # log, then just try the next one
+            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for fuzzy title")
+            msg.record.add_provenance("processor", "Received error from EPMC on request for fuzzy title")
 
     app.logger.info("EPMC metadata not found by any means available")
+    msg.record.add_provenance("processor", "EPMC metadata not found by any means available")
     return None, None
 
 
@@ -519,12 +575,14 @@ def extract_fulltext_info(msg, fulltext):
 def extract_fulltext_licence(msg, fulltext):
     type, url, para = fulltext.get_licence_details()
 
+    # if there is a type, and it is one of the ones we know about
     if type is not None and type in [l for u, l in licences.urls]:
         msg.record.licence_type = type
         msg.record.add_provenance("processor", "Fulltext XML specifies licence type as %(license)s" % {"license" : type})
         msg.record.licence_source = "epmc_xml"
         return
 
+    # if there is a url, and it begins with one of the urls we know about (so we can capture multiple cc licence versions with one url)
     if url is not None:
         urls = [u for u, l in licences.urls]
         for u in urls:
@@ -534,13 +592,22 @@ def extract_fulltext_licence(msg, fulltext):
                 msg.record.licence_source = "epmc_xml"
                 return
 
+    # if there is some text, and we can find one of our substrings in it
     if para is not None:
         for ss, t in licences.substrings:
             if ss in para:
                 msg.record.licence_type = t
                 msg.record.add_provenance("processor", "Fulltext XML licence description contains the licence text %(text)s which gives us licence type %(license)s" % {"text" : ss, "license" : t})
                 msg.record.licence_source = "epmc_xml"
-                break
+                return
+
+    # finally, if there is licence information, but we can't recognise it, then record a non-standard licence
+    if type is not None or url is not None or para is not None:
+        msg.record.licence_type = "non-standard-licence"
+        msg.record.add_provenance("processor", "Fulltext XML contained licence information, but we could not recognise it as a standard open licence; recording non-standard-licence")
+        msg.record.licence_source = "epmc_xml"
+        return
+
 
 def add_to_rerun(record, idtype, oag_rerun):
     if idtype == "pmcid":
@@ -612,18 +679,33 @@ def send_complete_mail(job):
 
     mail.send_mail(to=[job.contact_email], subject="[oac] Processing complete", template_name="emails/complete_email_template.txt", url=url)
 
+TYPE_MAP = {
+    "free-to-read" : "non-standard-licence",
+    "cc-nc-nd" : "cc-by-nc-nd",
+    "other-closed" : "non-standard-licence"
+}
+
+def translate_licence_type(ltype):
+    if ltype in TYPE_MAP:
+        return TYPE_MAP.get(ltype)
+    return ltype
+
 def oag_record_callback(result, oag_rerun, ssjob):
 
     def handle_error(record, idtype, error_message, oag_rerun):
         # first record an error status against the id type
+        problem_id = ""
         if idtype == "pmcid":
             record.oag_pmcid = "error"
+            problem_id = record.pmcid
         elif idtype == "pmid":
             record.oag_pmid = "error"
+            problem_id = record.pmid
         elif idtype == "doi":
             record.oag_doi = "error"
+            problem_id = record.doi
 
-        record.add_provenance("oag", error_message)
+        record.add_provenance("oag", problem_id + " - " + error_message)
 
         # save the record then pass it on to see if it needs to be re-submitted
         added = add_to_rerun(record, idtype, oag_rerun)
@@ -658,7 +740,7 @@ def oag_record_callback(result, oag_rerun, ssjob):
             record.oag_doi = "success"
             record.licence_source = "publisher"
 
-        record.licence_type = result.get("license", [{}])[0].get("type")
+        record.licence_type = translate_licence_type(result.get("license", [{}])[0].get("type"))
         record.oag_complete = True
         record.save()
         return
@@ -677,9 +759,18 @@ def oag_record_callback(result, oag_rerun, ssjob):
             record.save()
             return
 
+        # get the id that resulted in the success
+        success_id = ""
+        if idtype == "pmcid":
+            success_id = record.pmcid
+        elif idtype == "pmid":
+            success_id = record.pmid
+        elif idtype == "doi":
+            success_id = record.doi
+
         # get the OAG provenance description and put it into the record
         prov = result.get("license", [{}])[0].get("provenance", {}).get("description")
-        record.add_provenance("oag", prov)
+        record.add_provenance("oag", success_id + " - " + prov)
 
         if result.get("license", [{}])[0].get("type") == "failed-to-obtain-license":
             handle_fto(record, idtype, oag_rerun)

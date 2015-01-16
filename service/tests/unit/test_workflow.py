@@ -219,7 +219,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is True
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 2
-        assert "Provenance PMC1234" in provs
+        assert "PMC1234 - Provenance PMC1234" in provs
         assert "Detected AAM status from EPMC web page" in provs
 
     def test_03_handle_oag_response_02_pmcid_fto(self):
@@ -271,7 +271,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is True
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 2
-        assert "FTO PMC1234" in provs
+        assert "PMC1234 - FTO PMC1234" in provs
         assert "Detected AAM status from EPMC web page" in provs
 
     def test_03_handle_oag_response_03_pmcid_no_aam(self):
@@ -321,7 +321,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is False
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 2
-        assert "No Licence PMC1234" in provs
+        assert "PMC1234 - No Licence PMC1234" in provs
         assert "Detected AAM status from EPMC web page" in provs
 
     def test_03_handle_oag_response_04_pmcid_no_change(self):
@@ -416,7 +416,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.oag_pmcid == "error"
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "broken!" in provs
+        assert "PMC1234 - broken!" in provs
 
     def test_03_handle_oag_response_06_doi_success(self):
         # first make ourselves a record that we want to enhance
@@ -463,7 +463,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is None
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "Provenance 10.1234" in provs
+        assert "10.1234 - Provenance 10.1234" in provs
 
     def test_03_handle_oag_response_07_doi_fto(self):
         # first make ourselves a record that we want to enhance
@@ -512,7 +512,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is None
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "FTO 10.1234" in provs
+        assert "10.1234 - FTO 10.1234" in provs
 
     def test_03_handle_oag_response_08_doi_error(self):
         # first make ourselves a record that we want to enhance
@@ -552,7 +552,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.oag_doi == "error"
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "broken!" in provs
+        assert "10.1234 - broken!" in provs
 
     def test_03_handle_oag_response_09_pmid_success(self):
         # first make ourselves a record that we want to enhance
@@ -599,7 +599,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is None
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "Provenance 1234" in provs
+        assert "1234 - Provenance 1234" in provs
 
     def test_03_handle_oag_response_10_pmid_fto(self):
         # first make ourselves a record that we want to enhance
@@ -645,7 +645,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.aam is None
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "FTO 1234" in provs
+        assert "1234 - FTO 1234" in provs
 
     def test_03_handle_oag_response_11_pmid_error(self):
         # first make ourselves a record that we want to enhance
@@ -685,7 +685,7 @@ class TestWorkflow(testindex.ESTestCase):
         assert r2.oag_pmid == "error"
         provs = [n for b, w, n in r2.provenance]
         assert len(provs) == 1
-        assert "broken!" in provs
+        assert "1234 - broken!" in provs
 
     def test_04_process_oag(self):
         job = models.SpreadsheetJob()
@@ -952,13 +952,15 @@ class TestWorkflow(testindex.ESTestCase):
         record = models.Record()
         msg = workflow.WorkflowMessage(record=record)
         workflow.extract_fulltext_licence(msg, ft)
-        assert record.licence_type is None
-        assert record.licence_source is None
-        assert len(record.provenance) == 0
+        assert record.licence_type == "non-standard-licence"
+        assert record.licence_source == "epmc_xml"
+        assert len(record.provenance) == 1
 
         # no licence element present
         p = l[0].getparent()
         p.remove(l[0])
+        s = etree.tostring(xml)
+        ft = epmc.EPMCFullText(s)
         record = models.Record()
         msg = workflow.WorkflowMessage(record=record)
         workflow.extract_fulltext_licence(msg, ft)
@@ -1184,3 +1186,42 @@ class TestWorkflow(testindex.ESTestCase):
         assert type(cb) == types.FunctionType
 
         # FIXME: more testing required
+
+    def test_12_licence_translate(self):
+        assert workflow.translate_licence_type("free-to-read") == "non-standard-licence"
+
+        # first make ourselves a record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
+        record = models.Record()
+        record.upload_id = job.id
+        record.pmcid = "PMC1234"
+        record.save()
+        time.sleep(2)
+
+        # construct the OAG response object, which has detected a licence
+        oag_result = {
+            "identifier" : [{
+                "id" : "PMC1234",
+                "type" : "pmcid"
+            }],
+            "license" : [{
+                "type" : "free-to-read",
+                "provenance" : {
+                    "accepted_author_manuscript" : False,   # FIXME: provisional
+                    "description" : "FtR PMC1234"
+                }
+            }]
+        }
+
+        oag_rerun = []
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
+
+        # give the index a moment to catch up
+        time.sleep(2)
+
+        r2 = models.Record.get_by_identifier("PMC1234", job.id)
+        assert isinstance(r2, models.Record)
+
+        assert r2.licence_type == "non-standard-licence"

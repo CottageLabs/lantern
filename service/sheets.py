@@ -18,30 +18,50 @@ class MasterSheet(object):
         u'Notes' : "notes",
 
         # values used exclusively in the output
-        u"Fulltext in EPMC?" : "ft_in_epmc",
+        u"Fulltext in EPMC?" : "in_epmc",
+        u"XML Fulltext?" : "xml_ft_in_epmc",
         u"AAM?" : "aam",
         u"Open Access?" : "open_access",
         u"Licence" : "licence",
         u"Licence Source" : "licence_source",
         u"Journal Type" : "journal_type",
-        u"Correct Article Confidence" : "confidence"
+        u"Correct Article Confidence" : "confidence",
+        u"Standard Compliance?" : "standard_compliance",
+        u"Deluxe Compliance?" : "deluxe_compliance",
+        u"ISSN" : "issn",
+        u"Compliance Processing Ouptut" : "provenance"
     }
 
     OUTPUT_ORDER = [
-        "pmcid", "pmid", "doi", "article_title", "ft_in_epmc", "aam", "open_access",
-        "licence", "licence_source", "journal_type", "confidence", "notes"
+        "university", "pmcid", "pmid", "doi", "publisher", "journal_title", "issn", "article_title", "apc", "wellcome_apc",
+        "vat", "total_cost", "grant_code", "licence_info", "notes", "in_epmc", "xml_ft_in_epmc", "aam", "open_access",
+        "licence", "licence_source", "journal_type", "confidence", "standard_compliance", "deluxe_compliance", "provenance"
     ]
 
-    def __init__(self, path=None, writer=None):
+    DEFAULT_VALUES = {
+        "aam" : "unknown",
+        "licence" : "unknown"
+    }
+
+    def __init__(self, path=None, writer=None, spec=None):
         if path is not None:
             self._sheet = clcsv.ClCsv(path)
         elif writer is not None:
             self._sheet = clcsv.ClCsv(writer=writer)
-            self._set_headers()
+            self._set_headers(spec)
 
-    def _set_headers(self):
+    def _set_headers(self, spec=None):
         headers = []
-        for o in self.OUTPUT_ORDER:
+
+        # only write headers which are in the object spec
+        if spec is not None:
+            oo = [x for x in self.OUTPUT_ORDER if x in spec]
+        else:
+            oo = self.OUTPUT_ORDER
+
+        # write the headers in the correct order, ensuring they exist in the
+        # Master spreadsheet header definitions
+        for o in oo:
             found = False
             for k, v in self.HEADERS.iteritems():
                 if v == o:
@@ -50,6 +70,8 @@ class MasterSheet(object):
                     break
             if not found:
                 headers.append(o)
+
+        # finally write the filtered, sanitised headers
         self._sheet.set_headers(headers)
 
     def _header_key_map(self, key):
@@ -57,6 +79,11 @@ class MasterSheet(object):
             if key.strip().lower() == k.lower():
                 return v
         return None
+
+    def _value(self, field, value):
+        if (value is None or value == "") and field in self.DEFAULT_VALUES:
+            return self.DEFAULT_VALUES.get(field, "")
+        return value
 
     def objects(self):
         for o in self._sheet.objects():
@@ -72,7 +99,7 @@ class MasterSheet(object):
         for k, v in obj.iteritems():
             for k1, v1 in self.HEADERS.iteritems():
                 if k == v1:
-                    no[k1] = v
+                    no[k1] = self._value(k, v)
                     break
         self._sheet.add_object(no)
 
