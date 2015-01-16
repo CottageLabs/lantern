@@ -363,7 +363,10 @@ def get_epmc_md(msg):
                 msg.record.add_provenance("processor", err)
         except epmc.EuropePMCException as e:
             # log, then just try the next one
-            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for " + msg.record.pmcid)
+            code = "None"
+            if e.response is not None:
+                code = str(e.response.status_code)
+            app.logger.info("EPMC API returned " + code + " to request for " + msg.record.pmcid)
             msg.record.add_provenance("processor", "Received error from EPMC on request for " + msg.record.pmcid)
 
     # if we find 0 or > 1 via the pmcid, try again with the pmid
@@ -380,7 +383,10 @@ def get_epmc_md(msg):
                 msg.record.add_provenance("processor", err)
         except epmc.EuropePMCException as e:
             # log, then just try the next one
-            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for " + msg.record.pmid)
+            code = "None"
+            if e.response is not None:
+                code = str(e.response.status_code)
+            app.logger.info("EPMC API returned " + code + " to request for " + msg.record.pmid)
             msg.record.add_provenance("processor", "Received error from EPMC on request for " + msg.record.pmid)
 
     # if we find 0 or > 1 via the pmid, try again with the doi
@@ -397,7 +403,10 @@ def get_epmc_md(msg):
                 msg.record.add_provenance("processor", err)
         except epmc.EuropePMCException as e:
             # log, then just try the next one
-            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for " + msg.record.doi)
+            code = "None"
+            if e.response is not None:
+                code = str(e.response.status_code)
+            app.logger.info("EPMC API returned " + code + " to request for " + msg.record.doi)
             msg.record.add_provenance("processor", "Received error from EPMC on request for " + msg.record.doi)
 
     if msg.record.title is not None:
@@ -413,7 +422,10 @@ def get_epmc_md(msg):
                 msg.record.add_provenance("processor", err)
         except epmc.EuropePMCException as e:
             # log, then just try the next one
-            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for exact title")
+            code = "None"
+            if e.response is not None:
+                code = str(e.response.status_code)
+            app.logger.info("EPMC API returned " + code + " to request for exact title")
             msg.record.add_provenance("processor", "Received error from EPMC on request for exact title")
 
         app.logger.info("Requesting EPMC metadata by fuzzy Title " + msg.record.title)
@@ -428,7 +440,10 @@ def get_epmc_md(msg):
                 msg.record.add_provenance("processor", err)
         except epmc.EuropePMCException as e:
             # log, then just try the next one
-            app.logger.info("EPMC API returned " + str(e.response.status_code) + " to request for fuzzy title")
+            code = "None"
+            if e.response is not None:
+                code = str(e.response.status_code)
+            app.logger.info("EPMC API returned " + code + " to request for fuzzy title")
             msg.record.add_provenance("processor", "Received error from EPMC on request for fuzzy title")
 
     app.logger.info("EPMC metadata not found by any means available")
@@ -513,10 +528,18 @@ def doaj_lookup(msg):
     app.logger.info("Looking up record in DOAJ " + str(msg.record.id))
     client = doaj.DOAJSearchClient()
     journals = client.journals_by_issns(msg.record.issn)
-    return len(journals) > 0
+    if journals is None:
+        app.logger.info("Got no response from DOAJ")
+        msg.record.add_provenance("doaj", "unable to retrieve data from DOAJ at this time")
+        return None
+    else:
+        return len(journals) > 0
 
 def hybrid_or_oa(msg):
     oajournal = doaj_lookup(msg)
+    if oajournal is None:
+        # doaj lookup failed
+        return
     msg.record.journal_type = "oa" if oajournal else "hybrid"
     if oajournal:
         msg.record.add_provenance("processor", "Journal with ISSN %(issn)s was found in DOAJ; assuming OA" % {"issn" : ",".join(msg.record.issn)})
@@ -575,12 +598,13 @@ def extract_fulltext_info(msg, fulltext):
 def extract_fulltext_licence(msg, fulltext):
     type, url, para = fulltext.get_licence_details()
 
-    # if there is a type, and it is one of the ones we know about
-    if type is not None and type in [l for u, l in licences.urls]:
-        msg.record.licence_type = type
-        msg.record.add_provenance("processor", "Fulltext XML specifies licence type as %(license)s" % {"license" : type})
-        msg.record.licence_source = "epmc_xml"
-        return
+    if type is not None:
+        for t, c in licences.types.iteritems():
+            if type == t:
+                msg.record.licence_type = c
+                msg.record.add_provenance("processor", "Fulltext XML specifies licence type as %(license)s" % {"license" : type})
+                msg.record.licence_source = "epmc_xml"
+                return
 
     # if there is a url, and it begins with one of the urls we know about (so we can capture multiple cc licence versions with one url)
     if url is not None:
@@ -679,11 +703,15 @@ def send_complete_mail(job):
 
     mail.send_mail(to=[job.contact_email], subject="[oac] Processing complete", template_name="emails/complete_email_template.txt", url=url)
 
+# create the type map which maps OAG licences to the way we want to represent them internally
 TYPE_MAP = {
     "free-to-read" : "non-standard-licence",
     "cc-nc-nd" : "cc-by-nc-nd",
     "other-closed" : "non-standard-licence"
 }
+
+# add to the type map the known EPMC licence types, with their canonical forms, so we get uniform representation
+TYPE_MAP.update(licences.types)
 
 def translate_licence_type(ltype):
     if ltype in TYPE_MAP:

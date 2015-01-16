@@ -908,7 +908,7 @@ class TestWorkflow(testindex.ESTestCase):
         lp = l[0].find("license-p")
 
         # licence in type attribute
-        l[0].set("license-type", "cc-by")
+        l[0].set("license-type", "cc by")   # note the missing "-"; to test the licence representation variations at the same time
         l[0].set("{http://www.w3.org/1999/xlink}href", "http://random.url")
         lp.clear()
         s = etree.tostring(xml)
