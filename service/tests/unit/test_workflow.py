@@ -896,7 +896,7 @@ class TestWorkflow(testindex.ESTestCase):
         workflow.extract_fulltext_info(msg, ft)
 
         assert record.has_ft_xml is True
-        assert len(record.provenance) == 1
+        assert len(record.provenance) == 2
         assert record.aam is True
         assert record.aam_from_xml is True
 

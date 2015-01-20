@@ -612,6 +612,7 @@ def extract_fulltext_info(msg, fulltext):
     # record whether the fulltext tells us this is an author manuscript
     msg.record.aam = fulltext.is_aam
     msg.record.aam_from_xml = True
+    msg.record.add_provenance("processor", "AAM status set from Fulltext XML")
 
 def extract_fulltext_licence(msg, fulltext):
     type, url, para = fulltext.get_licence_details()
