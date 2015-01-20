@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+        u"Fulltext in EPMC?" : "in_epmc",
+        u"XML Fulltext?" : "xml_ft_in_epmc",
+        u"AAM?" : "aam",
+        u"Open Access?" : "open_access",
+        u"Licence" : "licence",
+        u"Licence Source" : "licence_source",
+        u"Journal Type" : "journal_type",
+        u"Correct Article Confidence" : "confidence",
+        u"Standard Compliance?" : "standard_compliance",
+        u"Deluxe Compliance?" : "deluxe_compliance",
+        u"ISSN" : "issn",
+        u"Compliance Processing Ouptut" : "provenance"
+<h1>Output Spreadsheet Format</h1>
+
+<p>When you download your processed spreadsheet, it will reflect back at you the columns that you uploaded, and
+        add a number of other compliance analysis columns.  Those columns can be interpreted as described below.
+
+<table>
+    <thead>
+        <tr>
+            <td>Spreadsheet Field</td>
+            <td>Description</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Fulltext in EPMC?</td>
+            <td>Does the fulltext of the article appear in some form in EPMC?  This is equivalent to the EPMC metadata record asserting <strong>inEPMC: Y</strong></td>
+        </tr>
+        <tr>
+            <td>XML Fulltext?</td>
+            <td>Does the XML version of the fulltext of the article appear in EPMC?  This will be a subset of those where the fulltext appears in some form, and all OA articles SHOULD have this content available.</td>
+        </tr>
+        <tr>
+            <td>AAM?</td>
+            <td>Is the copy of the paper in EPMC the Accepted Authors Manuscript (AAM)?  If the XML fulltext is present in EPMC then this information will be lifted from there, otherwise we page-scrape the EPMC web page for the article to detect whether it is the author manuscript</td>
+        </tr>
+        <tr>
+            <td>PMCID</td>
+            <td></td>
+        </tr>
+
+    </tbody>
+</table>
+
+{% endblock %}
