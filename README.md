@@ -82,6 +82,7 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
             "aam_from_ft_xml" : true|false,
             "aam_from_epmc" : true|false,
             "issn" : ["<issn for this journal>"],
+            "journal" : "<name of journal>",
             "currently_in_oag" : true|false,
             "oag_pmcid" : "not_sent|sent|success|fto|error",
             "oag_doi" : "not_sent|sent|success|fto|error",

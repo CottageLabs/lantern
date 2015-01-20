@@ -264,6 +264,14 @@ class Record(RecordDAO, DataObj):
         self._add_to_list("supporting_info.issn", val, self._utf8_unicode())
 
     @property
+    def journal(self):
+        return self._get_single("supporting_info.journal", self._utf8_unicode())
+
+    @journal.setter
+    def journal(self, val):
+        self._set_single("supporting_info.journal", val, self._utf8_unicode())
+
+    @property
     def in_oag(self):
         return self._get_single("supporting_info.currently_in_oag", bool)
 

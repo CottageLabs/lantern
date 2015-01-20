@@ -151,12 +151,22 @@ def output_csv(job):
             "standard_compliance" : r.standard_compliance,
             "deluxe_compliance" : r.deluxe_compliance,
             "provenance" : serialise_provenance(r),
-            "issn" : ", ".join(r.issn)
+            "issn" : ", ".join(r.issn),
+
+            # this is also a result of the run, but it can be overridden by the source data
+            # if it was passed in and not empty
+            "journal_title" : r.journal
         }
 
         # add the original data if present, being careful not to overwrite the data we have produced
         if r.source is not None:
+            # list the fields to overwrite in the source.  Note that journal_title should only be overwritten
+            # if the source does not contain a value
             overwrite = obj.keys()
+            jt = r.source.get("journal_title")
+            if jt is not None and jt != "":
+                del overwrite["journal_title"]
+
             original = deepcopy(r.source)
             for k in overwrite:
                 if k in original:
@@ -575,16 +585,24 @@ def extract_metadata(msg, epmc_md):
     :param epmc_md: EPMC Metadata object
     :return:
     """
+
+    # in epmc?
     if epmc_md.in_epmc is not None:
         msg.record.in_epmc = epmc_md.in_epmc == "Y"
 
+    # is oa?
     if epmc_md.is_oa is not None:
         msg.record.is_oa = epmc_md.is_oa == "Y"
 
+    # any issns
     if epmc_md.issn is not None:
         msg.record.add_issn(epmc_md.issn)
     if epmc_md.essn is not None:
         msg.record.add_issn(epmc_md.essn)
+
+    # the journal
+    if epmc_md.journal is not None:
+        msg.record.journal = epmc_md.journal
 
 def extract_fulltext_info(msg, fulltext):
     # record that the fulltext exists in the first place
