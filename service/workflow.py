@@ -250,7 +250,7 @@ def process_record(msg):
     :return:
     """
 
-    app.logger.info("Processing record " + msg.record.id)
+    app.logger.info("Processing record " + str(msg.record.id))
 
     # get the epmc metadata for this record
     epmc_md, confidence = get_epmc_md(msg)

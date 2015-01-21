@@ -17,6 +17,9 @@ class SpreadsheetJobDAO(dao.ESDAO):
         total, epmc, oag = RecordDAO.upload_completeness(self.id)
         ec = epmc.get("T", 0.0)
         oc = oag.get("T", 0.0)
+        if total == 0:
+            # we will get a divide-by-zero error
+            return 0.0    # 100% isn't right, but 0% isn't really right either
         pc = (((float(ec) + float(oc)) / 2) / float(total)) * 100.0
         return pc
 
