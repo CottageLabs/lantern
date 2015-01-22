@@ -246,3 +246,94 @@ class TestModels(ESTestCase):
         record.is_oa = True
         assert record.deluxe_compliance is True
         assert record.standard_compliance is True
+
+    def test_06_duplicates(self):
+        # first make ourselves a job to work on
+        job = SpreadsheetJob()
+        job.save()
+
+        # now make a bunch of records, some unique and some duplicate
+
+        # unique pmcid
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCunique"
+        r.save()
+
+        # duplicate pmcid
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.save()
+
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.save()
+
+        # unique pmid
+        r = Record()
+        r.upload_id = job.id
+        r.pmid = "unique"
+        r.save()
+
+        # duplicate pmid
+        r = Record()
+        r.upload_id = job.id
+        r.pmid = "dupe"
+        r.save()
+
+        r = Record()
+        r.upload_id = job.id
+        r.pmid = "dupe"
+        r.save()
+
+        # unique doi
+        r = Record()
+        r.upload_id = job.id
+        r.doi = "10.unique"
+        r.save()
+
+        # duplicate pmcid
+        r = Record()
+        r.upload_id = job.id
+        r.doi = "10.dupe"
+        r.save()
+
+        r = Record()
+        r.upload_id = job.id
+        r.doi = "10.dupe"
+        r.save()
+
+        # one that is a duplicate of everything
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.pmid = "dupe"
+        r.doi = "10.dupe"
+        r.save()
+
+        # one that is confused about its duplication
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.pmid = "dupe"
+        r.doi = "10.notdupe"
+        r.save()
+
+        time.sleep(2)
+
+        dupes = job.list_duplicate_identifiers()
+
+        # check the structure of the response
+        assert "pmcid" in dupes
+        assert "pmid" in dupes
+        assert "doi" in dupes
+
+        # check the contentes
+        assert len(dupes["pmcid"]) == 1
+        assert "PMCdupe" in dupes["pmcid"]
+        assert len(dupes["pmid"]) == 1
+        assert "dupe" in dupes["pmid"]
+        assert len(dupes["doi"]) == 1
+        assert "10.dupe" in dupes["doi"]

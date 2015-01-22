@@ -235,6 +235,10 @@ def process_job(job):
         msg = WorkflowMessage(job, record, oag_register)
         process_record(msg)
 
+    # at this point we have fleshed out all possible identifiers, so we need to check
+    # for duplicates
+    duplicate_check(job)
+
     # the oag_register will now contain all the records that need to go on to OAG
     process_oag(oag_register, job)
 
@@ -274,7 +278,7 @@ def process_record(msg):
 
     # now we've extracted all we can from the EPMC metadata, let's save before moving on to the
     # next external request
-    msg.record.save()
+    # msg.record.save()
 
     # obtain the fulltext, and if found, extract metadata and licence information from it
     fulltext = get_epmc_fulltext(msg)
@@ -283,7 +287,7 @@ def process_record(msg):
         extract_fulltext_licence(msg, fulltext)
 
         # since we have extracted data, and are about to do another external request, save again
-        msg.record.save()
+        # msg.record.save()
     else:
         msg.record.has_ft_xml = False
 
@@ -301,6 +305,48 @@ def process_record(msg):
 
     # after this, all additional work will be picked up by the OAG processing chain, asynchronously
     app.logger.info("Record processed")
+
+def duplicate_check(job):
+    dupes = job.list_duplicate_identifiers()
+
+    dupemsg = "This record's {type} is a duplicate of another in the same upload.  Compliance results should therefore be reviewed carefully, in case this indicates an erroneous set of identifiers"
+
+    inmem = {}
+
+    app.logger.info("Found the following duplicates in job {x}: {pmc} PMCIDs, {pmid} PMIDs, {doi} DOIs".format(
+        x=job.id,
+        pmc=len(dupes.get("pmcid", [])),
+        pmid=len(dupes.get("pmid", [])),
+        doi=len(dupes.get("doi", []))
+    ))
+
+    for id in dupes.get("pmcid", []):
+        matches = models.Record.get_by_identifier(id, job.id, "pmcid")
+        for r in matches:
+            r.add_provenance("processor", dupemsg.format(type="PMCID"))
+            r.save()
+            inmem[r.id] = r
+
+    for id in dupes.get("pmid", []):
+        matches = models.Record.get_by_identifier(id, job.id, "pmid")
+        for r in matches:
+            if r.id in inmem:
+                r = inmem[r.id]
+            r.add_provenance("processor", dupemsg.format(type="PMID"))
+            r.save()
+            inmem[r.id] = r
+
+    for id in dupes.get("doi", []):
+        matches = models.Record.get_by_identifier(id, job.id, "doi")
+        for r in matches:
+            if r.id in inmem:
+                r = inmem[r.id]
+            r.add_provenance("processor", dupemsg.format(type="DOI"))
+            r.save()
+
+    # this changes a bunch of stuff, so force a wait before proceeding
+    time.sleep(2)
+
 
 def process_oag(oag_register, job):
     app.logger.info("Running " + str(len(oag_register)) + " identifiers through OAG")
@@ -471,7 +517,9 @@ def register_with_oag(msg):
             return
         else:
             app.logger.info("Sending PMCID " + msg.record.pmcid + " to OAG for record " + msg.record.id)
-            msg.oag_register.append({"id" : msg.record.pmcid, "type" : "pmcid"})
+            obj = {"id" : msg.record.pmcid, "type" : "pmcid"}
+            if obj not in msg.oag_register:
+                msg.oag_register.append(obj)
             msg.record.in_oag = True
             msg.record.oag_pmcid = "sent"
             msg.record.save()
@@ -486,7 +534,9 @@ def register_with_oag(msg):
     # next priority is to send a doi if there is one
     if msg.record.doi is not None:
         app.logger.info("Sending DOI " + msg.record.doi + " to OAG for record " + msg.record.id)
-        msg.oag_register.append({"id" : msg.record.doi, "type" : "doi"})
+        obj = {"id" : msg.record.doi, "type" : "doi"}
+        if obj not in msg.oag_register:
+            msg.oag_register.append(obj)
         msg.record.in_oag = True
         msg.record.oag_doi = "sent"
         msg.record.save()
@@ -495,7 +545,9 @@ def register_with_oag(msg):
     # lowest priority is to send the pmid if there is one
     if msg.record.pmid is not None:
         app.logger.info("Sending PMID " + msg.record.pmid + " to OAG for record " + msg.record.id)
-        msg.oag_register.append({"id" : msg.record.pmid, "type" : "pmid"})
+        obj = {"id" : msg.record.pmid, "type" : "pmid"}
+        if obj not in msg.oag_register:
+            msg.oag_register.append(obj)
         msg.record.in_oag = True
         msg.record.oag_pmid = "sent"
         msg.record.save()
@@ -655,15 +707,21 @@ def extract_fulltext_licence(msg, fulltext):
 def add_to_rerun(record, idtype, oag_rerun):
     if idtype == "pmcid":
         if record.doi is not None:
-            oag_rerun.append({"id" : record.doi, "type" : "doi"})
+            obj = {"id" : record.doi, "type" : "doi"}
+            if obj not in oag_rerun:
+                oag_rerun.append(obj)
             return True
         if record.pmid is not None:
-            oag_rerun.append({"id" : record.pmid, "type" : "pmid"})
+            obj = {"id" : record.pmid, "type" : "pmid"}
+            if obj not in oag_rerun:
+                oag_rerun.append(obj)
             return True
         return False
     elif idtype == "doi":
         if record.pmid is not None:
-            oag_rerun.append({"id" : record.pmid, "type" : "pmid"})
+            obj = {"id" : record.pmid, "type" : "pmid"}
+            if obj not in oag_rerun:
+                oag_rerun.append(obj)
             return True
         return False
     elif idtype == "pmid":
@@ -708,6 +766,9 @@ def oag_callback_closure():
     return oag_callback
 
 def send_complete_mail(job):
+    if job.contact_email is None:
+        app.logger.warn("Unable to send email for job {x} as there is no contact address".format(x=job.id))
+
     from flask import url_for
     url_root = app.config.get("SERVICE_BASE_URL")
 
@@ -720,7 +781,10 @@ def send_complete_mail(job):
         url = url_root + url_for("progress", job_id=job.id)
         ctx.pop()
 
-    mail.send_mail(to=[job.contact_email], subject="[oac] Processing complete", template_name="emails/complete_email_template.txt", url=url)
+    try:
+        mail.send_mail(to=[job.contact_email], subject="[oac] Processing complete", template_name="emails/complete_email_template.txt", url=url)
+    except:
+        app.logger.warn("Problem sending email")
 
 # create the type map which maps OAG licences to the way we want to represent them internally
 TYPE_MAP = {
@@ -845,54 +909,68 @@ def oag_record_callback(result, oag_rerun, ssjob):
     if type == "epmc":
         type = "pmcid"
 
-    # try to get a record from the id, job id, and type
-    record = models.Record.get_by_identifier(id, ssjob.id, type)
-
-    # if we didn't find a unique record, we can't do anything
-    if record is None:
-        app.logger.info("was unable to relate OAG response to record")
-        return
-
-    assert isinstance(record, models.Record)    # For pycharm type inspection
-
+    # try to get record from the id, job id, and type (note that there could be one, if the user has
+    # given us duplicate ids, or we discovered two ids share a duplicate along the way
+    records = models.Record.get_by_identifier(id, ssjob.id, type)
     app.logger.info("handling OAG response for " + id)
 
-    # set its in_oag flag and re-save it
-    record.in_oag = False
-    record.save()
+    # each record we have that matches this identifier has to be processed in the same
+    # way, so we just iterate over them
+    found = 0
+    for record in records:
+        found += 1
 
-    # by this point we must know the type
-    if type is None:
-        if id == record.pmcid:
-            type = "pmcid"
-        elif id == record.pmid:
-            type = "pmid"
-        elif id == record.doi:
-            type = "doi"
-        else:
-            app.logger.info("unable to determine the type for " + str(id))
+        assert isinstance(record, models.Record)    # For pycharm type inspection
 
-    if type == "pmcid":
-        if iserror:
-            handle_error(record, "pmcid", result.get("error"), oag_rerun)
-            return
+        # set its in_oag flag and re-save it
+        record.in_oag = False
+        record.save()
+
+        # by this point we must know the type
+        if type is None:
+            if id == record.pmcid:
+                type = "pmcid"
+            elif id == record.pmid:
+                type = "pmid"
+            elif id == record.doi:
+                type = "doi"
+            else:
+                app.logger.info("unable to determine the type for " + str(id))
+
+        if type == "pmcid":
+            if iserror:
+                handle_error(record, "pmcid", result.get("error"), oag_rerun)
+                # return
+                continue                # These continues are here not because they have any immediate effect
+            else:
+                if not record.aam_from_xml:
+                    handle_aam(result, record)
+                process_licence(result, record, type, oag_rerun)
+                continue                # but because they remind us that this is the end of the processing chain
+        elif type == "doi":
+            if iserror:
+                handle_error(record, "doi", result.get("error"), oag_rerun)
+                # return
+                continue                # for this particular record.  If we add further logic below, this will
+            else:
+                process_licence(result, record, type, oag_rerun)
+                continue                # remind us to take that into consideration, and we won't accidentally
+        elif type == "pmid":
+            if iserror:
+                handle_error(record, "pmid", result.get("error"), oag_rerun)
+                continue                # do more work on the record than we intended
+            else:
+                process_licence(result, record, type, oag_rerun)
+                continue
         else:
-            if not record.aam_from_xml:
-                handle_aam(result, record)
-            process_licence(result, record, type, oag_rerun)
-    elif type == "doi":
-        if iserror:
-            handle_error(record, "doi", result.get("error"), oag_rerun)
-            return
-        else:
-            process_licence(result, record, type, oag_rerun)
-    elif type == "pmid":
-        if iserror:
-            handle_error(record, "pmid", result.get("error"), oag_rerun)
-        else:
-            process_licence(result, record, type, oag_rerun)
+            app.logger.info("type of id was not one of pmcid, doi, pmid")
+            continue
+
+    # summary log of what we did
+    if found == 0:
+        app.logger.info("was unable to relate OAG response to record")
     else:
-        app.logger.info("type of id was not one of pmcid, doi, pmid")
+        app.logger.info("Updated {x} records from OAG response".format(x=found))
 
 
 

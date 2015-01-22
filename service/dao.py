@@ -23,6 +23,10 @@ class SpreadsheetJobDAO(dao.ESDAO):
         pc = (((float(ec) + float(oc)) / 2) / float(total)) * 100.0
         return pc
 
+    def list_duplicate_identifiers(self):
+        return RecordDAO.list_duplicates(self.id)
+
+
 class SpreadsheetStatusQuery(object):
     def __init__(self, status):
         self.status = status
@@ -46,15 +50,17 @@ class RecordDAO(dao.ESDAO):
         return cls.object_query(q.query())
 
     @classmethod
+    def count_by_upload(cls, sheet_id):
+        q = RecordSheetQuery(sheet_id, 0)
+        return cls.count(q.query())
+
+    @classmethod
     def get_by_identifier(cls, identifier, upload, type=None):
         if type is not None:
             q = RecordTypedIdentifierQuery(identifier, type, upload)
         else:
             q = RecordUntypedIdentifierQuery(identifier, upload)
-        res = cls.object_query(q.query())
-        if len(res) > 0:
-            return res[0]
-        return None
+        return cls.iterate(q.query())
 
     @classmethod
     def upload_completeness(cls, upload_id):
@@ -72,6 +78,38 @@ class RecordDAO(dao.ESDAO):
            oag[f.get("term")] = f.get("count", 0)
 
         return total, epmc, oag
+
+    @classmethod
+    def list_duplicates(cls, sheet_id):
+        max = RecordDAO.count_by_upload(sheet_id)
+        q = RecordIdentifierFacetQuery(sheet_id, max)
+        res = cls.query(q.query())
+
+        pmcids = res.get("facets", {}).get("pmcid", {}).get("terms", [])
+        pmids = res.get("facets", {}).get("pmid", {}).get("terms", [])
+        dois = res.get("facets", {}).get("doi", {}).get("terms", [])
+
+        duplicates = {"pmcid" : [], "pmid" : [], "doi" : []}
+
+        for term in pmcids:
+            if term.get("count", 0) > 1:
+                duplicates["pmcid"].append(term.get("term"))
+            else:
+                break   # Saves us a few cycles, since the array is ordered by count
+
+        for term in pmids:
+            if term.get("count", 0) > 1:
+                duplicates["pmid"].append(term.get("term"))
+            else:
+                break   # Saves us a few cycles, since the array is ordered by count
+
+        for term in dois:
+            if term.get("count", 0) > 1:
+                duplicates["doi"].append(term.get("term"))
+            else:
+                break   # Saves us a few cycles, since the array is ordered by count
+
+        return duplicates
 
 class RecordTypedIdentifierQuery(object):
     def __init__(self, identifier, type, upload):
@@ -140,6 +178,39 @@ class RecordsCompleteQuery(object):
             "facets" : {
                 "epmc" : {"terms" : {"field" : "supporting_info.epmc_complete"}},
                 "oag" : {"terms" : {"field" : "supporting_info.oag_complete"}},
+            }
+        }
+
+class RecordIdentifierFacetQuery(object):
+    def __init__(self, sheet_id, max_size=100):
+        self.sheet_id = sheet_id
+        self.max_size = max_size
+
+    def query(self):
+        return {
+            "query": {
+                "term": {"upload.id.exact": self.sheet_id}
+            },
+            "size": 0,
+            "facets": {
+                "pmcid": {
+                    "terms": {
+                        "field": "identifiers.pmcid.exact",
+                        "size" : self.max_size
+                    }
+                },
+                "pmid": {
+                    "terms": {
+                        "field": "identifiers.pmid.exact",
+                        "size" : self.max_size
+                    }
+                },
+                "doi": {
+                    "terms": {
+                        "field": "identifiers.doi.exact",
+                        "size" : self.max_size
+                    }
+                }
             }
         }
 

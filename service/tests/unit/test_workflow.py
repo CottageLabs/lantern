@@ -86,6 +86,11 @@ class TestWorkflow(testindex.ESTestCase):
         workflow.add_to_rerun(record, "pmid", oag)
         assert len(oag) == 0
 
+        # duplicate of existing object on stack
+        oag = [{"id" : "1234", "type" : "pmid"}]
+        workflow.add_to_rerun(record, "pmid", oag)
+        assert len(oag) == 1
+
     def test_02_send_to_oag(self):
         record = models.Record()
 
@@ -169,6 +174,14 @@ class TestWorkflow(testindex.ESTestCase):
         workflow.register_with_oag(msg)
         assert len(oag) == 0
 
+        # identifier which has previously been added to the run
+        record.pmid = "1234"
+        oag = [{"id" : "1234", "type" : "pmid"}]
+        msg = workflow.WorkflowMessage(record=record, oag_register=oag)
+        workflow.register_with_oag(msg)
+        assert len(oag) == 1
+
+
     def test_03_handle_oag_response_01_pmcid_success(self):
         # first make ourselves a job/record that we want to enhance
         job = models.SpreadsheetJob()
@@ -206,7 +219,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid").next()
         assert isinstance(r2, models.Record)
         assert r2.id == record.id
         assert r2.pmcid == "PMC1234"
@@ -261,7 +274,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid").next()
         assert isinstance(r2, models.Record)
 
         # provenance added, pmcid=fto, aam set
@@ -310,7 +323,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid").next()
         assert isinstance(r2, models.Record)
 
         # expecting no licence or aam
@@ -363,7 +376,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid").next()
         assert isinstance(r2, models.Record)
 
         # expecting no changes
@@ -408,7 +421,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid")
+        r2 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid").next()
         assert isinstance(r2, models.Record)
 
         # provenance added, pmcid=error, pmid reprocess
@@ -453,7 +466,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("10.1234", job.id) # leave out the "doi" type just for the hell of it
+        r2 = models.Record.get_by_identifier("10.1234", job.id).next() # leave out the "doi" type just for the hell of it
         assert isinstance(r2, models.Record)
 
         # licence added, source=publisher, doi=success, provenance added
@@ -503,7 +516,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("10.1234", job.id)
+        r2 = models.Record.get_by_identifier("10.1234", job.id).next()
         assert isinstance(r2, models.Record)
 
         # provenance added, doi=fto, pmid reprocess
@@ -544,7 +557,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("10.1234", job.id)
+        r2 = models.Record.get_by_identifier("10.1234", job.id).next()
         assert isinstance(r2, models.Record)
 
         # provenance added, pmcid=error, pmid reprocess
@@ -589,7 +602,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("1234", job.id, "pmid")
+        r2 = models.Record.get_by_identifier("1234", job.id, "pmid").next()
         assert isinstance(r2, models.Record)
 
         # licence added, source=publisher, doi=success, provenance added
@@ -636,7 +649,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("1234", job.id, "pmid")
+        r2 = models.Record.get_by_identifier("1234", job.id, "pmid").next()
         assert isinstance(r2, models.Record)
 
         # provenance added, doi=fto, pmid reprocess
@@ -677,7 +690,7 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("1234", job.id, "pmid")
+        r2 = models.Record.get_by_identifier("1234", job.id, "pmid").next()
         assert isinstance(r2, models.Record)
 
         # provenance added, pmcid=error, pmid reprocess
@@ -711,143 +724,6 @@ class TestWorkflow(testindex.ESTestCase):
         assert oj is not None
         state = oj.state()
         assert len(state.pending) == 4
-
-
-    """
-    THIS TEST IS NOW DEFUNCT, AS THE CODE IT TESTS IS NO LONGER IN USE
-    def test_04_process_oag_prototype(self):
-        def mock_post(*args, **kwargs):
-            # fall back to original requests module
-            if args[0] != "http://howopenisit.org/lookup":
-                return self.old_post(*args, **kwargs)
-
-            global post_counter
-
-            class MockResponse(object):
-                def __init__(self):
-                    self.status_code = None
-                    self.text = None
-
-            if post_counter == 0:
-                obj = {
-                    "requested": 4,
-                    "results": [
-                        {
-                            "identifier" : [{"id" : "PMC1234", "type" : "pmcid"}],
-                            "license" : [{
-                                "type" : "cc-by",
-                                "provenance" : {"description" : "Provenance PMC1234"}
-                            }]
-                        },
-                        {
-                            "identifier" : [{"id" : "10.1234", "type" : "doi"}],
-                            "license" : [{
-                                "type" : "failed-to-obtain-license",
-                                "provenance" : {"description" : "FTO 10.1234"}
-                            }]
-                        }
-                    ],
-                    "errors":[
-                        {
-                            "identifier" : {"id" : "10.5678", "type" : "doi"},
-                            "error" : "error 1"
-                        },
-                        {
-                            "identifier" : {"id" : "abcd", "type" : "pmid"},
-                            "error" : "error 2"
-                        }
-                    ]
-                }
-            elif post_counter == 1:
-                obj = {
-                    "requested": 2,
-                    "results": [
-                        {
-                            "identifier" : [{"id" : "1234", "type" : "pmid"}],
-                            "license" : [{
-                                "type" : "cc nc-nd",
-                                "provenance" : {"description" : "WAS 10.1234"}
-                            }]
-                        },
-                        {
-                            "identifier" : [{"id" : "5678", "type" : "pmid"}],
-                            "license" : [{
-                                "type" : "failed-to-obtain-license",
-                                "provenance" : {"description" : "FTO 5678"}
-                            }]
-                        }
-                    ]
-                }
-            else:
-                obj = {}
-            resp = MockResponse()
-            resp.status_code = 200
-            resp.text = json.dumps(obj)
-
-            post_counter += 1
-            return resp
-
-        requests.post = mock_post
-
-        job = models.SpreadsheetJob()
-        job.status_code = "processing"
-
-        r1 = models.Record()
-        r1.pmcid = "PMC1234"
-        r1.save()
-
-        r2 = models.Record()
-        r2.doi = "10.1234"
-        r2.pmid = "1234"
-        r2.save()
-
-        r3 = models.Record()
-        r3.doi = "10.5678"
-        r3.pmid = "5678"
-        r3.save()
-
-        r4 = models.Record()
-        r4.pmid = "abcd"
-        r4.save()
-
-        oag_register = [
-            {"id" : "PMC1234", "type" : "pmcid"},
-            {"id" : "10.1234", "type" : "doi"},
-            {"id" : "10.5678", "type" : "doi"},
-            {"id" : "abcd", "type" : "pmid"}
-        ]
-
-        time.sleep(2)
-        workflow.process_oag_direct(oag_register, job)
-
-        assert job.status_code == "complete"
-
-        time.sleep(2)
-        r1 = models.Record.get_by_identifier("pmcid", "PMC1234")
-        r2 = models.Record.get_by_identifier("doi", "10.1234")
-        r3 = models.Record.get_by_identifier("doi", "10.5678")
-        r4 = models.Record.get_by_identifier("pmid", "abcd")
-
-        assert isinstance(r1, models.Record)
-        assert r1.licence_type == "cc-by"
-        assert r1.oag_pmcid == "success"
-
-        assert isinstance(r2, models.Record)
-        assert r2.licence_type == "cc nc-nd"
-        assert r2.oag_doi == "fto"
-        assert r2.oag_pmid == "success"
-
-        assert isinstance(r3, models.Record)
-        assert r3.licence_type is None
-        assert r3.oag_doi == "error"
-        assert r3.oag_pmid == "fto"
-
-        assert isinstance(r4, models.Record)
-        assert r4.licence_type is None
-        assert r4.oag_pmid == "error"
-
-        assert post_counter == 2
-    """
 
     def test_05_populate_identifiers(self):
         record = models.Record()
@@ -1235,7 +1111,211 @@ class TestWorkflow(testindex.ESTestCase):
         # give the index a moment to catch up
         time.sleep(2)
 
-        r2 = models.Record.get_by_identifier("PMC1234", job.id)
+        r2 = models.Record.get_by_identifier("PMC1234", job.id).next()
         assert isinstance(r2, models.Record)
 
         assert r2.licence_type == "non-standard-licence"
+
+    def test_13_duplicate_check(self):
+        # first make ourselves a job to work on
+        job = models.SpreadsheetJob()
+        job.save()
+
+        # now make a bunch of records, some unique and some duplicate
+
+        # unique pmcid
+        r = models.Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCunique"
+        r.save()
+
+        # duplicate pmcid
+        r = models.Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.save()
+
+        r = models.Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.save()
+
+        # unique pmid
+        r = models.Record()
+        r.upload_id = job.id
+        r.pmid = "unique"
+        r.save()
+
+        # duplicate pmid
+        r = models.Record()
+        r.upload_id = job.id
+        r.pmid = "dupe"
+        r.save()
+
+        r = models.Record()
+        r.upload_id = job.id
+        r.pmid = "dupe"
+        r.save()
+
+        # unique doi
+        r = models.Record()
+        r.upload_id = job.id
+        r.doi = "10.unique"
+        r.save()
+
+        # duplicate pmcid
+        r = models.Record()
+        r.upload_id = job.id
+        r.doi = "10.dupe"
+        r.save()
+
+        r = models.Record()
+        r.upload_id = job.id
+        r.doi = "10.dupe"
+        r.save()
+
+        # one that is a duplicate of everything
+        r = models.Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.pmid = "dupe"
+        r.doi = "10.dupe"
+        r.save()
+
+        # one that is confused about its duplication
+        r = models.Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.pmid = "dupe"
+        r.doi = "10.notdupe"
+        r.save()
+
+        time.sleep(2)
+
+        workflow.duplicate_check(job)
+
+        # for each record, check that it got the provenance
+
+        # unique pmcid - no provenance, one result
+        unique = models.Record.get_by_identifier("PMCunique", job.id, "pmcid")
+        ulen = 0
+        for u in unique:
+            ulen += 1
+            assert len(u.provenance) == 0
+        assert ulen == 1
+
+        # unique pmid - no provenance, one result
+        unique = models.Record.get_by_identifier("unique", job.id, "pmid")
+        ulen = 0
+        for u in unique:
+            ulen += 1
+            assert len(u.provenance) == 0
+        assert ulen == 1
+
+        # unique doi - no provenance, one result
+        unique = models.Record.get_by_identifier("10.unique", job.id, "doi")
+        ulen = 0
+        for u in unique:
+            ulen += 1
+            assert len(u.provenance) == 0
+        assert ulen == 1
+
+        # duplicates of pmcdupe
+        duped = models.Record.get_by_identifier("PMCdupe", job.id, "pmcid")
+        dlen = 0
+        for u in duped:
+            dlen += 1
+            prov = False
+            for p in u.provenance:
+                if "PMCID" in p[2]:
+                    prov = True
+                    break
+            assert prov
+        assert dlen == 4
+
+        # duplicates of pmid dupe
+        duped = models.Record.get_by_identifier("dupe", job.id, "pmid")
+        dlen = 0
+        for u in duped:
+            dlen += 1
+            prov = False
+            for p in u.provenance:
+                if "PMID" in p[2]:
+                    prov = True
+                    break
+            assert prov
+        assert dlen == 4
+
+        # duplicates of 10.dupe
+        duped = models.Record.get_by_identifier("10.dupe", job.id, "doi")
+        dlen = 0
+        for u in duped:
+            dlen += 1
+            prov = False
+            for p in u.provenance:
+                if "DOI" in p[2]:
+                    prov = True
+                    break
+            assert prov
+        assert dlen == 3
+
+    def test_14_oag_record_callback_duplicate(self):
+        # first make ourselves a job/record that we want to enhance
+        job = models.SpreadsheetJob()
+        job.save()
+
+        # make two distinct records with the same ids
+        record = models.Record()
+        record.upload_id = job.id
+        record.pmcid = "PMC1234"
+        record.save()
+
+        record = models.Record()
+        record.upload_id = job.id
+        record.pmcid = "PMC1234"
+        record.save()
+
+        time.sleep(2)
+
+        # construct the OAG response object, which has detected a licence
+        oag_result = {
+            "identifier" : [{
+                "id" : "PMC1234",
+                "type" : "pmcid"
+            }],
+            "license" : [{
+                "type" : "cc-by",
+                "provenance" : {
+                    "accepted_author_manuscript" : True,
+                    "description" : "Provenance PMC1234"
+                }
+            }]
+        }
+
+        # call the oag record callback
+        oag_rerun = []
+        workflow.oag_record_callback(oag_result, oag_rerun, job)
+
+        # give the index a moment to catch up
+        time.sleep(2)
+
+        # read the duplicate records out of the index
+        records = [r for r in models.Record.get_by_identifier("PMC1234", job.id, "pmcid")]
+
+        # there should be 2 of them
+        assert len(records) == 2
+        for record in records:
+            assert isinstance(r, models.Record)
+
+            # both records should have the same data
+            # licence added, source=epmc, pmcid=success, provenance added, aam set
+            assert record.licence_type == "cc-by"
+            assert record.licence_source == "epmc"
+            assert record.oag_pmcid == "success"
+            assert record.aam_from_epmc is True
+            assert record.aam is True
+            provs = [n for b, w, n in record.provenance]
+            assert len(provs) == 2
+            assert "PMC1234 - Provenance PMC1234" in provs
+            assert "Detected AAM status from EPMC web page" in provs
+            assert record.oag_complete is True
