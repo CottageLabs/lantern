@@ -22,6 +22,7 @@ if __name__ == "__main__":
 
     # we must create a job with a single record for it to be run
     job = models.SpreadsheetJob()
+    job.contact_email = "test@example.com"
     job.save()
 
     record = models.Record()
