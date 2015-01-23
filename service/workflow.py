@@ -116,6 +116,8 @@ def parse_csv(job):
 
     app.logger.info("Loaded " + str(i) + " records from spreadsheet")
 
+    # FIXME: I'm not totally convinced this a/ works or b/ is a good idea
+    # Refresh can behave quite strangely, sometimes,
     # refresh the index so the data is ready to use
     models.Record.refresh()
 
@@ -235,9 +237,21 @@ def process_job(job):
         msg = WorkflowMessage(job, record, oag_register)
         process_record(msg)
 
+    # FIXME: the last record is saved at the end of process_record, and then we go straight
+    # into a duplicate check, which may overwrite the record.  We should therefore refresh,
+    # wait, or perhaps better have the duplicates build up during the above process, so that
+    # we already know about them.  For the time being, including a time.sleep here as a weak
+    # stop-gap
+    time.sleep(2)
+
     # at this point we have fleshed out all possible identifiers, so we need to check
     # for duplicates
     duplicate_check(job)
+
+    # FIXME: duplicate check saves changes to records which may subsequently get picked up by OAG.
+    # Further down, OAG delays its start, but this is all a weak stop-gap.  Put in a time.sleep
+    # for the moment, but bear in mind we need a better long-term solution
+    time.sleep(2)
 
     # the oag_register will now contain all the records that need to go on to OAG
     process_oag(oag_register, job)
@@ -343,10 +357,6 @@ def duplicate_check(job):
                 r = inmem[r.id]
             r.add_provenance("processor", dupemsg.format(type="DOI"))
             r.save()
-
-    # this changes a bunch of stuff, so force a wait before proceeding
-    time.sleep(2)
-
 
 def process_oag(oag_register, job):
     app.logger.info("Running " + str(len(oag_register)) + " identifiers through OAG")
