@@ -1,6 +1,7 @@
 import sys
 import time
 import traceback
+import logging
 
 from octopus.lib import error_handler
 from octopus.core import app, initialise
@@ -10,7 +11,7 @@ from service.workflow import process_jobs
 def run():
     print "Starting OACWellcome Job Processor ... Started"
     initialise()
-    error_handler.setup_error_logging(app, "OACWellcome Runner Error")
+    error_handler.setup_error_logging(app, "OACWellcome Runner Error", stdout_logging_level=logging.DEBUG)
     while True:
         time.sleep(app.config.get('OACWELLCOME_JOBS_POLL_TIME', 2))
         try:
