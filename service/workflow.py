@@ -228,7 +228,9 @@ def process_job(job):
         try:
             parse_csv(job)
         except Exception:
-            app.logger.error("Trouble with parsing CSV {0}.csv for job {0}".format(job.id) + "\n\n" + traceback.format_exc())
+            thetraceback = traceback.format_exc()
+            app.logger.error("Trouble with parsing CSV {0}.csv for job {0}".format(job.id) + "\n\n" + thetraceback)
+            job.set_status(u'error', thetraceback)
             return
 
         # list all of the records, and work through them one by one doing all the processing
