@@ -4,7 +4,7 @@ from octopus.modules.doaj import client as doaj
 from octopus.modules.identifiers import pmid, doi, pmcid
 from octopus.lib import mail
 from service import models, sheets, licences
-import os, time
+import os, time, traceback
 from StringIO import StringIO
 from copy import deepcopy
 
@@ -221,44 +221,56 @@ def process_job(job):
     :return:    nothing
     """
 
-    app.logger.info("Processing spreadsheet job " + job.id)
+    try:
+        app.logger.info("Processing spreadsheet job " + job.id)
 
-    # start by switching the status of the job so it is active
-    job.status_code = "processing"
-    job.save()
+        # now we want to parse the csv itself to our record index
+        try:
+            parse_csv(job)
+        except Exception:
+            app.logger.error("Trouble with parsing CSV {0}.csv for job {0}".format(job.id) + "\n\n" + traceback.format_exc())
 
-    # now we want to parse the csv itself to our record index
-    parse_csv(job)
+        # list all of the records, and work through them one by one doing all the processing
+        records = models.Record.list_by_upload(job.id)
+        oag_register = []
+        for record in records:
+            msg = WorkflowMessage(job, record, oag_register)
+            try:
+                process_record(msg)
+            except Exception:
+                app.logger.error("Problem while processing record id {0}".format(record.id) + "\n\n" + traceback.format_exc())
 
-    # list all of the records, and work through them one by one doing all the processing
-    records = models.Record.list_by_upload(job.id)
-    oag_register = []
-    for record in records:
-        msg = WorkflowMessage(job, record, oag_register)
-        process_record(msg)
+        # FIXME: the last record is saved at the end of process_record, and then we go straight
+        # into a duplicate check, which may overwrite the record.  We should therefore refresh,
+        # wait, or perhaps better have the duplicates build up during the above process, so that
+        # we already know about them.  For the time being, including a time.sleep here as a weak
+        # stop-gap
+        time.sleep(2)
 
-    # FIXME: the last record is saved at the end of process_record, and then we go straight
-    # into a duplicate check, which may overwrite the record.  We should therefore refresh,
-    # wait, or perhaps better have the duplicates build up during the above process, so that
-    # we already know about them.  For the time being, including a time.sleep here as a weak
-    # stop-gap
-    time.sleep(2)
+        # at this point we have fleshed out all possible identifiers, so we need to check
+        # for duplicates
+        try:
+            duplicate_check(job)
+        except Exception:
+            app.logger.error("Problem while detecting duplicates in job {0}".format(job.id) + "\n\n" + traceback.format_exc())
 
-    # at this point we have fleshed out all possible identifiers, so we need to check
-    # for duplicates
-    duplicate_check(job)
+        # FIXME: duplicate check saves changes to records which may subsequently get picked up by OAG.
+        # Further down, OAG delays its start, but this is all a weak stop-gap.  Put in a time.sleep
+        # for the moment, but bear in mind we need a better long-term solution
+        time.sleep(2)
 
-    # FIXME: duplicate check saves changes to records which may subsequently get picked up by OAG.
-    # Further down, OAG delays its start, but this is all a weak stop-gap.  Put in a time.sleep
-    # for the moment, but bear in mind we need a better long-term solution
-    time.sleep(2)
+        # the oag_register will now contain all the records that need to go on to OAG
+        try:
+            process_oag(oag_register, job)
+        except Exception:
+            app.logger.error("Problem while creating OAGR jobs for OACWellcome job id {0}".format(job.id) + "\n\n" + traceback.format_exc())
 
-    # the oag_register will now contain all the records that need to go on to OAG
-    process_oag(oag_register, job)
+        # beyond this point all the processing is handled asynchronously, so this function
+        # is now complete
+        app.logger.info("Processing spreadsheet " + job.id + " complete")
 
-    # beyond this point all the processing is handled asynchronously, so this function
-    # is now complete
-    app.logger.info("Processing spreadsheet " + job.id + " complete")
+    except Exception:
+        app.logger.error(traceback.format_exc())
 
 def process_record(msg):
     """
