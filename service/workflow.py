@@ -229,6 +229,7 @@ def process_job(job):
             parse_csv(job)
         except Exception:
             app.logger.error("Trouble with parsing CSV {0}.csv for job {0}".format(job.id) + "\n\n" + traceback.format_exc())
+            return
 
         # list all of the records, and work through them one by one doing all the processing
         records = models.Record.list_by_upload(job.id)
@@ -264,13 +265,15 @@ def process_job(job):
             process_oag(oag_register, job)
         except Exception:
             app.logger.error("Problem while creating OAGR jobs for OACWellcome job id {0}".format(job.id) + "\n\n" + traceback.format_exc())
+            return
 
         # beyond this point all the processing is handled asynchronously, so this function
         # is now complete
         app.logger.info("Processing spreadsheet " + job.id + " complete")
 
     except Exception:
-        app.logger.error(traceback.format_exc())
+        app.logger.error("Unknown problem while processing job {0}".format(job.id) + "\n\n" + traceback.format_exc())
+        return
 
 def process_record(msg):
     """
