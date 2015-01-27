@@ -9,7 +9,9 @@ setup(
         "esprit",
         "Flask==0.9",
         "WTForms==2.0.1",
-        "flask_mail==0.9.1"
+        "flask_mail==0.9.1",
+        "newrelic==2.42.0.35",
+        "gunicorn==19.1.1"
     ],
     url = 'http://cottagelabs.com/',
     author = 'Cottage Labs',
