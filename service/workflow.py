@@ -224,6 +224,9 @@ def process_job(job):
     try:
         app.logger.info("Processing spreadsheet job " + job.id)
 
+        job.status_code = "processing"
+        job.save()
+
         # now we want to parse the csv itself to our record index
         try:
             parse_csv(job)
