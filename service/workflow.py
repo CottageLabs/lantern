@@ -167,7 +167,7 @@ def output_csv(job):
             overwrite = obj.keys()
             jt = r.source.get("journal_title")
             if jt is not None and jt != "":
-                del overwrite["journal_title"]
+                overwrite.remove("journal_title")
 
             original = deepcopy(r.source)
             for k in overwrite:
