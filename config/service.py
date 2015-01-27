@@ -52,3 +52,5 @@ UPLOAD_DIR = "upload"
 ALLOWED_EXTENSIONS = ['csv']
 SPREADSHEET_OPTIONS = [('None', 'Type:'), ('Excel', 'Excel'), ('Google Docs', 'Google Docs'), ('Libre Office', 'Libre Office')]
 OACWELLCOME_JOBS_POLL_TIME = 2  # seconds
+
+ERROR_LOGGING_ADDRESSES = ['richard@cottagelabs.com', 'emanuil@cottagelabs.com']
