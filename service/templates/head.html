@@ -1,0 +1,49 @@
+<head>
+    <meta charset="utf-8">
+
+    {% include "meta.html" %}
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <link href="{{ url_for('static', filename='images/favicon.ico') }}" rel="icon" type="image/x-icon" />
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- this is where we can incorporate any css files -->
+
+    <link rel="stylesheet" href="{{url_for('static', filename='vendor/bootstrap-3.3.1/css/bootstrap.min.css')}}">
+    <!-- <link rel="stylesheet" href="{{url_for('static', filename='vendor/bootstrap-2.0.0/css/bootstrap.min.css')}}"> -->
+    <!-- <link rel="stylesheet" href="{{url_for('static', filename='vendor/bootstrap-3.2.0/css/bootstrap.min.css')}}"> -->
+
+    <!-- get jquery-ui css -->
+    <!-- <link rel="stylesheet" href="{{url_for('static', filename='vendor/jquery-ui-1.8.18.custom/jquery-ui-1.8.18.custom.css')}}"> -->
+    <link rel="stylesheet" href="{{url_for('static', filename='vendor/jquery-ui-1.11.1/jquery-ui.css')}}">
+
+    <!-- get facetview2 css -->
+    <link rel="stylesheet" href="{{url_for('static', filename='vendor/facetview2/css/facetview.css')}}">
+
+    <!-- get the table sorter css -->
+    <!-- <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='vendor/tablesorter-2.3.10/css/blue/style.css')}}"> -->
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='vendor/tablesorter-2.17.7/css/theme.blue.css')}}">
+
+    <!-- get the select2 css -->
+    <!-- <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='vendor/select2-3.2/select2.css')}}"> -->
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='vendor/select2-3.5.1/select2.css')}}">
+
+    <!-- get octopus css -->
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/octopus.css')}}">
+
+    <!-- nvd3 styles -->
+    <link rel="stylesheet" href="{{url_for('static', filename='vendor/facetview2/vendor/nvd3/nv.d3.css')}}">
+
+    <!-- get the application's css -->
+    <link rel="stylesheet" href="{{url_for('static', filename='css/service.css')}}">
+
+    <!-- Google Fonts -->
+    <link href='http://fonts.googleapis.com/css?family=Lora' rel='stylesheet' type='text/css'>
+
+</head>

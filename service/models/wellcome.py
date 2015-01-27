@@ -1,4 +1,4 @@
-from service.dao import SpreadsheetJobDAO, RecordDAO
+from service.dao import SpreadsheetJobDAO, RecordDAO, OAGRLinkDAO
 from datetime import datetime
 from octopus.lib.dataobj import DataObj
 
@@ -56,6 +56,7 @@ class SpreadsheetJob(SpreadsheetJobDAO, DataObj):
         self.status_code = code
         self.status_message = message
 
+
 class Record(RecordDAO, DataObj):
     """
     {
@@ -101,6 +102,8 @@ class Record(RecordDAO, DataObj):
             "oag_pmcid" : "not_sent|sent|success|fto|error",
             "oag_doi" : "not_sent|sent|success|fto|error",
             "oag_pmid" : "not_sent|sent|success|fto|error",
+            "epmc_complete" : true|false,
+            "oag_complete" : true|false
         },
 
         "compliance" : {
@@ -147,6 +150,10 @@ class Record(RecordDAO, DataObj):
     def upload_pos(self, val):
         self._set_single("upload.pos", val, int)
 
+    @property
+    def source(self):
+        return self._get_single("source")
+
     def set_source_data(self, university=None,
                                 pmcid=None,
                                 pmid=None,
@@ -184,6 +191,10 @@ class Record(RecordDAO, DataObj):
     def pmcid(self, val):
         self._set_single("identifiers.pmcid", val, self._utf8_unicode())
 
+    @pmcid.deleter
+    def pmcid(self):
+        self._delete("identifiers.pmcid")
+
     @property
     def pmid(self):
         return self._get_single("identifiers.pmid", self._utf8_unicode())
@@ -192,6 +203,10 @@ class Record(RecordDAO, DataObj):
     def pmid(self, val):
         self._set_single("identifiers.pmid", val, self._utf8_unicode())
 
+    @pmid.deleter
+    def pmid(self):
+        self._delete("identifiers.pmid")
+
     @property
     def doi(self):
         return self._get_single("identifiers.doi", self._utf8_unicode())
@@ -199,6 +214,10 @@ class Record(RecordDAO, DataObj):
     @doi.setter
     def doi(self, val):
         self._set_single("identifiers.doi", val, self._utf8_unicode())
+
+    @doi.deleter
+    def doi(self):
+        self._delete("identifiers.doi")
 
     @property
     def title(self):
@@ -210,7 +229,8 @@ class Record(RecordDAO, DataObj):
 
     @property
     def has_ft_xml(self):
-        return self._get_single("supporting_info.epmc_ft_xml", bool, default=False)
+        # return self._get_single("supporting_info.epmc_ft_xml", bool, default=False)
+        return self._get_single("supporting_info.epmc_ft_xml", bool)
 
     @has_ft_xml.setter
     def has_ft_xml(self, val):
@@ -239,6 +259,17 @@ class Record(RecordDAO, DataObj):
     @issn.setter
     def issn(self, val):
         self._set_list("supporting_info.issn", val, self._utf8_unicode())
+
+    def add_issn(self, val):
+        self._add_to_list("supporting_info.issn", val, self._utf8_unicode())
+
+    @property
+    def journal(self):
+        return self._get_single("supporting_info.journal", self._utf8_unicode())
+
+    @journal.setter
+    def journal(self, val):
+        self._set_single("supporting_info.journal", val, self._utf8_unicode())
 
     @property
     def in_oag(self):
@@ -273,12 +304,29 @@ class Record(RecordDAO, DataObj):
         self._set_single("supporting_info.oag_pmid", val, self._utf8_unicode(), allowed_values=self.OAG_STATES)
 
     @property
+    def epmc_complete(self):
+        return self._get_single("supporting_info.epmc_complete", bool, default=False)
+
+    @epmc_complete.setter
+    def epmc_complete(self, val):
+        self._set_single("supporting_info.epmc_complete", val, bool)
+
+    @property
+    def oag_complete(self):
+        return self._get_single("supporting_info.oag_complete", bool, default=False)
+
+    @oag_complete.setter
+    def oag_complete(self, val):
+        self._set_single("supporting_info.oag_complete", val, bool)
+
+    @property
     def in_epmc(self):
         return self._get_single("compliance.in_epmc", bool)
 
     @in_epmc.setter
     def in_epmc(self, val):
         self._set_single("compliance.in_epmc", val, bool)
+        self._calculate_compliance()
 
     @property
     def is_oa(self):
@@ -287,14 +335,16 @@ class Record(RecordDAO, DataObj):
     @is_oa.setter
     def is_oa(self, val):
         self._set_single("compliance.epmc_is_oa", val, bool)
+        self._calculate_compliance()
 
     @property
     def aam(self):
-        return self._get_single("compliance.epmc_aap", bool)
+        return self._get_single("compliance.epmc_aam", bool)
 
     @aam.setter
     def aam(self, val):
-        self._set_single("compliance.epmc_aap", val, bool)
+        self._set_single("compliance.epmc_aam", val, bool)
+        self._calculate_compliance()
 
     @property
     def licence_type(self):
@@ -303,6 +353,12 @@ class Record(RecordDAO, DataObj):
     @licence_type.setter
     def licence_type(self, val):
         self._set_single("compliance.licence.type", val, self._utf8_unicode())
+        self._calculate_compliance()
+
+    @licence_type.deleter
+    def licence_type(self):
+        self._delete("compliance.licence.type")
+        self._calculate_compliance()
 
     @property
     def licence_source(self):
@@ -311,6 +367,7 @@ class Record(RecordDAO, DataObj):
     @licence_source.setter
     def licence_source(self, val):
         self._set_single("compliance.licence_source", val, self._utf8_unicode(), allowed_values=self.LICENCE_SOURCES)
+        self._calculate_compliance()
 
     @property
     def journal_type(self):
@@ -330,7 +387,7 @@ class Record(RecordDAO, DataObj):
 
     @property
     def standard_compliance(self):
-        return self._get_single("compliance.standard", bool)
+        return self._get_single("compliance.standard", bool, default=False)
 
     @standard_compliance.setter
     def standard_compliance(self, val):
@@ -338,7 +395,7 @@ class Record(RecordDAO, DataObj):
 
     @property
     def deluxe_compliance(self):
-        return self._get_single("compliance.deluxe", bool)
+        return self._get_single("compliance.deluxe", bool, default=False)
 
     @deluxe_compliance.setter
     def deluxe_compliance(self, val):
@@ -356,3 +413,62 @@ class Record(RecordDAO, DataObj):
         obj["when"] = when
 
         self._add_to_list("provenance", obj)
+
+    def _calculate_compliance(self):
+        # calculate (if possible) the standard and deluxe compliance
+        # Standard Compliance
+        # IF full-text is in Europe PMC AND it is an author manuscript THEN compliance = YES
+        # IF full-text is in Europe PMC AND the licence (in any location) is CC BY THEN compliance = YES
+        #
+        # Deluxe Compliance
+        # IF full-text is in Europe PMC AND it is an author manuscript THEN compliance = YES
+        # IF full-text is in Europe PMC AND the licence as present in Europe PMC is CC BY AND the article is in the open access subset THEN compliance = YES
+
+        sc = False
+        dc = False
+
+        if self.in_epmc:    # minimum requirement for either kind of compliance is to be in EPMC
+
+            if self.aam:    # if this is the AAM then this is both standard and deluxe
+                sc = True
+                dc = True
+
+            if self.licence_type is not None and self.licence_type.lower().strip() in ["cc-by", "cc by"]: # if this is CC BY
+                sc = True     # this is sufficient for standard compliance
+
+                if self.licence_source is not None and self.licence_source in ["epmc_xml", "epmc"] and self.is_oa:  # for deluxe compliance licence must be known in EPMC and be in the OA subset
+                    dc = True
+
+        self.standard_compliance = sc
+        self.deluxe_compliance = dc
+
+    def prep(self):
+        # ensure that both the epmc_complete and oag_complete fields are truly set
+        # (this weird bit of code will ensure that they are set to their current values
+        # or their default value)
+        self.epmc_complete = self.epmc_complete
+        self.oag_complete = self.oag_complete
+
+        # ensure that compliance is calculated
+        self._calculate_compliance()
+
+        # ensure compliance values are set for real
+        self.standard_compliance = self.standard_compliance
+        self.deluxe_compliance = self.deluxe_compliance
+
+class OAGRLink(OAGRLinkDAO, DataObj):
+    @property
+    def oagrjob_id(self):
+        return self._get_single("oagrjob_id", self._utf8_unicode())
+
+    @oagrjob_id.setter
+    def oagrjob_id(self, val):
+        self._set_single("oagrjob_id", val, self._utf8_unicode())
+
+    @property
+    def spreadsheet_id(self):
+        return self._get_single("spreadsheet_id", self._utf8_unicode())
+
+    @spreadsheet_id.setter
+    def spreadsheet_id(self, val):
+        self._set_single("spreadsheet_id", val, self._utf8_unicode())

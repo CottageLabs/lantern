@@ -1,16 +1,18 @@
-from unittest import TestCase
+from octopus.modules.es import testindex
 import os
 from octopus.lib import clcsv
 from service import workflow, models
-from octopus.core import app, initialise
+from octopus.core import app
 
-class TestImport(TestCase):
+
+class TestImport(testindex.ESTestCase):
     def setUp(self):
-        initialise()
+        super(TestImport, self).setUp()
         self.old_upload_dir = app.config.get("UPLOAD_DIR")
         app.config["UPLOAD_DIR"] = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources")
 
     def tearDown(self):
+        super(TestImport, self).tearDown()
         app.config["UPLOAD_DIR"] = self.old_upload_dir
 
     def test_01_csv_reader(self):
@@ -19,10 +21,7 @@ class TestImport(TestCase):
         for o in sheet.objects():
             assert o is not None
 
-    def test_02_master_sheet(self):
-        pass
-
-    def test_03_parse_csv(self):
+    def test_02_parse_csv(self):
         s = models.SpreadsheetJob()
         s.filename = "test_submission.csv"
         s.contact_email = "contact@email.com"

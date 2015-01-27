@@ -6,7 +6,9 @@ src*
 build/*
 dist/*
 local.cfg
+service/tests/resources/tmpupload
+service/tests/scratch.py
 
 .idea/
 
-
+upload/*

@@ -2,4 +2,4 @@
 # like this ...
 # now you can do
 # from service.models import MyObject
-from service.models.wellcome import SpreadsheetJob, Record
+from service.models.wellcome import SpreadsheetJob, Record, OAGRLink

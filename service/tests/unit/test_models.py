@@ -1,9 +1,13 @@
-from unittest import TestCase
-from service.models import Record, SpreadsheetJob
+from octopus.modules.es.testindex import ESTestCase
+from service.models import Record, SpreadsheetJob, OAGRLink
+import time
 
-class TestModels(TestCase):
-    def setUp(self): pass
-    def tearDown(self): pass
+class TestModels(ESTestCase):
+    def setUp(self):
+        super(TestModels, self).setUp()
+
+    def tearDown(self):
+        super(TestModels, self).tearDown()
 
     def test_01_spreadsheet(self):
         s = SpreadsheetJob()
@@ -87,5 +91,249 @@ class TestModels(TestCase):
             assert by in ["richard", "wellcome"]
             assert note in ["provenance 1", "provenance 2"]
 
+    def test_03_oagrlink(self):
+        l = OAGRLink()
+        l.spreadsheet_id = "1234"
+        l.oagrjob_id = "9876"
 
+        assert l.spreadsheet_id == "1234"
+        assert l.oagrjob_id == "9876"
 
+        l.save()
+        time.sleep(1)
+
+        l2 = OAGRLink.by_oagr_id("9876")
+
+        assert l2.spreadsheet_id == "1234"
+        assert l2.oagrjob_id == "9876"
+
+    def test_04_pc_complete(self):
+        job = SpreadsheetJob()
+        job.save()
+
+        # a record with no completeness
+        r = Record()
+        r.upload_id = job.id
+        r.save()
+
+        # a record with epmc complete
+        r2 = Record()
+        r2.upload_id = job.id
+        r2.epmc_complete = True
+        r2.save()
+
+        # a record with both complete
+        r3 = Record()
+        r3.upload_id = job.id
+        r3.epmc_complete = True
+        r3.oag_complete = True
+        r3.save()
+
+        time.sleep(1)
+
+        comp = job.pc_complete
+        assert int(comp) == 50
+
+        r.epmc_complete = True
+        r.save()
+
+        time.sleep(1)
+
+        comp = job.pc_complete
+        assert int(comp) == 66
+
+        r.oag_complete = True
+        r2.oag_complete = True
+        r.save()
+        r2.save()
+
+        time.sleep(1)
+
+        comp = job.pc_complete
+        assert int(comp) == 100
+
+    def test_05_compliance(self):
+        record = Record()
+
+        # Truth table for standard and deluxe compliance
+        #
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 0             0       0           0                   0           0       0
+        # 0             0       1           0                   0           0       0
+        # 1             0       0           0                   0           0       0
+        # 1             0       0           0                   1           0       0
+        # 1             0       0           1                   1           0       0
+        # 1             0       1           0                   0           1       0
+        # 1             0       1           1                   1           1       1
+        # 1             1       0           0                   0           1       1
+        # 1             1       1           0                   0           1       1
+        # 1             1       1           1                   1           1       1
+
+        # check the default values, before we've done anything to the record
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # set the various switches, and then check the results
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 0             0       0           0                   0           0       0
+        record.in_epmc = False
+        record.aam = False
+        record.licence_type = "Other"
+        record.licence_source = "publisher"
+        record.is_oa = False
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 0             0       1           0                   0           0       0
+        record.licence_type = "cc-by"
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       0           0                   0           0       0
+        record.in_epmc = True
+        record.licence_type = "Other"
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       0           0                   1           0       0
+        record.is_oa = True
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       0           1                   1           0       0
+        record.licence_source = "epmc_xml"
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is False
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       1           0                   0           1       0
+        record.licence_type = "CC BY"
+        record.licence_source = "publisher"
+        record.is_oa = False
+        assert record.deluxe_compliance is False
+        assert record.standard_compliance is True
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             0       1           1                   1           1       1
+        record.licence_type = "cc-by"
+        record.licence_source = "epmc"
+        record.is_oa = True
+        assert record.deluxe_compliance is True
+        assert record.standard_compliance is True
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             1       0           0                   0           1       1
+        record.aam = True
+        record.licence_type = "Other"
+        record.licence_source = "publisher"
+        assert record.deluxe_compliance is True
+        assert record.standard_compliance is True
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             1       1           0                   0           1       1
+        record.licence_type = "CC-BY"
+        assert record.deluxe_compliance is True
+        assert record.standard_compliance is True
+
+        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
+        # 1             1       1           1                   1           1       1
+        record.licence_source = "epmc_xml"
+        record.is_oa = True
+        assert record.deluxe_compliance is True
+        assert record.standard_compliance is True
+
+    def test_06_duplicates(self):
+        # first make ourselves a job to work on
+        job = SpreadsheetJob()
+        job.save()
+
+        # now make a bunch of records, some unique and some duplicate
+
+        # unique pmcid
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCunique"
+        r.save()
+
+        # duplicate pmcid
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.save()
+
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.save()
+
+        # unique pmid
+        r = Record()
+        r.upload_id = job.id
+        r.pmid = "unique"
+        r.save()
+
+        # duplicate pmid
+        r = Record()
+        r.upload_id = job.id
+        r.pmid = "dupe"
+        r.save()
+
+        r = Record()
+        r.upload_id = job.id
+        r.pmid = "dupe"
+        r.save()
+
+        # unique doi
+        r = Record()
+        r.upload_id = job.id
+        r.doi = "10.unique"
+        r.save()
+
+        # duplicate pmcid
+        r = Record()
+        r.upload_id = job.id
+        r.doi = "10.dupe"
+        r.save()
+
+        r = Record()
+        r.upload_id = job.id
+        r.doi = "10.dupe"
+        r.save()
+
+        # one that is a duplicate of everything
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.pmid = "dupe"
+        r.doi = "10.dupe"
+        r.save()
+
+        # one that is confused about its duplication
+        r = Record()
+        r.upload_id = job.id
+        r.pmcid = "PMCdupe"
+        r.pmid = "dupe"
+        r.doi = "10.notdupe"
+        r.save()
+
+        time.sleep(2)
+
+        dupes = job.list_duplicate_identifiers()
+
+        # check the structure of the response
+        assert "pmcid" in dupes
+        assert "pmid" in dupes
+        assert "doi" in dupes
+
+        # check the contentes
+        assert len(dupes["pmcid"]) == 1
+        assert "PMCdupe" in dupes["pmcid"]
+        assert len(dupes["pmid"]) == 1
+        assert "dupe" in dupes["pmid"]
+        assert len(dupes["doi"]) == 1
+        assert "10.dupe" in dupes["doi"]
