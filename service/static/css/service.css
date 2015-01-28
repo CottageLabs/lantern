@@ -34,13 +34,17 @@ body {
     background-color: #FFC805;
     color: black;
     border-width: 0px;
+}
 
+#navigation a:hover.navbar-brand {
+    background-color: transparent; !important
 }
 
 .navbar-brand {
     height: 40px;
     font-size: 30px;
 }
+
 
 .panel {
   border-top-width: 5px;
