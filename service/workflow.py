@@ -760,30 +760,45 @@ def add_to_rerun(record, idtype, oag_rerun):
 #################################################################
 
 def oag_callback_closure():
-    def oag_callback(state):
-        # a register of identifiers which need to be re-run
-        oag_rerun = []
-
+    def oag_callback(event, state):
         # follow the link over to the related spreadsheet
         oagrlink = models.OAGRLink.by_oagr_id(state.id)
         ssjob = models.SpreadsheetJob.pull(oagrlink.spreadsheet_id)
 
-        # handle the successes
-        successes = state.flush_success()
-        for s in successes:
-            oag_record_callback(s, oag_rerun, ssjob)
+        # a register of identifiers which need to be re-run
+        oag_rerun = []
 
-        # handle the errors
-        errors = state.flush_error()
-        for e in errors:
-            oag_record_callback(e, oag_rerun, ssjob)
+        if event == "cycle":
+            # handle the successes
+            successes = state.flush_success()
+            for s in successes:
+                oag_record_callback(s, oag_rerun, ssjob)
 
-        # if there is anything to reprocess, do that
-        if len(oag_rerun) > 0:
-            # put anything that needs to be reprocessed back on the job queue
-            process_oag(oag_rerun, ssjob)
+            # handle the errors
+            errors = state.flush_error()
+            for e in errors:
+                oag_record_callback(e, oag_rerun, ssjob)
 
-        else:
+            """
+            else:
+                # it's possible that the spreadsheet job has finished, so we need
+                # to check and update if so
+                time.sleep(2)   # just to give the index a bit of time to refresh
+                pc = ssjob.pc_complete
+                if int(pc) == 100:
+                    ssjob.status_code = "complete"
+                    ssjob.save()
+                    send_complete_mail(ssjob)
+            """
+
+        elif event == "finished":
+            app.logger.info("OAGR job event finished - " + str(len(state.maxed.keys())) + " maxed")
+
+            # check all the identifiers that got maxed, and record errors against them
+            # in their individual records
+            for id, obj in state.maxed.iteritems():
+                record_maxed(id, obj, ssjob, oag_rerun)
+
             # it's possible that the spreadsheet job has finished, so we need
             # to check and update if so
             time.sleep(2)   # just to give the index a bit of time to refresh
@@ -793,7 +808,54 @@ def oag_callback_closure():
                 ssjob.save()
                 send_complete_mail(ssjob)
 
+        # if there is anything to reprocess, do that
+        if len(oag_rerun) > 0:
+            # put anything that needs to be reprocessed back on the job queue
+            process_oag(oag_rerun, ssjob)
+
     return oag_callback
+
+def record_maxed(id, result, ssjob, oag_rerun):
+    def process(record, type, oag_rerun):
+        record.add_provenance("oag", "Attempted to retrieve {x} {y} times from OAG, and got no result; giving up.".format(x=id, y=result.get("requested")))
+        added = add_to_rerun(record, type, oag_rerun)
+        if not added:
+            record.oag_complete = True
+        record.save()
+
+    records = models.Record.get_by_identifier(id, ssjob.id)
+    found = 0
+    for record in records:
+        found += 1
+
+        # set its in_oag flag and re-save it
+        record.in_oag = False
+
+        # by this point we must know the type
+        type = None
+        if id == record.pmcid:
+            type = "pmcid"
+            record.oag_pmcid = "error"
+        elif id == record.pmid:
+            type = "pmid"
+            record.oag_pmid = "error"
+        elif id == record.doi:
+            type = "doi"
+            record.oag_doi = "error"
+        else:
+            app.logger.info("unable to determine the type for " + str(id))
+
+        if type is not None:
+            process(record, type, oag_rerun)
+        else:
+            app.logger.info("type of id was not one of pmcid, doi, pmid")
+            continue
+
+    # summary log of what we did
+    if found == 0:
+        app.logger.info("was unable to relate OAG response to record")
+    else:
+        app.logger.info("Updated {x} records from OAG maxed identifiers".format(x=found))
 
 def send_complete_mail(job):
     if job.contact_email is None:
@@ -913,7 +975,7 @@ def oag_record_callback(result, oag_rerun, ssjob):
         prov = result.get("license", [{}])[0].get("provenance", {}).get("description")
         record.add_provenance("oag", success_id + " - " + prov)
 
-        if result.get("license", [{}])[0].get("type") == "failed-to-obtain-license":
+        if result.get("license", [{}])[0].get("type", "failed-to-obtain-license") == "failed-to-obtain-license":
             handle_fto(record, idtype, oag_rerun)
         else:
             handle_success(result, record, idtype)

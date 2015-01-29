@@ -38,11 +38,21 @@ OAGR_RUNNER_CALLBACK_CLOSURE = "service.workflow.oag_callback_closure"
 
 # NOTE: we may want to modify these parameters in particular when we tune the running
 
+# The combination of the following factors give the behaviour:
+#
+# 10 retries in the first 5 minutes, meaning rapid responses for things which are going
+# to come back quickly, then every 5 minutes for 7.5 hours
+
 # maximim number of seconds to wait between requests for identifiers, irrespective of the back-off rules
-OAG_STATE_MAX_BACK_OFF = 120
+OAG_STATE_MAX_BACK_OFF = 300    # 5 minutes
+
+# multiplier on incremental back off.  The back-off algorithm doubles the wait time each request, multiplied
+# by this factor, so adjust it to speed or slow the back-off
+OAG_STATE_BACK_OFF_FACTOR = 0.15    # back off slowly, so we try a lot initially
 
 # maximum number of times to retry an identifier
-OAG_STATE_MAX_RETRIES = None
+OAG_STATE_MAX_RETRIES = 100  # retry pretty hard.
+
 
 ##########################################
 # service specific config

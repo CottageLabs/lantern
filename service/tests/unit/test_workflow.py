@@ -1,6 +1,7 @@
 from octopus.modules.es import testindex
 from octopus.modules.epmc import client as epmc
 from octopus.modules.oag import oagr
+from octopus.modules.oag import client as oagclient
 from service import workflow, models
 import time, requests, json, os
 from lxml import etree
@@ -1068,14 +1069,121 @@ class TestWorkflow(testindex.ESTestCase):
         assert oag[0]["id"] == "PMC4219345"
         assert oag[0]["type"] == "pmcid"
 
-    def test_11_oag_callback(self):
+    def test_11_oag_callback_01_cycle(self):
         cb = workflow.oag_callback_closure()
         assert cb is not None
 
         import types
         assert type(cb) == types.FunctionType
 
-        # FIXME: more testing required
+        job = models.SpreadsheetJob()
+        job.save()
+
+        state = oagclient.RequestState(["PMC1234", "PMC9876"])
+        oag_response = {
+            "results" : [
+                {
+                    "identifier" : [{"id" : "PMC1234", "type" : "epmc", "canonical" : "PMC1234"}],
+                    "license" : [
+                        {
+                            "type" : "cc-by",
+                            "provenance" : {"description" : "SUCCESS"}
+                        }
+                    ]
+                }
+            ],
+            "errors" : [
+                {
+                    "identifier" : {"id" : "PMC9876", "type" : "epmc", "canonical" : "PMC9876"},
+                    "error" : "ERROR"
+                }
+            ]
+        }
+        state.record_result(oag_response)
+
+        oagrlink = models.OAGRLink()
+        oagrlink.spreadsheet_id = job.id
+        oagrlink.oagrjob_id = state.id
+        oagrlink.save()
+
+        record = models.Record()
+        record.upload_id = job.id
+        record.pmcid = "PMC1234"
+        record.save()
+
+        record = models.Record()
+        record.upload_id = job.id
+        record.pmcid = "PMC9876"
+        record.save()
+
+        time.sleep(2)
+
+        cb("cycle", state)
+
+        time.sleep(2)
+
+        r1 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid").next()
+        r2 = models.Record.get_by_identifier("PMC9876", job.id, "pmcid").next()
+
+        assert r1.in_oag is False
+        assert len(r1.provenance) == 1
+        assert "SUCCESS" in r1.provenance[0][2]
+        assert r1.oag_pmcid == "success"
+        assert r1.licence_source == "epmc"
+        assert r1.licence_type == "cc-by"
+        assert r1.oag_complete is True
+
+        assert r2.in_oag is False
+        assert r2.oag_pmcid == "error"
+        assert len(r2.provenance) == 1
+        assert "ERROR" in r2.provenance[0][2]
+        assert r2.oag_complete is True
+
+    def test_11_oag_callback_02_finished(self):
+        cb = workflow.oag_callback_closure()
+
+        job = models.SpreadsheetJob()
+        job.save()
+
+        state = oagclient.RequestState(["PMC1234", "PMC9876"], max_retries=1)
+        state.record_requested(["PMC1234", "PMC9876"])
+
+        oagrlink = models.OAGRLink()
+        oagrlink.spreadsheet_id = job.id
+        oagrlink.oagrjob_id = state.id
+        oagrlink.save()
+
+        record = models.Record()
+        record.upload_id = job.id
+        record.pmcid = "PMC1234"
+        record.save()
+
+        record = models.Record()
+        record.upload_id = job.id
+        record.pmcid = "PMC9876"
+        record.save()
+
+        time.sleep(2)
+
+        cb("finished", state)
+
+        time.sleep(2)
+
+        r1 = models.Record.get_by_identifier("PMC1234", job.id, "pmcid").next()
+        r2 = models.Record.get_by_identifier("PMC9876", job.id, "pmcid").next()
+
+        assert r1.in_oag is False
+        assert len(r1.provenance) == 1
+        assert r1.provenance[0][2].startswith("Attempted to retrieve PMC1234 1")
+        assert r1.oag_pmcid == "error"
+        assert r1.oag_complete is True
+
+        assert r2.in_oag is False
+        assert r2.oag_pmcid == "error"
+        assert len(r2.provenance) == 1
+        assert r2.provenance[0][2].startswith("Attempted to retrieve PMC9876 1")
+        assert r2.oag_complete is True
+
 
     def test_12_licence_translate(self):
         assert workflow.translate_licence_type("free-to-read") == "non-standard-licence"
@@ -1193,6 +1301,8 @@ class TestWorkflow(testindex.ESTestCase):
         time.sleep(2)
 
         workflow.duplicate_check(job)
+
+        time.sleep(2)
 
         # for each record, check that it got the provenance
 
@@ -1319,3 +1429,53 @@ class TestWorkflow(testindex.ESTestCase):
             assert "PMC1234 - Provenance PMC1234" in provs
             assert "Detected AAM status from EPMC web page" in provs
             assert record.oag_complete is True
+
+    def test_15_record_maxed_01_basic_win(self):
+        job = models.SpreadsheetJob()
+        job.save()
+
+        record = models.Record()
+        record.pmcid = "PMC1234"
+        record.upload_id = job.id
+        record.save()
+
+        time.sleep(2)
+
+        oag_maxed = {
+            "requested": 20,
+            "init" : "2001-01-01T09:30:00Z"
+        }
+
+        oag_rerun = []
+        workflow.record_maxed(record.pmcid, oag_maxed, job, oag_rerun)
+
+        time.sleep(2)
+
+        record = models.Record.pull(record.id)
+        assert record.oag_complete is True
+        assert len(record.provenance) == 1
+
+    def test_15_record_maxed_02_no_match(self):
+        job = models.SpreadsheetJob()
+        job.save()
+
+        record = models.Record()
+        record.pmcid = "PMC1234"
+        record.upload_id = job.id
+        record.save()
+
+        time.sleep(2)
+
+        oag_maxed = {
+            "requested": 20,
+            "init" : "2001-01-01T09:30:00Z"
+        }
+
+        oag_rerun = []
+        workflow.record_maxed("PMC9876", oag_maxed, job, oag_rerun)
+
+        time.sleep(2)
+
+        record = models.Record.pull(record.id)
+        assert record.oag_complete is False
+        assert len(record.provenance) == 0

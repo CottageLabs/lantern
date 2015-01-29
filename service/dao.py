@@ -145,7 +145,8 @@ class RecordUntypedIdentifierQuery(object):
                         {"term" : {"identifiers.pmcid.exact" : self.identifier}},
                         {"term" : {"identifiers.pmid.exact" : self.identifier}},
                         {"term" : {"identifiers.doi.exact" : self.identifier}}
-                    ]
+                    ],
+                    "minimum_should_match" : 1
                 }
             }
         }
