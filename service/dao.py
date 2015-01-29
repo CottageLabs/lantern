@@ -12,6 +12,19 @@ class SpreadsheetJobDAO(dao.ESDAO):
     def query_by_filename(cls, filename):
         return cls.object_query(terms={"filename.exact": filename})
 
+    @classmethod
+    def queue_length(cls, sheet_id, max=10):
+        q = SpreadsheetStatusQuery("submitted", size=max)
+        first_x = cls.object_query(q.query())
+
+        pos = 0
+        for s in first_x:
+            if s.id == sheet_id:
+                return pos
+            pos += 1
+
+        return max + 1
+
     @property
     def pc_complete(self):
         total, epmc, oag = RecordDAO.upload_completeness(self.id)
@@ -27,16 +40,20 @@ class SpreadsheetJobDAO(dao.ESDAO):
         return RecordDAO.list_duplicates(self.id)
 
 
+
+
 class SpreadsheetStatusQuery(object):
-    def __init__(self, status):
+    def __init__(self, status, size=10):
         self.status = status
+        self.size = size
 
     def query(self):
         return {
             "query" : {
                 "term" : {"status.code.exact" : self.status}
             },
-            "sort" : [{"created_date" : {"order" : "asc"}}]
+            "sort" : [{"created_date" : {"order" : "asc"}}],
+            "size" : self.size
         }
 
 ######################################################

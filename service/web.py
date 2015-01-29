@@ -1,18 +1,17 @@
 from flask import Flask, request, abort, render_template, redirect, make_response, jsonify, send_file, \
     send_from_directory, url_for
-from flask.views import View
 from wtforms import Form, StringField, validators, SelectField
 from wtforms.fields.html5 import EmailField
 from werkzeug import secure_filename
-from datetime import datetime
 from StringIO import StringIO
-import os
+import os, json
 
 from service import models
 
 from octopus.core import app, initialise
 from octopus.lib.webapp import custom_static
 from workflow import csv_upload, email_submitter, output_csv
+from octopus.lib.webapp import jsonp
 
 import sys
 
@@ -56,6 +55,69 @@ def percentage(job_id):
     job = models.SpreadsheetJob.pull(job_id)
     pc = str(job.pc_complete)
     return pc
+
+@app.route("/progress/<job_id>/status")
+@jsonp
+def status(job_id):
+    job = models.SpreadsheetJob.pull(job_id)
+
+    obj = {"pc" : 0.0, "queue" : "0"}
+    obj["status"] = job.status_code
+    obj["message"] = job.status_message
+
+    if job.status_code == "submitted":
+        obj["pc"] = 0.0
+        ql = models.SpreadsheetJob.queue_length(job.id, max=10)
+        obj["queue"] = str(ql) if ql < max else "10 or more"
+    elif job.status_code == "processing":
+        obj["pc"] = job.pc_complete
+    elif job.status_code == "complete":
+        obj["pc"] = 100.0
+
+    resp = make_response(json.dumps(obj))
+    resp.mimetype = "application/json"
+    return resp
+
+"""
+Use this to force certain states in the UI, and thus allow testing of different
+statuses
+
+@app.route("/progress/<job_id>/<test_type>")
+@jsonp
+def test_status(job_id, test_type):
+    obj = {}
+
+    if test_type == "submitted":
+        obj = {
+            "status" : "submitted",
+            "pc" : 0.0,
+            "queue" : "8"
+        }
+    elif test_type == "processing":
+        import random
+        obj = {
+            "status" : "processing",
+            "pc" : random.randint(0, 99) + random.random(),
+            "queue" : "0"
+        }
+    elif test_type == "error":
+        obj = {
+            "status" : "error",
+            "message" : "oops",
+            "pc" : 0.0,
+            "queue" : "0"
+        }
+    elif test_type == "complete":
+        obj = {
+            "status" : "complete",
+            "pc" : 100.0,
+            "queue" : "0"
+        }
+
+    resp = make_response(json.dumps(obj))
+    resp.mimetype = "application/json"
+    return resp
+"""
 
 @app.route("/download_original/<job_id>")
 def download_original_csv(job_id):

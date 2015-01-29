@@ -53,7 +53,7 @@ body {
   border-right-width: 0px;
   border-color: #0e8293;
   background-color: #eaeaea;
-  height: 220px;
+  /*height: 220px;*/
   border-radius: 0px;
 }
 
@@ -98,7 +98,7 @@ body {
 
 .status {
     background-color: #f0f0f0;
-    height: 40px;
+    /* height: 40px; */
     text-align: center;
     font-size: 18px;
     line-height: 40px;
