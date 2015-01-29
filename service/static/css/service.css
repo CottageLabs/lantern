@@ -31,7 +31,7 @@ body {
 }
 
 #navigation a:hover {
-    background-color: #FFC805;
+/*    background-color: #FFC805;*/
     color: black;
     border-width: 0px;
 }

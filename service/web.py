@@ -21,17 +21,13 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config["ALLOWED_EXTENSIONS"]
 
-@app.route("/")
-def root():
-    return redirect(url_for('upload_csv'))
-
 class UploadForm(Form):
     contact_email = EmailField('Email Address', [validators.DataRequired(), validators.Email()])
     spreadsheet_type = SelectField('Type', choices=app.config.get('SPREADSHEET_OPTIONS'))
 
 
 @app.route("/", methods=['GET', 'POST'])
-@app.route("/upload_csv", methods=['GET', 'POST'])
+#@app.route("/upload_csv", methods=['GET', 'POST'])
 def upload_csv():
     form = UploadForm(request.form)
     invalid_file = False
