@@ -881,7 +881,6 @@ def send_complete_mail(job):
 # create the type map which maps OAG licences to the way we want to represent them internally
 TYPE_MAP = {
     "free-to-read" : "non-standard-licence",
-    "cc-nc-nd" : "cc-by-nc-nd",
     "other-closed" : "non-standard-licence"
 }
 
