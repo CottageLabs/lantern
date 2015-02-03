@@ -7,6 +7,7 @@ from service import models, sheets, licences
 import os, time, traceback
 from StringIO import StringIO
 from copy import deepcopy
+from uuid import uuid1
 
 class WorkflowException(Exception):
     pass
@@ -231,9 +232,10 @@ def process_job(job):
         try:
             parse_csv(job)
         except Exception:
+            magic = str(uuid1())
             thetraceback = traceback.format_exc()
-            app.logger.error("Trouble with parsing CSV {0}.csv for job {0}".format(job.id) + "\n\n" + thetraceback)
-            job.set_status(u'error', thetraceback)
+            app.logger.error("Trouble with parsing CSV {0}.csv for job {0}, magic {1}".format(job.id, magic) + "\n\n" + thetraceback)
+            job.set_status(u'error', "There was a problem parsing your CSV. Please quote this magic number {0} so maintainers can easily find out what went wrong.".format(magic))
             return
 
         # list all of the records, and work through them one by one doing all the processing
