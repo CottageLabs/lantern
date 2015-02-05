@@ -50,9 +50,9 @@ class MasterSheet(object):
 
     def __init__(self, path=None, writer=None, spec=None):
         if path is not None:
-            self._sheet = clcsv.ClCsv(path)
+            self._sheet = clcsv.ClCsv(path, ignore_blank_rows=True)
         elif writer is not None:
-            self._sheet = clcsv.ClCsv(writer=writer)
+            self._sheet = clcsv.ClCsv(writer=writer, ignore_blank_rows=True)
             self._set_headers(spec)
 
     def _set_headers(self, spec=None):
