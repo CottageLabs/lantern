@@ -433,7 +433,7 @@ class Record(RecordDAO, DataObj):
                 sc = True
                 dc = True
 
-            if self.licence_type is not None and self.licence_type.lower().strip() in ["cc-by", "cc by"]: # if this is CC BY
+            if self.licence_type is not None and self.licence_type.lower().strip() in ["cc-by", "cc by", "cc0"]: # if this is CC BY or CC0
                 sc = True     # this is sufficient for standard compliance
 
                 if self.licence_source is not None and self.licence_source in ["epmc_xml", "epmc"] and self.is_oa:  # for deluxe compliance licence must be known in EPMC and be in the OA subset

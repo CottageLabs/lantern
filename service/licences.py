@@ -38,6 +38,7 @@ types.update(make_variation_map(["cc", "by", "nd"], "cc-by-nd"))
 types.update(make_variation_map(["cc", "by", "nc"], "cc-by-nc"))
 types.update(make_variation_map(["cc", "by", "nc", "nd"], "cc-by-nc-nd"))
 types.update(make_variation_map(["cc", "by", "nc", "sa"], "cc-by-nc-sa"))
+types.update(make_variation_map(["cc0"], "cc0"))
 
 # some types which are regularly mis-represented
 types.update(make_variation_map(["cc", "nc"], "cc-by-nc"))
@@ -51,6 +52,7 @@ urls = [
     ("http://creativecommons.org/licenses/by-sa", "cc-by-sa"),
     ("http://creativecommons.org/licenses/by-nc", "cc-by-nc"),
     ("http://creativecommons.org/licenses/by", "cc-by"),
+    ("https://creativecommons.org/publicdomain/zero/1.0/", "cc0")
 ]
 
 # The substrings in the order that they should be searched for, and they type they map to
