@@ -45,6 +45,10 @@ def upload_csv():
             invalid_file = True
     return render_template("upload_csv.html", form=form, invalid_file=invalid_file)
 
+@app.route("/docs")
+def docs():
+    return render_template("docs.html")
+
 @app.route("/progress/<job_id>")
 def progress(job_id):
     job = models.SpreadsheetJob.pull(job_id)

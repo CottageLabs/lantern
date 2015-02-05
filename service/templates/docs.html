@@ -2,49 +2,173 @@
 
 {% block content %}
 
-        u"Fulltext in EPMC?" : "in_epmc",
-        u"XML Fulltext?" : "xml_ft_in_epmc",
-        u"AAM?" : "aam",
-        u"Open Access?" : "open_access",
-        u"Licence" : "licence",
-        u"Licence Source" : "licence_source",
-        u"Journal Type" : "journal_type",
-        u"Correct Article Confidence" : "confidence",
-        u"Standard Compliance?" : "standard_compliance",
-        u"Deluxe Compliance?" : "deluxe_compliance",
-        u"ISSN" : "issn",
-        u"Compliance Processing Ouptut" : "provenance"
+<h1>Input Spreadsheet Format</h1>
+
+<p>Spreadsheets should be uploaded according to the Wellcome Trust Master Spreadsheet Format.  This means that
+any of the following column headers may be present:</p>
+
+<ul>
+    <li>University</li>
+    <li>PMCID</li>
+    <li>PMID</li>
+    <li>DOI</li>
+    <li>Publisher</li>
+    <li>Journal title</li>
+    <li>Article title</li>
+    <li>Publication Date</li>
+    <li>Title of paper (shortened)</li>
+    <li>Author(s)</li>
+    <li>Grant References</li>
+    <li>Total cost of Article Processing Charge (APC), in £</li>
+    <li>Amount of APC charged to Wellcome OA grant, in £ (see comment)</li>
+    <li>VAT charged</li>
+    <li>COST (£)</li>
+    <li>Wellcome grant</li>
+    <li>Licence info</li>
+    <li>Notes</li>
+</ul>
+
+In order for a successful processing of your records to take place, AT LEAST one of the following needs to be present:
+
+<ul>
+    <li>PMCID</li>
+    <li>PMID</li>
+    <li>DOI</li>
+    <li>Article title</li>
+</ul>
+
+<p>You may omit any number of columns from the full list, provided that one of the above is present.</p>
+
+<p>Any column that is present that does not correspond <strong>exactly</strong> to one of the above headers will be ignored.</p>
+
+<p><strong>NOTE</strong> - The application works best with CSVs which are UTF-8 encoded.  Non-UTF-8 encoded sheets (such as those
+exported by Excel by default) should still work, though you may notice character encoding issues in the results.</p>
+
 <h1>Output Spreadsheet Format</h1>
 
-<p>When you download your processed spreadsheet, it will reflect back at you the columns that you uploaded, and
-        add a number of other compliance analysis columns.  Those columns can be interpreted as described below.
+<p>When you download your processed spreadsheet, it will reflect back at you any columns that you uploaded which are part of the
+    Wellcome Trust Master Spreadsheet Format, and add a number of other compliance analysis columns.
+    Those additional columns can be interpreted as described below.</p>
+
+<style type="text/css">
+    table {
+        margin-bottom: 30px;
+    }
+    tr {
+        border-bottom: 1px solid #000000;
+    }
+    td {
+        padding-bottom: 5px;
+        padding-top: 5px;
+    }
+</style>
 
 <table>
     <thead>
         <tr>
-            <td>Spreadsheet Field</td>
-            <td>Description</td>
+            <td><strong>Compliance Field</strong></td>
+            <td><strong>Description</strong></td>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td>Fulltext in EPMC?</td>
+            <td><strong>Fulltext in EPMC?</strong></td>
             <td>Does the fulltext of the article appear in some form in EPMC?  This is equivalent to the EPMC metadata record asserting <strong>inEPMC: Y</strong></td>
         </tr>
         <tr>
-            <td>XML Fulltext?</td>
+            <td><strong>XML Fulltext?</strong></td>
             <td>Does the XML version of the fulltext of the article appear in EPMC?  This will be a subset of those where the fulltext appears in some form, and all OA articles SHOULD have this content available.</td>
         </tr>
         <tr>
-            <td>AAM?</td>
+            <td><strong>AAM?</strong></td>
             <td>Is the copy of the paper in EPMC the Accepted Authors Manuscript (AAM)?  If the XML fulltext is present in EPMC then this information will be lifted from there, otherwise we page-scrape the EPMC web page for the article to detect whether it is the author manuscript</td>
         </tr>
         <tr>
-            <td>PMCID</td>
-            <td></td>
+            <td><strong>Open Access</strong></td>
+            <td>Is the article Open Access?  This is equivalent to the EPMC metadata record asserting <strong>isOpenAccess: Y</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Licence</strong></td>
+            <td>
+                <p>What licence, if any, were we able to detect for the article.  Will be one of the Creative Commons licences (including CC0), or "non-standard-licence".</p>
+                <p>Licences looked for in a number of places, in the following order:</p>
+                <ol>
+                    <li>The EPMC Fulltext XML, if present</li>
+                    <li>The EPMC web page (via page scraping)</li>
+                    <li>The publisher's page for the article (via page scraping, or publisher API if one exists)</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Licence Source</strong></td>
+            <td>
+                <p>Where did we find the licence information?  As per the <strong>Licence</strong> column, there are 3 places we might find the licence, and these are noted in this column</p>
+                <ol>
+                    <li><strong>epmc_xml</strong> - Detected in the EPMC Fulltext XML</li>
+                    <li><strong>epmc</strong> - Detected on the EPMC web page (via page scraping)</li>
+                    <li><strong>publisher</strong> - Detected on the publisher's page for the article (via page scraping, or publisher API if one exists)</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Journal Type</strong></td>
+            <td>
+                <p>Whether this is a hybrid or pure Open Access journal.  Determined by whether the journal is present in the <a href="http://doaj.org">DOAJ</a></p>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Correct Article Confidence</strong></td>
+            <td>
+                <p>What level of confidence does the system has that it has successfully identified and analysed the correct article?</p>
+                <p>Since there are different ways we might identify the article, we may not always be 100% certain that we have found the correct one.  Values in this column are:</p>
+                <ol>
+                    <li><strong>1</strong> - we are certain this is the right article for the identifiers provided.  This is because we found an exact match to the PMCID, PMID or DOI in EPMC</li>
+                    <li><strong>0.9</strong> - we are almost certain this is the right article, as we identified it by exact title match in EPMC, and there was only one result</li>
+                    <li><strong>0.7</strong> - we are pretty sure this is the right article, as we identified it with a title keyword search in EPMC, and there was only one result</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Standard Compliance</strong></td>
+            <td>
+                <p>Does the result of the analysis live up to the requirements of Wellcome's Standard Compliance criteria?</p>
+                <p>These criteria are:</p>
+                <ul>
+                    <li>IF full-text is in Europe PMC AND it is an author manuscript THEN compliance = TRUE</li>
+                    <li>IF full-text is in Europe PMC AND the licence (in any location) is CC BY or CC0 THEN compliance = TRUE</li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Deluxe Compliance</strong></td>
+            <td>
+                <p>Does the result of the analysis live up to the requirements of Wellcome's Deluxe Compliance criteria?</p>
+                <p>These criteria are:</p>
+                <ul>
+                    <li>IF full-text is in Europe PMC AND it is an author manuscript THEN compliance = TRUE</li>
+                    <li>IF full-text is in Europe PMC AND the licence as present in Europe PMC is CC BY or CC0 AND the article is in the open access subset THEN compliance = TRUE</li>
+                </ul>
+            </td>
+        </tr>
+
+        <tr>
+            <td><strong>Compliance Processing Output</strong></td>
+            <td>
+                <p>This field contains detailed logging and provenance information for the processing run, allowing you to understand on a case-by-case basis how the decisions and analysis were made</p>
+            </td>
         </tr>
 
     </tbody>
 </table>
+
+<p>In addition to the compliance analysis there are a couple of other columns added for your convenience:</p>
+
+<ul>
+    <li><strong>ISSN</strong> - any ISSNs that we encounter in EPMC will be added here.  There is no distinction between print and electronic ISSNs</li>
+    <li><strong>Journal title</strong> - if you do not provide a Journal title column initially, we will add one with the Journal title from EPMC.  If you do provide a journal title we will leave it as-is unless the field is blank for a given identifier, in which case we will fill it in for you</li>
+</ul>
+
+<p><strong>Note</strong> - the output CSVs are encded in UTF-8, so when you open them in Excel you will need to specify the encoding.  If you do not
+Excel may open them in a native Windows encoding, and you may experience unexpected characters appearing in your spreadsheet.</p>
 
 {% endblock %}
