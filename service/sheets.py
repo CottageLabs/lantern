@@ -9,6 +9,10 @@ class MasterSheet(object):
         u'Publisher' : "publisher",
         u'Journal title' : "journal_title",
         u'Article title' : "article_title",
+        u'Publication Date' : "publication_date",
+        u'Title of paper (shortened)' : "short_title",
+        u'Author(s)' : "authors",
+        u'Grant References' : "grant_refs",
         u'Total cost of Article Processing Charge (APC), in \xa3' : "apc",
         u'Amount of APC charged to Wellcome OA grant, in \xa3 (see comment)' : "wellcome_apc",
         u'VAT charged' : "vat",
@@ -33,7 +37,8 @@ class MasterSheet(object):
     }
 
     OUTPUT_ORDER = [
-        "university", "pmcid", "pmid", "doi", "publisher", "journal_title", "issn", "article_title", "apc", "wellcome_apc",
+        "university", "pmcid", "pmid", "doi", "publisher", "journal_title", "issn", "article_title", "publication_date",
+        "short_title", "authors", "grant_refs", "apc", "wellcome_apc",
         "vat", "total_cost", "grant_code", "licence_info", "notes", "in_epmc", "xml_ft_in_epmc", "aam", "open_access",
         "licence", "licence_source", "journal_type", "confidence", "standard_compliance", "deluxe_compliance", "provenance"
     ]
