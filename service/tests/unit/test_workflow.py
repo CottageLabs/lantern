@@ -835,9 +835,22 @@ class TestWorkflow(testindex.ESTestCase):
         assert record.licence_source == "epmc_xml"
         assert len(record.provenance) == 1
 
+        # licence in words in text
+        l[0].set("license-type", "open access")
+        l[0].set("{http://www.w3.org/1999/xlink}href", "http://random.url")
+        lp.text = "This is a Creative Commons Attribution-NonCommercial licenced article"
+        l[0].remove(lp2)
+        s = etree.tostring(xml)
+        ft = epmc.EPMCFullText(s)
+        record = models.Record()
+        msg = workflow.WorkflowMessage(record=record)
+        workflow.extract_fulltext_licence(msg, ft)
+        assert record.licence_type == "cc-by-nc"
+        assert record.licence_source == "epmc_xml"
+        assert len(record.provenance) == 1
+
         # licence present but unrecognised
         lp.text = "wibble wibble wobble"
-        l[0].remove(lp2)
         s = etree.tostring(xml)
         ft = epmc.EPMCFullText(s)
         record = models.Record()
