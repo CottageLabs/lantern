@@ -167,7 +167,11 @@ class Record(RecordDAO, DataObj):
                                 total_cost=None,
                                 grant_code=None,
                                 licence_info=None,
-                                notes=None):
+                                notes=None,
+                                publication_date=None,
+                                short_title=None,
+                                grant_refs=None,
+                                authors=None):
         if university is not None: self._set_single("source.university", university, self._utf8_unicode())
         if pmcid is not None: self._set_single("source.pmcid", pmcid, self._utf8_unicode())
         if pmid is not None: self._set_single("source.pmid", pmid, self._utf8_unicode())
@@ -182,6 +186,10 @@ class Record(RecordDAO, DataObj):
         if grant_code is not None: self._set_single("source.grant_code", grant_code, self._utf8_unicode())
         if licence_info is not None: self._set_single("source.licence_info", licence_info, self._utf8_unicode())
         if notes is not None: self._set_single("source.notes", notes, self._utf8_unicode())
+        if publication_date is not None: self._set_single("source.publication_date", publication_date, self._utf8_unicode())
+        if short_title is not None: self._set_single("source.short_title", short_title, self._utf8_unicode())
+        if grant_ref is not None: self._set_single("source.grant_refs", grant_refs, self._utf8_unicode())
+        if authors is not None: self._set_single("source.authors", authors, self._utf8_unicode())
 
     @property
     def pmcid(self):
