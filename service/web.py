@@ -155,6 +155,9 @@ def health():
     oacwellcome_daemon_status = check_background_process("oacwellcome-production-daemon")
     oagr_daemon_status = check_background_process("oagr-production-daemon")
 
+    if not oacwellcome_daemon_status and not oagr_daemon_status:
+        return "Both daemons have encountered a problem"
+
     if not oacwellcome_daemon_status:
         return "The OACWellcome Daemon has encountered a problem"
 
