@@ -1,3 +1,4 @@
+import subprocess
 from flask import Flask, request, abort, render_template, redirect, make_response, jsonify, send_file, \
     send_from_directory, url_for
 from wtforms import Form, StringField, validators, SelectField
@@ -138,6 +139,39 @@ def download_progress_csv(job_id):
         spreadsheet = spreadsheet.encode('utf-8', 'ignore')
     filename = "processed_" + job.filename
     return send_file(StringIO(spreadsheet), attachment_filename=filename, as_attachment=True)
+
+
+# health status endpoint
+@app.route("/health")
+def health():
+    # if the request has come this far, the web app itself is fine so no
+    # need to check
+
+    # If there is an exception (e.g. *during* checks on the output of
+    # commands), this web route will crash and burn. This is fine -
+    # the Newrelic monitoring will get a 500 in response and we will be
+    # alerted.
+
+    oacwellcome_daemon_status = check_background_process("oacwellcome-production-daemon")
+    oagr_daemon_status = check_background_process("oagr-production-daemon")
+
+    if not oacwellcome_daemon_status:
+        return "The OACWellcome Daemon has encountered a problem"
+
+    if not oagr_daemon_status:
+        return "The OAGR Daemon has encountered a problem"
+
+    return "All OK"
+
+
+def check_background_process(supervisord_process_name):
+    output = subprocess.check_output(["sudo", "supervisorctl", "status", supervisord_process_name])
+
+    if len(output.splitlines()) != 1:
+        return "Wrong # of lines returned by supervisorctl for {0}, double check the command and correct the service.web.health code.".format(supervisord_process_name)
+
+    if 'RUNNING' in output:
+        return True
 
 # this allows us to override the standard static file handling with our own dynamic version
 @app.route("/static/<path:filename>")
