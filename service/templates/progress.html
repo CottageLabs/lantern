@@ -1,35 +1,53 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container col-md-12" style="padding: 20px; padding-top:0px; height: 500px;">
+
+<div class="container col-md-12" style="padding: 20px; padding-top:0px;">
     <h1 style="text-align:center;"><small>Progress for: </small> {{job.filename}}</h1>
-    <div class="col-md-offset-3 col-md-6 panel" >
+    <div class="col-md-offset-3 col-md-6 panel">
+        <div style="padding-bottom: 10px">
             <div class="row" style="padding: 10px; padding-bottom: 0px;">
-                    <a href="{{url_for('download_original_csv', job_id=job.id)}}" class="btn btn-primary col-md-12">Download original</a>
+                <a href="{{url_for('download_original_csv', job_id=job.id)}}" class="btn btn-primary col-md-12">Download original</a>
             </div>
             <div class="row" style="padding: 10px; padding-bottom: 0px;">
                 <div class="container status col-md-12">
                     Spreadsheet status:
-                    {{job.status_code}}
+                    <span id="job_status">{{job.status_code}}</span>
                  </div>
             </div>
-        {% if job.status_code == "submitted" %}
-        <div class="row" style="padding: 10px; padding-bottom: 0px;">
+
+            <div id="error_container" class="row" style="padding: 10px; padding-bottom: 0px;{% if job.status_code != 'error' %} display:none{% endif %}">
                 <div class="container status col-md-12">
-                    Your spreadsheet has been uploaded. Processing will start shortly.
-                 </div>
+                    <strong>There were permanent errors processing your upload</strong><br>
+                    <span id="error_message"></span>
+                </div>
             </div>
-        {% else %}
-            <div class="row" style="padding: 10px; padding-bottom: 0px;">
+
+            <div id="queue_container" class="row" style="padding: 10px; padding-bottom: 0px;{% if job.status_code != 'submitted' %} display:none{% endif %}">
+                <div class="container status col-md-12">
+                    Your spreadsheet has been uploaded. Processing will start shortly.<br>
+                    <span id="queue_notify" style="display:none">There are <span id="queue_length">[x]</span> jobs ahead of yours in the queue</span>
+                </div>
+            </div>
+
+            <div id="progress_container" class="row" style="padding: 10px; padding-bottom: 0px;{% if job.status_code != 'processing' %} display:none{% endif %}">
                 <div class="container status col-md-12">
                     Processing progress:
                     <span id="pc_container">{{job.pc_complete}}</span>%
                  </div>
             </div>
-            <div class="row" style="padding: 10px; padding-bottom: 0px;">
-                    <a href="{{url_for('download_progress_csv', job_id=job.id)}}" class="btn btn-primary col-md-12">{% if job.status_code == "complete" %} Download final result {% else %} Download current stage {% endif %}</a>
+
+            <div id="download_container" class="row" style="padding: 10px; padding-bottom: 0px;{% if job.status_code != 'processing' and job.status_code != 'complete' %} display:none{% endif %}">
+                <a href="{{url_for('download_progress_csv', job_id=job.id)}}" class="btn btn-primary col-md-12" id="download_link">
+                    {% if job.status_code == "complete" %}
+                        Download final result
+                    {% else %}
+                        Download current progress
+                    {% endif %}
+                </a>
             </div>
-        {% endif %}
+        </div>
+
      </div>
 </div>
 

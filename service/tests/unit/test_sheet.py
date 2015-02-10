@@ -4,6 +4,7 @@ import os, csv
 from StringIO import StringIO
 
 TEST_SUBMISSION = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "test_submission.csv")
+BLANK_LINES = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "resources", "blank_rows.csv")
 
 class TestImport(testindex.ESTestCase):
     def setUp(self):
@@ -170,3 +171,8 @@ class TestImport(testindex.ESTestCase):
             assert o.get("licence") == "unknown"
             assert o.get("university") == "A"
         assert size == 1
+
+    def test_06_blank_rows(self):
+        ms = sheets.MasterSheet(path=BLANK_LINES)
+        objects = [o for o in ms.objects()]
+        assert len(objects) == 20

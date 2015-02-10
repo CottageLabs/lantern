@@ -1,18 +1,18 @@
+import subprocess
 from flask import Flask, request, abort, render_template, redirect, make_response, jsonify, send_file, \
     send_from_directory, url_for
-from flask.views import View
 from wtforms import Form, StringField, validators, SelectField
 from wtforms.fields.html5 import EmailField
 from werkzeug import secure_filename
-from datetime import datetime
 from StringIO import StringIO
-import os
+import os, json
 
 from service import models
 
 from octopus.core import app, initialise
 from octopus.lib.webapp import custom_static
 from workflow import csv_upload, email_submitter, output_csv
+from octopus.lib.webapp import jsonp
 
 import sys
 
@@ -21,17 +21,13 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config["ALLOWED_EXTENSIONS"]
 
-@app.route("/")
-def root():
-    return redirect(url_for('upload_csv'))
-
 class UploadForm(Form):
     contact_email = EmailField('Email Address', [validators.DataRequired(), validators.Email()])
     spreadsheet_type = SelectField('Type', choices=app.config.get('SPREADSHEET_OPTIONS'))
 
 
 @app.route("/", methods=['GET', 'POST'])
-@app.route("/upload_csv", methods=['GET', 'POST'])
+#@app.route("/upload_csv", methods=['GET', 'POST'])
 def upload_csv():
     form = UploadForm(request.form)
     invalid_file = False
@@ -50,6 +46,10 @@ def upload_csv():
             invalid_file = True
     return render_template("upload_csv.html", form=form, invalid_file=invalid_file)
 
+@app.route("/docs")
+def docs():
+    return render_template("docs.html")
+
 @app.route("/progress/<job_id>")
 def progress(job_id):
     job = models.SpreadsheetJob.pull(job_id)
@@ -60,6 +60,69 @@ def percentage(job_id):
     job = models.SpreadsheetJob.pull(job_id)
     pc = str(job.pc_complete)
     return pc
+
+@app.route("/progress/<job_id>/status")
+@jsonp
+def status(job_id):
+    job = models.SpreadsheetJob.pull(job_id)
+
+    obj = {"pc" : 0.0, "queue" : "0"}
+    obj["status"] = job.status_code
+    obj["message"] = job.status_message
+
+    if job.status_code == "submitted":
+        obj["pc"] = 0.0
+        ql = models.SpreadsheetJob.queue_length(job.id, max=10)
+        obj["queue"] = str(ql) if ql < max else "10 or more"
+    elif job.status_code == "processing":
+        obj["pc"] = job.pc_complete
+    elif job.status_code == "complete":
+        obj["pc"] = 100.0
+
+    resp = make_response(json.dumps(obj))
+    resp.mimetype = "application/json"
+    return resp
+
+"""
+Use this to force certain states in the UI, and thus allow testing of different
+statuses
+
+@app.route("/progress/<job_id>/<test_type>")
+@jsonp
+def test_status(job_id, test_type):
+    obj = {}
+
+    if test_type == "submitted":
+        obj = {
+            "status" : "submitted",
+            "pc" : 0.0,
+            "queue" : "8"
+        }
+    elif test_type == "processing":
+        import random
+        obj = {
+            "status" : "processing",
+            "pc" : random.randint(0, 99) + random.random(),
+            "queue" : "0"
+        }
+    elif test_type == "error":
+        obj = {
+            "status" : "error",
+            "message" : "oops",
+            "pc" : 0.0,
+            "queue" : "0"
+        }
+    elif test_type == "complete":
+        obj = {
+            "status" : "complete",
+            "pc" : 100.0,
+            "queue" : "0"
+        }
+
+    resp = make_response(json.dumps(obj))
+    resp.mimetype = "application/json"
+    return resp
+"""
 
 @app.route("/download_original/<job_id>")
 def download_original_csv(job_id):
@@ -76,6 +139,42 @@ def download_progress_csv(job_id):
         spreadsheet = spreadsheet.encode('utf-8', 'ignore')
     filename = "processed_" + job.filename
     return send_file(StringIO(spreadsheet), attachment_filename=filename, as_attachment=True)
+
+
+# health status endpoint
+@app.route("/health")
+def health():
+    # if the request has come this far, the web app itself is fine so no
+    # need to check
+
+    # If there is an exception (e.g. *during* checks on the output of
+    # commands), this web route will crash and burn. This is fine -
+    # the Newrelic monitoring will get a 500 in response and we will be
+    # alerted.
+
+    oacwellcome_daemon_status = check_background_process("oacwellcome-production-daemon")
+    oagr_daemon_status = check_background_process("oagr-production-daemon")
+
+    if not oacwellcome_daemon_status and not oagr_daemon_status:
+        return "Both daemons have encountered a problem"
+
+    if not oacwellcome_daemon_status:
+        return "The OACWellcome Daemon has encountered a problem"
+
+    if not oagr_daemon_status:
+        return "The OAGR Daemon has encountered a problem"
+
+    return "All OK"
+
+
+def check_background_process(supervisord_process_name):
+    output = subprocess.check_output(["sudo", "supervisorctl", "status", supervisord_process_name])
+
+    if len(output.splitlines()) != 1:
+        return "Wrong # of lines returned by supervisorctl for {0}, double check the command and correct the service.web.health code.".format(supervisord_process_name)
+
+    if 'RUNNING' in output:
+        return True
 
 # this allows us to override the standard static file handling with our own dynamic version
 @app.route("/static/<path:filename>")

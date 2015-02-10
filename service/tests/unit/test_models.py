@@ -157,6 +157,8 @@ class TestModels(ESTestCase):
 
         # Truth table for standard and deluxe compliance
         #
+        # Note: CC-BY column means CC-BY or CC0
+        #
         # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
         # 0             0       0           0                   0           0       0
         # 0             0       1           0                   0           0       0
@@ -212,7 +214,7 @@ class TestModels(ESTestCase):
 
         # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
         # 1             0       1           0                   0           1       0
-        record.licence_type = "CC BY"
+        record.licence_type = "CC0"
         record.licence_source = "publisher"
         record.is_oa = False
         assert record.deluxe_compliance is False
