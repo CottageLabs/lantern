@@ -188,7 +188,7 @@ class Record(RecordDAO, DataObj):
         if notes is not None: self._set_single("source.notes", notes, self._utf8_unicode())
         if publication_date is not None: self._set_single("source.publication_date", publication_date, self._utf8_unicode())
         if short_title is not None: self._set_single("source.short_title", short_title, self._utf8_unicode())
-        if grant_ref is not None: self._set_single("source.grant_refs", grant_refs, self._utf8_unicode())
+        if grant_refs is not None: self._set_single("source.grant_refs", grant_refs, self._utf8_unicode())
         if authors is not None: self._set_single("source.authors", authors, self._utf8_unicode())
 
     @property
