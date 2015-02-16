@@ -700,6 +700,7 @@ def extract_fulltext_info(msg, fulltext):
 
 def extract_fulltext_licence(msg, fulltext):
     type, url, para = fulltext.get_licence_details()
+    cs = fulltext.copyright_statement
 
     if type is not None:
         for t, c in licences.types.iteritems():
@@ -725,6 +726,14 @@ def extract_fulltext_licence(msg, fulltext):
             if ss in para:
                 msg.record.licence_type = t
                 msg.record.add_provenance("processor", "Fulltext XML licence description contains the licence text %(text)s which gives us licence type %(license)s" % {"text" : ss, "license" : t})
+                msg.record.licence_source = "epmc_xml"
+                return
+
+    if cs is not None:
+        for ss, t in licences.substrings:
+            if ss in cs:
+                msg.record.licence_type = t
+                msg.record.add_provenance("processor", "Fulltext XML copyright statement contains the licence text %(text)s which gives us licence type %(license)s" % {"text" : ss, "license" : t})
                 msg.record.licence_source = "epmc_xml"
                 return
 
