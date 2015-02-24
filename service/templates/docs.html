@@ -6,8 +6,8 @@
 whether the articles listed meet the compliance criteria for the Wellcome Trust.</p>
 
 <p>Simply export a CSV from your favourite spreadsheet program (e.g. Excel), and <a href="{{ url_for('upload_csv') }}">upload it</a>.  We will
-then go off an inspect all the identifiers and gather together your compliance information.  You will be able to monitor the progress from
-your upload page, and download the results at any point during the run, or at the end when it is finished.</p>
+then go off and inspect all the identifiers and gather together your compliance information.  You will be able to monitor the progress from
+your upload page, and download the results at any point during the run, or at the end when it is finished.  We will also email you the completed spreadsheet when it is done.</p>
 
 <p>Below are some detailed documentation on the input spreadsheet format and the format in which you will receive the results.</p>
 
@@ -50,6 +50,10 @@ In order for a successful processing of your records to take place, AT LEAST one
 
 <p>Any column that is present that does not correspond <strong>exactly</strong> to one of the above headers will be ignored.</p>
 
+<p>The system will ignore any blank rows in the input sheet.  This is usually the right thing to do - ignoring excess blank lines
+at the end of the file which may get exported from your spreadsheet software.  But, it will also ignore blank lines anywhere in the
+input, so it is strongly recommended you avoid having any.</p>
+
 <p><strong>NOTE</strong> - The application works best with CSVs which are UTF-8 encoded.  Non-UTF-8 encoded sheets (such as those
 exported by Excel by default) should still work, though you may notice character encoding issues in the results.</p>
 
@@ -58,6 +62,10 @@ exported by Excel by default) should still work, though you may notice character
 <p>When you download your processed spreadsheet, it will reflect back at you any columns that you uploaded which are part of the
     Wellcome Trust Master Spreadsheet Format, and add a number of other compliance analysis columns.
     Those additional columns can be interpreted as described below.</p>
+
+<p>The output spreadsheet will also be in exactly the same order as you uploaded it, making it easy for you to combine it with any
+additional data from the original sheet which was not preserved in the run (e.g. headers not in the Master format).  Note, though, that
+any blank lines that were in your original sheet will not be returned to you.</p>
 
 <style type="text/css">
     table {
@@ -94,7 +102,7 @@ exported by Excel by default) should still work, though you may notice character
         </tr>
         <tr>
             <td><strong>Open Access</strong></td>
-            <td>Is the article Open Access?  This is equivalent to the EPMC metadata record asserting <strong>isOpenAccess: Y</strong></td>
+            <td>Is the article in the Open Access subset?  This is equivalent to the EPMC metadata record asserting <strong>isOpenAccess: Y</strong></td>
         </tr>
         <tr>
             <td><strong>Licence</strong></td>
@@ -128,7 +136,7 @@ exported by Excel by default) should still work, though you may notice character
         <tr>
             <td><strong>Correct Article Confidence</strong></td>
             <td>
-                <p>What level of confidence does the system has that it has successfully identified and analysed the correct article?</p>
+                <p>What level of confidence does the system have that it has successfully identified and analysed the correct article?</p>
                 <p>Since there are different ways we might identify the article, we may not always be 100% certain that we have found the correct one.  Values in this column are:</p>
                 <ol>
                     <li><strong>1</strong> - we are certain this is the right article for the identifiers provided.  This is because we found an exact match to the PMCID, PMID or DOI in EPMC</li>
