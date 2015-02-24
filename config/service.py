@@ -57,7 +57,7 @@ OAG_STATE_MAX_RETRIES = 100  # retry pretty hard.
 ##########################################
 # service specific config
 
-SERVICE_BASE_URL = "http://oacwellcome.ooz.cottagelabs.com"
+SERVICE_BASE_URL = "http://compliance.cottagelabs.com"
 UPLOAD_DIR = "upload"
 ALLOWED_EXTENSIONS = ['csv']
 SPREADSHEET_OPTIONS = [('None', 'Type:'), ('Excel', 'Excel'), ('Google Docs', 'Google Docs'), ('Libre Office', 'Libre Office')]
