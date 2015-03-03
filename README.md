@@ -54,20 +54,10 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
         },
         
         "source" : {
-            "university" : "<university>",
             "pmcid" : "<pmcid>",
             "pmid" : "<pmid>",
             "doi" : "<doi>",
-            "publisher" : "<publisher>",
-            "journal_title" : "<journal title>",
             "article_title" : "<article title>",
-            "apc" : "<total cost of apc>",
-            "wellcome_apc" : "<amount of apc charged to wellcome oa grant>",
-            "vat" : "<vat charged>",
-            "total_cost" : "<total cost>",
-            "grant_code" : "<wellcome grant code>",
-            "licence_info" : "<original licence information>",
-            "notes" : "<original notes>"
         },
         
         "identifiers" : {
@@ -101,8 +91,6 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
             "licence_source" : "epmc_xml|epmc|publisher",
             "journal_type" : "oa|hybrid",
             "confidence" : <out of 1>,
-            "standard" : true|false,
-            "deluxe" : true|false
         },
         
         "provenance" : [
@@ -139,8 +127,6 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
     * licence_source - where we detected the licence
     * journal_type - if the journal is OA or hybrid, as determined from the DOAJ
     * confidence - confidence that we have identified the correct journal in EPMC (will be < 1 if title match is used)
-    * standard - does the record meet Wellcome's standard compliance criteria
-    * deluxe - does the record meet Wellcome's deluxe compliance criteria
 * provenance - each operation may store information about work it did on the record.  These will later be serialised to notes on the record
     
 

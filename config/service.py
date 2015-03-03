@@ -10,7 +10,7 @@ MAIL_FROM_ADDRESS = "sysadmin@cottagelabs.com"
 
 # elasticsearch back-end connection settings
 ELASTIC_SEARCH_HOST = "http://localhost:9200"
-ELASTIC_SEARCH_INDEX = "wellcome"
+ELASTIC_SEARCH_INDEX = "lantern"
 
 # FIXME: shortcut for testing with OAGR
 # ELASTIC_SEARCH_TEST_INDEX = "wellcome"
@@ -57,7 +57,7 @@ OAG_STATE_MAX_RETRIES = 100  # retry pretty hard.
 ##########################################
 # service specific config
 
-SERVICE_BASE_URL = "http://compliance.cottagelabs.com"
+SERVICE_BASE_URL = "http://lantern.cottagelabs.com"
 UPLOAD_DIR = "upload"
 ALLOWED_EXTENSIONS = ['csv']
 SPREADSHEET_OPTIONS = [('None', 'Type:'), ('Excel', 'Excel'), ('Google Docs', 'Google Docs'), ('Libre Office', 'Libre Office')]

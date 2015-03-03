@@ -14,44 +14,40 @@ class TestImport(testindex.ESTestCase):
         super(TestImport, self).tearDown()
 
     def test_01_read(self):
-        ms = sheets.MasterSheet(path=TEST_SUBMISSION)
+        ms = sheets.SimpleSheet(path=TEST_SUBMISSION)
         objects = False
         for o in ms.objects():
             objects = True
             # just check a few fields to make sure the object looks reasonable
-            assert "university" in o
             assert "pmcid" in o
-            assert "journal_title" in o
+            assert "article_title" in o
 
         assert objects
 
     def test_02_write_subset(self):
         # set up a very simple subset sheet
-        spec = ["university", "pmcid", "journal_title"]
+        spec = ["article_title", "pmcid"]
         s = StringIO()
-        ms = sheets.MasterSheet(writer=s, spec=spec)
+        ms = sheets.SimpleSheet(writer=s, spec=spec)
 
         # add an object which conforms to the spec of the subset
         ms.add_object({
-            "university" : "A",
-            "pmcid" : "a",
-            "journal_title" : "1"
+            "article_title" : "A",
+            "pmcid" : "a"
         })
 
         # check that the record has been written
         size = 0
         for o in ms.objects():
             size += 1
-            assert o.get("university") == "A"
+            assert o.get("article_title") == "A"
             assert o.get("pmcid") == "a"
-            assert o.get("journal_title") == "1"
-            assert len(o.keys()) == 3
+            assert len(o.keys()) == 2
         assert size == 1
 
         # now add an object with insufficient data for all columns
         ms.add_object({
-            "university" : "B",
-            "journal_title" : "2",
+            "article_title" : "B",
         })
 
         # check that the new record has been written correctly (with suitable defaults)
@@ -59,9 +55,8 @@ class TestImport(testindex.ESTestCase):
         found = False
         for o in ms.objects():
             size += 1
-            if o.get("university") == "B":
+            if o.get("article_title") == "B":
                 found = True
-                assert o.get("journal_title") == "2"
                 assert o.get("pmcid") == ""
 
         assert size == 2
@@ -69,7 +64,7 @@ class TestImport(testindex.ESTestCase):
 
         # now add an object with too much data for the spec
         ms.add_object({
-            "university" : "C",
+            "article_title" : "C",
             "pmcid" : "c",
             "something_else" : "Gamma"
         })
@@ -79,9 +74,8 @@ class TestImport(testindex.ESTestCase):
         found = False
         for o in ms.objects():
             size += 1
-            if o.get("university") == "C":
+            if o.get("article_title") == "C":
                 found = True
-                assert o.get("journal_title") == ""
                 assert o.get("pmcid") == "c"
                 assert "something_else" not in o
 
@@ -90,29 +84,27 @@ class TestImport(testindex.ESTestCase):
 
     def test_03_write_full(self):
         s = StringIO()
-        ms = sheets.MasterSheet(writer=s)
+        ms = sheets.SimpleSheet(writer=s)
 
         # add an object which conforms to the spec of the subset
         ms.add_object({
-            "university" : "A",
+            "article_title" : "A",
             "pmcid" : "a",
-            "journal_title" : "1"
         })
 
         # check that the record has been written
         size = 0
         for o in ms.objects():
             size += 1
-            assert o.get("university") == "A"
+            assert o.get("article_title") == "A"
             assert o.get("pmcid") == "a"
-            assert o.get("journal_title") == "1"
             assert o.get("doi") == ""
             assert len(o.keys()) == len(ms.OUTPUT_ORDER)
         assert size == 1
 
         # now add an object with too much data for the spec
         ms.add_object({
-            "university" : "C",
+            "article_title" : "C",
             "pmcid" : "c",
             "something_else" : "Gamma"
         })
@@ -122,9 +114,8 @@ class TestImport(testindex.ESTestCase):
         found = False
         for o in ms.objects():
             size += 1
-            if o.get("university") == "C":
+            if o.get("article_title") == "C":
                 found = True
-                assert o.get("journal_title") == ""
                 assert o.get("pmcid") == "c"
                 assert "something_else" not in o
 
@@ -132,16 +123,16 @@ class TestImport(testindex.ESTestCase):
         assert found
 
     def test_04_output(self):
-        # set up a very simple subset sheet (not it's not in the desired output order)
-        spec = ["journal_title", "university", "pmcid"]
+        # set up a very simple subset sheet (note it's not in the desired output order)
+        spec = ["article_title", "doi", "pmcid"]
         s = StringIO()
-        ms = sheets.MasterSheet(writer=s, spec=spec)
+        ms = sheets.SimpleSheet(writer=s, spec=spec)
 
         # add an object which conforms to the spec of the subset
         ms.add_object({
-            "university" : "A",
+            "article_title" : "A",
             "pmcid" : "a",
-            "journal_title" : "1"
+            "doi" : "1"
         })
 
         # output the sheet to the StringIO object
@@ -152,16 +143,15 @@ class TestImport(testindex.ESTestCase):
         reader = csv.reader(s)
         rows = [row for row in reader]
         assert len(rows) == 2
-        assert rows[0] == ["University", "PMCID", "Journal title"]
-        assert rows[1] == ["A", "a", "1"]
+        assert rows[0] == ["PMCID", "DOI", "Article title"]
+        assert rows[1] == ["a", "1", "A"]
 
     def test_05_defaults(self):
         s = StringIO()
-        ms = sheets.MasterSheet(writer=s)
+        ms = sheets.SimpleSheet(writer=s)
         ms.add_object({
             "aam" : None,
             "licence" : "",
-            "university" : "A"
         })
 
         size = 0
@@ -169,10 +159,9 @@ class TestImport(testindex.ESTestCase):
             size += 1
             assert o.get("aam") == "unknown"
             assert o.get("licence") == "unknown"
-            assert o.get("university") == "A"
         assert size == 1
 
     def test_06_blank_rows(self):
-        ms = sheets.MasterSheet(path=BLANK_LINES)
+        ms = sheets.SimpleSheet(path=BLANK_LINES)
         objects = [o for o in ms.objects()]
         assert len(objects) == 20

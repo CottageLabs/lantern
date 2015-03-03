@@ -68,8 +68,7 @@ def parse_csv(job):
 
     path = os.path.join(upload, job.id + ".csv")
 
-    # FIXME: what happens if the sheet can't be read
-    sheet = sheets.MasterSheet(path)
+    sheet = sheets.SimpleSheet(path)
 
     i = 0
     for obj in sheet.objects():
@@ -151,30 +150,9 @@ def output_csv(job):
             "licence_source" : r.licence_source,
             "journal_type" : r.journal_type,
             "confidence" : r.confidence,
-            "standard_compliance" : r.standard_compliance,
-            "deluxe_compliance" : r.deluxe_compliance,
             "provenance" : serialise_provenance(r),
-            "issn" : ", ".join(r.issn),
-
-            # this is also a result of the run, but it can be overridden by the source data
-            # if it was passed in and not empty
-            "journal_title" : r.journal
+            "issn" : ", ".join(r.issn)
         }
-
-        # add the original data if present, being careful not to overwrite the data we have produced
-        if r.source is not None:
-            # list the fields to overwrite in the source.  Note that journal_title should only be overwritten
-            # if the source does not contain a value
-            overwrite = obj.keys()
-            jt = r.source.get("journal_title")
-            if jt is not None and jt != "":
-                overwrite.remove("journal_title")
-
-            original = deepcopy(r.source)
-            for k in overwrite:
-                if k in original:
-                    del original[k]
-            obj.update(original)
 
         return obj
 
@@ -183,9 +161,9 @@ def output_csv(job):
     records = models.Record.list_by_upload(job.id)
     spec = objectify(records[0])
 
-    # create a master spreadsheet with the right shape
+    # create a spreadsheet with the right shape
     s = StringIO()
-    sheet = sheets.MasterSheet(writer=s, spec=spec.keys())
+    sheet = sheets.SimpleSheet(writer=s, spec=spec.keys())
 
     # for each record, objectify it and add to the sheet
     for r in records:

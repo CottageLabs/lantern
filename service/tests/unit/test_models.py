@@ -26,20 +26,13 @@ class TestModels(ESTestCase):
         r = Record()
         r.upload_id = "1234"
         r.upload_pos = "234"
-        r.set_source_data(university="my uni",
+        r.set_source_data(
                           pmcid="PMC12345678",
                           pmid="98765432",
                           doi="10.whatever",
-                          publisher="wiley",
-                          journal_title="Journal of things",
                           article_title="A study of sorts",
-                          apc=100,
-                          wellcome_apc=200,
-                          vat=20,
-                          total_cost=300,
-                          grant_code="WELL01",
-                          licence_info="CC BY",
-                          notes="this is a note")
+                          )
+
         r.pmcid = "PMC12345678"
         r.pmid = "98765432"
         r.doi = "10.whatever"
@@ -59,8 +52,6 @@ class TestModels(ESTestCase):
         r.licence_source = "epmc"
         r.journal_type = "hybrid"
         r.confidence = "0.8"
-        r.standard_compliance = True
-        r.deluxe_compliance = False
         r.add_provenance("richard", "provenance 1")
         r.add_provenance("wellcome", "provenance 2")
 
@@ -82,8 +73,6 @@ class TestModels(ESTestCase):
         assert r.licence_source == "epmc"
         assert r.journal_type == "hybrid"
         assert r.confidence == 0.8
-        assert r.standard_compliance
-        assert not r.deluxe_compliance
 
         p = r.provenance
         assert len(p) == 2
@@ -152,104 +141,7 @@ class TestModels(ESTestCase):
         comp = job.pc_complete
         assert int(comp) == 100
 
-    def test_05_compliance(self):
-        record = Record()
-
-        # Truth table for standard and deluxe compliance
-        #
-        # Note: CC-BY column means CC-BY or CC0
-        #
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 0             0       0           0                   0           0       0
-        # 0             0       1           0                   0           0       0
-        # 1             0       0           0                   0           0       0
-        # 1             0       0           0                   1           0       0
-        # 1             0       0           1                   1           0       0
-        # 1             0       1           0                   0           1       0
-        # 1             0       1           1                   1           1       1
-        # 1             1       0           0                   0           1       1
-        # 1             1       1           0                   0           1       1
-        # 1             1       1           1                   1           1       1
-
-        # check the default values, before we've done anything to the record
-        assert record.deluxe_compliance is False
-        assert record.standard_compliance is False
-
-        # set the various switches, and then check the results
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 0             0       0           0                   0           0       0
-        record.in_epmc = False
-        record.aam = False
-        record.licence_type = "Other"
-        record.licence_source = "publisher"
-        record.is_oa = False
-        assert record.deluxe_compliance is False
-        assert record.standard_compliance is False
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 0             0       1           0                   0           0       0
-        record.licence_type = "cc-by"
-        assert record.deluxe_compliance is False
-        assert record.standard_compliance is False
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 1             0       0           0                   0           0       0
-        record.in_epmc = True
-        record.licence_type = "Other"
-        assert record.deluxe_compliance is False
-        assert record.standard_compliance is False
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 1             0       0           0                   1           0       0
-        record.is_oa = True
-        assert record.deluxe_compliance is False
-        assert record.standard_compliance is False
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 1             0       0           1                   1           0       0
-        record.licence_source = "epmc_xml"
-        assert record.deluxe_compliance is False
-        assert record.standard_compliance is False
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 1             0       1           0                   0           1       0
-        record.licence_type = "CC0"
-        record.licence_source = "publisher"
-        record.is_oa = False
-        assert record.deluxe_compliance is False
-        assert record.standard_compliance is True
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 1             0       1           1                   1           1       1
-        record.licence_type = "cc-by"
-        record.licence_source = "epmc"
-        record.is_oa = True
-        assert record.deluxe_compliance is True
-        assert record.standard_compliance is True
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 1             1       0           0                   0           1       1
-        record.aam = True
-        record.licence_type = "Other"
-        record.licence_source = "publisher"
-        assert record.deluxe_compliance is True
-        assert record.standard_compliance is True
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 1             1       1           0                   0           1       1
-        record.licence_type = "CC-BY"
-        assert record.deluxe_compliance is True
-        assert record.standard_compliance is True
-
-        # in EPMC |     AAM |   CC BY |     Licence in EPMC |   is OA |     S |     D
-        # 1             1       1           1                   1           1       1
-        record.licence_source = "epmc_xml"
-        record.is_oa = True
-        assert record.deluxe_compliance is True
-        assert record.standard_compliance is True
-
-    def test_06_duplicates(self):
+    def test_05_duplicates(self):
         # first make ourselves a job to work on
         job = SpreadsheetJob()
         job.save()

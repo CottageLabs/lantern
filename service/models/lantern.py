@@ -70,20 +70,10 @@ class Record(RecordDAO, DataObj):
         },
 
         "source" : {
-            "university" : "<university>",
             "pmcid" : "<pmcid>",
             "pmid" : "<pmid>",
             "doi" : "<doi>",
-            "publisher" : "<publisher>",
-            "journal_title" : "<journal title>",
             "article_title" : "<article title>",
-            "apc" : "<total cost of apc>",
-            "wellcome_apc" : "<amount of apc charged to wellcome oa grant>",
-            "vat" : "<vat charged>",
-            "total_cost" : "<total cost>",
-            "grant_code" : "<wellcome grant code>",
-            "licence_info" : "<original licence information>",
-            "notes" : "<original notes>"
         },
 
         "identifiers" : {
@@ -96,8 +86,9 @@ class Record(RecordDAO, DataObj):
         "supporting_info" : {
             "epmc_ft_xml" : true|false,
             "aam_from_ft_xml" : true|false,
-            "aam_from_empc" : true|false,
+            "aam_from_epmc" : true|false,
             "issn" : ["<issn for this journal>"],
+            "journal" : "<name of journal>",
             "currently_in_oag" : true|false,
             "oag_pmcid" : "not_sent|sent|success|fto|error",
             "oag_doi" : "not_sent|sent|success|fto|error",
@@ -116,8 +107,6 @@ class Record(RecordDAO, DataObj):
             "licence_source" : "epmc_xml|epmc|publisher",
             "journal_type" : "oa|hybrid",
             "confidence" : <out of 1>,
-            "standard" : true|false,
-            "deluxe" : true|false
         },
 
         "provenance" : [
@@ -154,42 +143,11 @@ class Record(RecordDAO, DataObj):
     def source(self):
         return self._get_single("source")
 
-    def set_source_data(self, university=None,
-                                pmcid=None,
-                                pmid=None,
-                                doi=None,
-                                publisher=None,
-                                journal_title=None,
-                                article_title=None,
-                                apc=None,
-                                wellcome_apc=None,
-                                vat=None,
-                                total_cost=None,
-                                grant_code=None,
-                                licence_info=None,
-                                notes=None,
-                                publication_date=None,
-                                short_title=None,
-                                grant_refs=None,
-                                authors=None):
-        if university is not None: self._set_single("source.university", university, self._utf8_unicode())
+    def set_source_data(self, pmcid=None, pmid=None, doi=None, article_title=None):
         if pmcid is not None: self._set_single("source.pmcid", pmcid, self._utf8_unicode())
         if pmid is not None: self._set_single("source.pmid", pmid, self._utf8_unicode())
         if doi is not None: self._set_single("source.doi", doi, self._utf8_unicode())
-        if publisher is not None: self._set_single("source.publisher", publisher, self._utf8_unicode())
-        if journal_title is not None: self._set_single("source.journal_title", journal_title, self._utf8_unicode())
         if article_title is not None: self._set_single("source.article_title", article_title, self._utf8_unicode())
-        if apc is not None: self._set_single("source.apc", apc, self._utf8_unicode())
-        if wellcome_apc is not None: self._set_single("source.wellcome_apc", wellcome_apc, self._utf8_unicode())
-        if vat is not None: self._set_single("source.vat", vat, self._utf8_unicode())
-        if total_cost is not None: self._set_single("source.total_cost", total_cost, self._utf8_unicode())
-        if grant_code is not None: self._set_single("source.grant_code", grant_code, self._utf8_unicode())
-        if licence_info is not None: self._set_single("source.licence_info", licence_info, self._utf8_unicode())
-        if notes is not None: self._set_single("source.notes", notes, self._utf8_unicode())
-        if publication_date is not None: self._set_single("source.publication_date", publication_date, self._utf8_unicode())
-        if short_title is not None: self._set_single("source.short_title", short_title, self._utf8_unicode())
-        if grant_refs is not None: self._set_single("source.grant_refs", grant_refs, self._utf8_unicode())
-        if authors is not None: self._set_single("source.authors", authors, self._utf8_unicode())
 
     @property
     def pmcid(self):
@@ -272,14 +230,6 @@ class Record(RecordDAO, DataObj):
         self._add_to_list("supporting_info.issn", val, self._utf8_unicode())
 
     @property
-    def journal(self):
-        return self._get_single("supporting_info.journal", self._utf8_unicode())
-
-    @journal.setter
-    def journal(self, val):
-        self._set_single("supporting_info.journal", val, self._utf8_unicode())
-
-    @property
     def in_oag(self):
         return self._get_single("supporting_info.currently_in_oag", bool)
 
@@ -334,7 +284,6 @@ class Record(RecordDAO, DataObj):
     @in_epmc.setter
     def in_epmc(self, val):
         self._set_single("compliance.in_epmc", val, bool)
-        self._calculate_compliance()
 
     @property
     def is_oa(self):
@@ -343,7 +292,6 @@ class Record(RecordDAO, DataObj):
     @is_oa.setter
     def is_oa(self, val):
         self._set_single("compliance.epmc_is_oa", val, bool)
-        self._calculate_compliance()
 
     @property
     def aam(self):
@@ -352,7 +300,6 @@ class Record(RecordDAO, DataObj):
     @aam.setter
     def aam(self, val):
         self._set_single("compliance.epmc_aam", val, bool)
-        self._calculate_compliance()
 
     @property
     def licence_type(self):
@@ -361,12 +308,10 @@ class Record(RecordDAO, DataObj):
     @licence_type.setter
     def licence_type(self, val):
         self._set_single("compliance.licence.type", val, self._utf8_unicode())
-        self._calculate_compliance()
 
     @licence_type.deleter
     def licence_type(self):
         self._delete("compliance.licence.type")
-        self._calculate_compliance()
 
     @property
     def licence_source(self):
@@ -375,7 +320,6 @@ class Record(RecordDAO, DataObj):
     @licence_source.setter
     def licence_source(self, val):
         self._set_single("compliance.licence_source", val, self._utf8_unicode(), allowed_values=self.LICENCE_SOURCES)
-        self._calculate_compliance()
 
     @property
     def journal_type(self):
@@ -394,22 +338,6 @@ class Record(RecordDAO, DataObj):
         self._set_single("compliance.confidence", val, float, allowed_range=(0.0, 1.0))
 
     @property
-    def standard_compliance(self):
-        return self._get_single("compliance.standard", bool, default=False)
-
-    @standard_compliance.setter
-    def standard_compliance(self, val):
-        self._set_single("compliance.standard", val, bool)
-
-    @property
-    def deluxe_compliance(self):
-        return self._get_single("compliance.deluxe", bool, default=False)
-
-    @deluxe_compliance.setter
-    def deluxe_compliance(self, val):
-        self._set_single("compliance.deluxe", val, bool)
-
-    @property
     def provenance(self):
         objs = self._get_list("provenance")
         return [(o.get("by"), o.get("when"), o.get("note")) for o in objs]
@@ -422,47 +350,12 @@ class Record(RecordDAO, DataObj):
 
         self._add_to_list("provenance", obj)
 
-    def _calculate_compliance(self):
-        # calculate (if possible) the standard and deluxe compliance
-        # Standard Compliance
-        # IF full-text is in Europe PMC AND it is an author manuscript THEN compliance = YES
-        # IF full-text is in Europe PMC AND the licence (in any location) is CC BY THEN compliance = YES
-        #
-        # Deluxe Compliance
-        # IF full-text is in Europe PMC AND it is an author manuscript THEN compliance = YES
-        # IF full-text is in Europe PMC AND the licence as present in Europe PMC is CC BY AND the article is in the open access subset THEN compliance = YES
-
-        sc = False
-        dc = False
-
-        if self.in_epmc:    # minimum requirement for either kind of compliance is to be in EPMC
-
-            if self.aam:    # if this is the AAM then this is both standard and deluxe
-                sc = True
-                dc = True
-
-            if self.licence_type is not None and self.licence_type.lower().strip() in ["cc-by", "cc by", "cc0"]: # if this is CC BY or CC0
-                sc = True     # this is sufficient for standard compliance
-
-                if self.licence_source is not None and self.licence_source in ["epmc_xml", "epmc"] and self.is_oa:  # for deluxe compliance licence must be known in EPMC and be in the OA subset
-                    dc = True
-
-        self.standard_compliance = sc
-        self.deluxe_compliance = dc
-
     def prep(self):
         # ensure that both the epmc_complete and oag_complete fields are truly set
         # (this weird bit of code will ensure that they are set to their current values
         # or their default value)
         self.epmc_complete = self.epmc_complete
         self.oag_complete = self.oag_complete
-
-        # ensure that compliance is calculated
-        self._calculate_compliance()
-
-        # ensure compliance values are set for real
-        self.standard_compliance = self.standard_compliance
-        self.deluxe_compliance = self.deluxe_compliance
 
 class OAGRLink(OAGRLinkDAO, DataObj):
     @property
