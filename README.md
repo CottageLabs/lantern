@@ -1,4 +1,4 @@
-# Wellcome Trust OA Compliance
+# Lantern: OA Compliance
 
 ## Data Model
 
@@ -144,41 +144,3 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
 * provenance - each operation may store information about work it did on the record.  These will later be serialised to notes on the record
     
 
-## Upload Processing
-
-* take the spreadsheet upload and make a record, set to status "submitted"
-* attempt to open spreadsheet with csv reader.
-    * if success, respond to user with successful upload message and URL
-    * if failure, set status to "error" with message set (and save), and respond to user with error message
-
-(For the time being, keep records of failed uploads, but we may choose to delete them in-line or in batches later)
-
-## Job Processing
-
-1. For a given spreadsheet upload (e.g. obtain by status "submitted"), set status to "processing"
-2. Get all the records for that upload
-3. Normalise the given identifiers and save all the records (update provenance with operations taken)
-4. Obtain the EPMC metadata via the identifiers provided for each record (update provenance with method of identification, and set compliance.confidence)
-5. Update the missing identifiers for each record and save
-6. Obtain "in_epmc" and "epmc_is_oa" for each record from EPMC metadata and store in compliance field
-7. Obtain "issn" for journal from EPMC metadata and store in supporting_info.issn (update provenance with information for user)
-8. Try to obtain fulltext XML from EPMC, store success/failure in supporting_info.epmc_ft_xml (update provenance with information for user)
-9. If XML FT in EPMC, determine if it is an author manuscript, store in compliance.epmc_aam and supporting_info.aam_from_ft_xml
-10. If XML FT in EPMC, determine the license conditions, store in compliance.licence and compliance.license_source=epmc_xml
-11. Lookup in DOAJ on ISSN or Journal Name (if no issn available), store in compliance.journal_type hybrid/oa (update provenance with action taken)
-12. Build list of identifiers to send to OAG (first run) - update provenance with action taken:
-    * if not supporting_info.aam_from_ft_xml AND identifiers.pmcid, use pmcid (this will try to give us the licence and AAM status); supporting_info.oag_pmcid=sent
-    * if identifiers.pmcid AND not compliance.licence, use pmcid (this will try to give us the licence and AAM status); supporting_info.oag_pmcid=sent
-    * if identifiers.doi AND not compliance.licence, use doi (this will try to give us the licence); supporting_info.oag_doi=sent
-    * if identifiers.pmid AND not compliance.licence, use pmid (this will try to give us the licence); supporting_info.oag_pmid=sent
-13. Send records for processing in OAG, await response (set supporting_info.currently_in_oag=true)
-14. Process OAG responses, as they come in (set supporting_info.currently_in_oag=false) - update provenance with OAG provenance field or error details, irrespective of result:
-    * if not supporting_info.aam_from_ft_xml AND identifiers.pmcid, and success, store supporting_info.aam_from_epmc and optionally compliance.licence and compliance.licence_source=epmc (if not already detected, and not FTO), set supporting_info.oag_pmcid=success|fto|error
-    * if identifiers.pmcid AND not compliance.licence, and success (not FTO), store compliance.licence and compliance.licence_source=epmc, set supporting_info.oag_pmcid=success|fto|error
-    * if identifiers.doi AND not compliance.licence, and success (not FTO), store compliance.licence and compliance.licence_source=publisher, set supporting_info.oag_doi=success|fto|error
-    * if identifiers.pmid AND not compliance.licence, and success, store compliance.licence and compliance.licence_source=publisher, set supporting_info.oag_pmid=success|fto|error
-15. Prepare to re-send FTO/error requests with different identifiers (iterate with 14 until successes or identifiers exhausted) (set supporting_info.currently_in_oag=true)
-    * if pmcid request failed (supporting_info.oag_pmcid=fto|error), send doi
-    * if doi request failed (supporting_info.oag_pmcid=fto|error and supporting_info.oag_doi=fto|error), send pmid
-    * if pmid failed (supporting_info.oag_pmcid=fto|error and supporting_info.oag_doi=fto|error and supporting_info.oag_pmid=fto|error), store FTO or error
-16. Upon final record being gathered from OAG mark spreadsheet upload status to "complete"
