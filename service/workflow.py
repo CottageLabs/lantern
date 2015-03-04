@@ -144,6 +144,7 @@ def output_csv(job):
             "article_title" : r.title,
 
             # the results of the run
+            "in_core" : r.in_core,
             "in_epmc" : r.in_epmc,
             "xml_ft_in_epmc" : r.has_ft_xml,
             "aam" : r.aam,
@@ -627,7 +628,10 @@ def hybrid_or_oa(msg):
         msg.record.add_provenance("processor", "Journal with ISSN %(issn)s was not found in DOAJ; assuming Hybrid" % {"issn" : ",".join(msg.record.issn)})
 
 def embargo(msg):
+    app.logger.info("Looking up embargo in Sherpa Romeo")
+
     if msg.record.issn is None or len(msg.record.issn) == 0:
+        app.logger.debug("No ISSN for record, so aborting Sherpa Romeo lookup")
         return
 
     def embargo_text(period, unit):
@@ -670,7 +674,27 @@ def embargo(msg):
             break   # keep trying until we run out of issns, or until the code above executes
 
 def ou_core(msg):
-    pass
+    app.logger.info("Looking up record in CORE")
+    if msg.record.doi is None:
+        app.logger.info("Record does not have a DOI, so cannot look up in CORE")
+        return
+
+    client = coreacuk.Core()
+    try:
+        sr = client.search(msg.record.doi, count=1)
+    except:
+        msg.record.add_provenance("processor", "Was unable to communicate with the CORE service for this record")
+        return
+
+    if sr.total_hits > 0:
+        msg.record.in_core = True
+        if sr.total_hits == 1:
+            msg.record.add_provenance("processor", "Exactly one record with DOI {x} in Core".format(x=msg.record.doi))
+        else:
+            msg.record.add_provenance("processor", "{y} records with DOI {x} in Core".format(y=sr.total_hits, x=msg.record.doi))
+    else:
+        msg.record.in_core = False
+        msg.record.add_provenance("processor", "DOI {x} was not found in Core".format(x=msg.record.doi))
 
 def populate_identifiers(msg, epmc_md):
     """

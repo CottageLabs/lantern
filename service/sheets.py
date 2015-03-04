@@ -9,9 +9,10 @@ class SimpleSheet(clcsv.SheetWrapper):
         u'Article title' : "article_title",
 
         # values used exclusively in the output
+        u"Metadata in CORE?" : "in_core",
         u"Fulltext in EPMC?" : "in_epmc",
-        u"XML Fulltext?" : "xml_ft_in_epmc",
-        u"AAM?" : "aam",
+        u"XML Fulltext in EPMC?" : "xml_ft_in_epmc",
+        u"AAM in EPMC?" : "aam",
         u"Open Access?" : "open_access",
         u"Licence" : "licence",
         u"Licence Source" : "licence_source",
@@ -29,12 +30,14 @@ class SimpleSheet(clcsv.SheetWrapper):
     }
 
     OUTPUT_ORDER = [
-        "pmcid", "pmid", "doi", "article_title", "issn", "publisher", "in_epmc", "xml_ft_in_epmc", "aam", "open_access",
+        "pmcid", "pmid", "doi", "article_title", "issn", "publisher", "in_core", "in_epmc", "xml_ft_in_epmc", "aam", "open_access",
         "licence", "licence_source", "journal_type", "preprint", "preprint_embargo", "postprint", "postprint_embargo",
         "publisher_print", "publisher_embargo", "confidence", "provenance"
     ]
 
     DEFAULT_VALUES = {
         "aam" : "unknown",
-        "licence" : "unknown"
+        "licence" : "unknown",
+        "in_core" : "unknown",
+        "journal_type" : "unknown"
     }

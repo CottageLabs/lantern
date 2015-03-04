@@ -61,6 +61,7 @@ class TestModels(ESTestCase):
         r.journal_postprint_embargo = "6 months"
         r.publisher_self_archive = "cannot"
         r.journal_publisher_embargo = "100 years"
+        r.in_core = True
 
         assert r.upload_id == "1234"
         assert r.upload_pos == 234
@@ -86,6 +87,7 @@ class TestModels(ESTestCase):
         assert r.journal_postprint_embargo == "6 months"
         assert r.publisher_self_archive == "cannot"
         assert r.journal_publisher_embargo == "100 years"
+        assert r.in_core
 
         p = r.provenance
         assert len(p) == 2

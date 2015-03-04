@@ -45,6 +45,7 @@ class TestImport(testindex.ESTestCase):
         r1.journal_postprint_embargo = "100 years"
         r1.publisher_self_archive = "can"
         r1.journal_publisher_embargo = "6 months"
+        r1.in_core = True
         r1.save()
 
         r2 = models.Record()
@@ -77,7 +78,7 @@ class TestImport(testindex.ESTestCase):
         assert len(rows) == 4
         assert rows[0] == [
             'PMCID', 'PMID', 'DOI', 'Article title',
-            "ISSN", "Publisher", "Fulltext in EPMC?", 'XML Fulltext?', 'AAM?',
+            "ISSN", "Publisher", "Metadata in CORE?", "Fulltext in EPMC?", 'XML Fulltext in EPMC?', 'AAM in EPMC?',
             'Open Access?', 'Licence', 'Licence Source', 'Journal Type',
             "Self-Archive Preprint", "Preprint Embargo", "Self-Archive Postprint", "Postprint Embargo",
             "Self-Archive Publisher Version", "Publisher Version Embargo",
@@ -85,7 +86,7 @@ class TestImport(testindex.ESTestCase):
         ]
         assert rows[1] == [
             'PMC1234', '1234', '10.1234', 'The Title',
-            "1234-5678, 9876-5432", "The Publisher", "True", 'True', 'True',
+            "1234-5678, 9876-5432", "The Publisher", "True", "True", 'True', 'True',
             'True', 'CC0', 'publisher', 'hybrid',
             "can", "12 months", "cannot", "100 years",
             "can", "6 months",
@@ -93,7 +94,7 @@ class TestImport(testindex.ESTestCase):
         ]
         assert rows[2] == [
             "PMC9876", "", "", "",
-            "", "", "", "", "unknown",
+            "", "", "unknown", "", "", "unknown",
             "", "unknown", "", "",
             "", "", "", "",
             "", "",
@@ -101,7 +102,7 @@ class TestImport(testindex.ESTestCase):
         ]
         assert rows[3] == [
             "", "9876", "", "",
-            "", "", "", "", "unknown",
+            "", "", "unknown", "", "", "unknown",
             "", "unknown", "", "",
             "", "", "", "",
             "", "",

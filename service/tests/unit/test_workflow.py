@@ -20,6 +20,7 @@ class TestWorkflow(testindex.ESTestCase):
         self.old_get_epmc_fulltext = workflow.get_epmc_fulltext
         self.old_process_oag = workflow.process_oag
         self.old_embargo = workflow.embargo
+        self.old_core = workflow.ou_core
 
     def tearDown(self):
         super(TestWorkflow, self).tearDown()
@@ -29,6 +30,7 @@ class TestWorkflow(testindex.ESTestCase):
         workflow.get_epmc_fulltext = self.old_get_epmc_fulltext
         workflow.process_oag = self.old_process_oag
         workflow.embargo = self.old_embargo
+        workflow.ou_core = self.old_core
 
     def test_01_oag_rerun(self):
         record = models.Record()

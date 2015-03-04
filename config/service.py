@@ -55,8 +55,9 @@ OAG_STATE_BACK_OFF_FACTOR = 0.15    # back off slowly, so we try a lot initially
 # maximum number of times to retry an identifier
 OAG_STATE_MAX_RETRIES = 100  # retry pretty hard.
 
-# you need to provide this in your local config
+# you need to provide these API keys in your local config
 ROMEO_API_KEY = ""
+CORE_API_KEY = ""
 
 ##########################################
 # service specific config
