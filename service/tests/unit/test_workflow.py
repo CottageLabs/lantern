@@ -19,6 +19,7 @@ class TestWorkflow(testindex.ESTestCase):
         self.old_get_epmc_md = workflow.get_epmc_md
         self.old_get_epmc_fulltext = workflow.get_epmc_fulltext
         self.old_process_oag = workflow.process_oag
+        self.old_embargo = workflow.embargo
 
     def tearDown(self):
         super(TestWorkflow, self).tearDown()
@@ -27,6 +28,7 @@ class TestWorkflow(testindex.ESTestCase):
         workflow.get_epmc_md = self.old_get_epmc_md
         workflow.get_epmc_fulltext = self.old_get_epmc_fulltext
         workflow.process_oag = self.old_process_oag
+        workflow.embargo = self.old_embargo
 
     def test_01_oag_rerun(self):
         record = models.Record()
@@ -906,9 +908,17 @@ class TestWorkflow(testindex.ESTestCase):
         def mock_doaj(*args, **kwargs):
             return False
 
+        def mock_romeo(*args, **kwargs):
+            pass
+
+        def mock_core(*args, **kwargs):
+            pass
+
         workflow.get_epmc_md = mock_get_md
         workflow.get_epmc_fulltext = mock_get_ft
         workflow.doaj_lookup = mock_doaj
+        workflow.embargo = mock_romeo
+        workflow.ou_core = mock_core
 
         record = models.Record()
         record.pmcid = "PMC4219345"
@@ -967,9 +977,17 @@ class TestWorkflow(testindex.ESTestCase):
         def mock_doaj(*args, **kwargs):
             return True
 
+        def mock_romeo(*args, **kwargs):
+            pass
+
+        def mock_core(*args, **kwargs):
+            pass
+
         workflow.get_epmc_md = mock_get_md
         workflow.get_epmc_fulltext = mock_get_ft
         workflow.doaj_lookup = mock_doaj
+        workflow.embargo = mock_romeo
+        workflow.ou_core = mock_core
 
         record = models.Record()
         record.pmcid = "PMC4219345"
@@ -1013,9 +1031,17 @@ class TestWorkflow(testindex.ESTestCase):
         def mock_doaj(*args, **kwargs):
             return True
 
+        def mock_romeo(*args, **kwargs):
+            pass
+
+        def mock_core(*args, **kwargs):
+            pass
+
         workflow.get_epmc_md = mock_get_md
         workflow.get_epmc_fulltext = mock_get_ft
         workflow.doaj_lookup = mock_doaj
+        workflow.embargo = mock_romeo
+        workflow.ou_core = mock_core
 
         record = models.Record()
         record.pmcid = "PMC4219345"
@@ -1052,9 +1078,17 @@ class TestWorkflow(testindex.ESTestCase):
         def mock_doaj(*args, **kwargs):
             return False
 
+        def mock_romeo(*args, **kwargs):
+            pass
+
+        def mock_core(*args, **kwargs):
+            pass
+
         workflow.get_epmc_md = mock_get_md
         workflow.get_epmc_fulltext = mock_get_ft
         workflow.doaj_lookup = mock_doaj
+        workflow.embargo = mock_romeo
+        workflow.ou_core = mock_core
 
         record = models.Record()
         record.pmcid = "PMC4219345"

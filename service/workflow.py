@@ -2,6 +2,8 @@ from octopus.core import app
 from octopus.modules.epmc import client as epmc
 from octopus.modules.doaj import client as doaj
 from octopus.modules.identifiers import pmid, doi, pmcid
+from octopus.modules.coreacuk import client as coreacuk
+from octopus.modules.romeo import client as romeo
 from octopus.lib import mail
 from service import models, sheets, licences
 import os, time, traceback
@@ -151,7 +153,14 @@ def output_csv(job):
             "journal_type" : r.journal_type,
             "confidence" : r.confidence,
             "provenance" : serialise_provenance(r),
-            "issn" : ", ".join(r.issn)
+            "issn" : ", ".join(r.issn),
+            "publisher" : r.publisher,
+            "preprint" : r.preprint_self_archive,
+            "postprint" : r.postprint_self_archive,
+            "publisher_print" : r.publisher_self_archive,
+            "preprint_embargo" : r.journal_preprint_embargo,
+            "postprint_embargo" : r.journal_postprint_embargo,
+            "publisher_embargo" : r.journal_publisher_embargo
         }
 
         return obj
@@ -290,23 +299,22 @@ def process_record(msg):
     # add the key bits of metadata we're interested in
     extract_metadata(msg, epmc_md)
 
-    # now we've extracted all we can from the EPMC metadata, let's save before moving on to the
-    # next external request
-    # msg.record.save()
-
     # obtain the fulltext, and if found, extract metadata and licence information from it
     fulltext = get_epmc_fulltext(msg)
     if fulltext is not None:
         extract_fulltext_info(msg, fulltext)
         extract_fulltext_licence(msg, fulltext)
-
-        # since we have extracted data, and are about to do another external request, save again
-        # msg.record.save()
     else:
         msg.record.has_ft_xml = False
 
     # lookup the issn in the DOAJ, and record whether the journal is OA or hybrid
     hybrid_or_oa(msg)
+
+    # lookup the issn in Sherpa Romeo for embargo information
+    embargo(msg)
+
+    # lookup the doi in OU Core for whether it is in a repository
+    ou_core(msg)
 
     # at this stage, all the epmc lookup work has completed
     msg.record.epmc_complete = True
@@ -617,6 +625,52 @@ def hybrid_or_oa(msg):
         msg.record.add_provenance("processor", "Journal with ISSN %(issn)s was found in DOAJ; assuming OA" % {"issn" : ",".join(msg.record.issn)})
     else:
         msg.record.add_provenance("processor", "Journal with ISSN %(issn)s was not found in DOAJ; assuming Hybrid" % {"issn" : ",".join(msg.record.issn)})
+
+def embargo(msg):
+    if msg.record.issn is None or len(msg.record.issn) == 0:
+        return
+
+    def embargo_text(period, unit):
+        if period is None:
+            return None
+        text = period
+        if unit is not None:
+            text += " " + unit
+        return text
+
+    client = romeo.RomeoClient()
+    for i in msg.record.issn:
+        sr = client.get_by_issn(i)
+        pubs = sr.publishers
+
+        if len(pubs) > 0:
+            p = pubs[0]     # make the implicit assumption that there is only one
+
+            # if we don't already know the publisher name, set it
+            name = p.name
+            if msg.record.publisher is None and name is not None:
+                msg.record.publisher = name
+
+            # lift all the relevant values out of the response and write them into the record
+            msg.record.preprint_self_archive = p.preprint_archiving
+            msg.record.postprint_self_archive = p.postprint_archiving
+            msg.record.publisher_self_archive = p.pdf_archiving
+
+            pre_period, pre_unit = p.preprint_embargo
+            msg.record.journal_preprint_embargo = embargo_text(pre_period, pre_unit)
+
+            post_period, post_unit = p.postprint_embargo
+            msg.record.journal_postprint_embargo = embargo_text(post_period, post_unit)
+
+            pub_period, pub_unit = p.pdf_embargo
+            msg.record.journal_publisher_embargo = embargo_text(pub_period, pub_unit)
+
+            msg.record.add_provenance("processor", "Obtained embargo information from Sherpa Romeo with ISSN {x}".format(x=i))
+
+            break   # keep trying until we run out of issns, or until the code above executes
+
+def ou_core(msg):
+    pass
 
 def populate_identifiers(msg, epmc_md):
     """

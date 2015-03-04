@@ -38,6 +38,13 @@ class TestImport(testindex.ESTestCase):
         r1.upload_id = job.id
         r1.upload_pos = 1
         r1.issn = ["1234-5678", "9876-5432"]
+        r1.publisher = "The Publisher"
+        r1.preprint_self_archive = "can"
+        r1.journal_preprint_embargo = "12 months"
+        r1.postprint_self_archive = "cannot"
+        r1.journal_postprint_embargo = "100 years"
+        r1.publisher_self_archive = "can"
+        r1.journal_publisher_embargo = "6 months"
         r1.save()
 
         r2 = models.Record()
@@ -68,10 +75,37 @@ class TestImport(testindex.ESTestCase):
         rows = [r for r in reader]
 
         assert len(rows) == 4
-        assert rows[0] == ['PMCID', 'PMID', 'DOI', 'Article title', "ISSN", "Fulltext in EPMC?", 'XML Fulltext?', 'AAM?', 'Open Access?', 'Licence', 'Licence Source', 'Journal Type', 'Correct Article Confidence', 'Compliance Processing Ouptut']
-        assert rows[1] == ['PMC1234', '1234', '10.1234', 'The Title',"1234-5678, 9876-5432",  "True", 'True', 'True', 'True', 'CC0', 'publisher', 'hybrid', '0.9', '[' + now + ' test] provenance']
-        assert rows[2] == ["PMC9876", "", "", "", "", "", "", "unknown", "", "unknown", "", "", "", ""]
-        assert rows[3] == ["", "9876", "", "", "", "", "", "unknown", "", "unknown", "", "", "", '[' + now + ' test] provenance\n\n[' + now + ' test] more']
+        assert rows[0] == [
+            'PMCID', 'PMID', 'DOI', 'Article title',
+            "ISSN", "Publisher", "Fulltext in EPMC?", 'XML Fulltext?', 'AAM?',
+            'Open Access?', 'Licence', 'Licence Source', 'Journal Type',
+            "Self-Archive Preprint", "Preprint Embargo", "Self-Archive Postprint", "Postprint Embargo",
+            "Self-Archive Publisher Version", "Publisher Version Embargo",
+            'Correct Article Confidence', 'Compliance Processing Ouptut'
+        ]
+        assert rows[1] == [
+            'PMC1234', '1234', '10.1234', 'The Title',
+            "1234-5678, 9876-5432", "The Publisher", "True", 'True', 'True',
+            'True', 'CC0', 'publisher', 'hybrid',
+            "can", "12 months", "cannot", "100 years",
+            "can", "6 months",
+            '0.9', '[' + now + ' test] provenance'
+        ]
+        assert rows[2] == [
+            "PMC9876", "", "", "",
+            "", "", "", "", "unknown",
+            "", "unknown", "", "",
+            "", "", "", "",
+            "", "",
+            "", ""
+        ]
+        assert rows[3] == [
+            "", "9876", "", "",
+            "", "", "", "", "unknown",
+            "", "unknown", "", "",
+            "", "", "", "",
+            "", "",
+            "", '[' + now + ' test] provenance\n\n[' + now + ' test] more']
 
 
 

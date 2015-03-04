@@ -15,6 +15,8 @@ ELASTIC_SEARCH_INDEX = "lantern"
 # FIXME: shortcut for testing with OAGR
 # ELASTIC_SEARCH_TEST_INDEX = "wellcome"
 
+ELASTIC_SEARCH_VERSION = "1.4.2"
+
 # Classes from which to retrieve ES mappings to be used in this application
 ELASTIC_SEARCH_MAPPINGS = [
     "service.dao.SpreadsheetJobDAO",
@@ -53,6 +55,8 @@ OAG_STATE_BACK_OFF_FACTOR = 0.15    # back off slowly, so we try a lot initially
 # maximum number of times to retry an identifier
 OAG_STATE_MAX_RETRIES = 100  # retry pretty hard.
 
+# you need to provide this in your local config
+ROMEO_API_KEY = ""
 
 ##########################################
 # service specific config

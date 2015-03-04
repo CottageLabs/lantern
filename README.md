@@ -73,6 +73,7 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
             "aam_from_epmc" : true|false,
             "issn" : ["<issn for this journal>"],
             "journal" : "<name of journal>",
+            "publisher" : "<name of publisher>",
             "currently_in_oag" : true|false,
             "oag_pmcid" : "not_sent|sent|success|fto|error",
             "oag_doi" : "not_sent|sent|success|fto|error",
@@ -91,6 +92,17 @@ For each (1) there can be many (2), and each (2) may be associated with exactly 
             "licence_source" : "epmc_xml|epmc|publisher",
             "journal_type" : "oa|hybrid",
             "confidence" : <out of 1>,
+            "in_core" : true|false,
+            "journal_embargo" : {
+                "preprint" : "<preprint embargo>",
+                "postprint" : "<postprint embargo>",
+                "publisher" : "<publisher's final copy embargo>"
+            },
+            "journal_self_archiving : {
+                "preprint" : "<preprint self archiving>",
+                "postprint" : "<postprint self archiving>",
+                "publisher" : "<publisher's final self archiving>"
+            }
         },
         
         "provenance" : [

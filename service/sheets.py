@@ -18,12 +18,20 @@ class SimpleSheet(clcsv.SheetWrapper):
         u"Journal Type" : "journal_type",
         u"Correct Article Confidence" : "confidence",
         u"ISSN" : "issn",
+        u"Publisher" : "publisher",
+        u"Self-Archive Preprint" : "preprint",
+        u"Preprint Embargo" : "preprint_embargo",
+        u"Self-Archive Postprint" : "postprint",
+        u"Postprint Embargo" : "postprint_embargo",
+        u"Self-Archive Publisher Version" : "publisher_print",
+        u"Publisher Version Embargo" : "publisher_embargo",
         u"Compliance Processing Ouptut" : "provenance"
     }
 
     OUTPUT_ORDER = [
-        "pmcid", "pmid", "doi", "article_title", "issn", "in_epmc", "xml_ft_in_epmc", "aam", "open_access",
-        "licence", "licence_source", "journal_type", "confidence", "provenance"
+        "pmcid", "pmid", "doi", "article_title", "issn", "publisher", "in_epmc", "xml_ft_in_epmc", "aam", "open_access",
+        "licence", "licence_source", "journal_type", "preprint", "preprint_embargo", "postprint", "postprint_embargo",
+        "publisher_print", "publisher_embargo", "confidence", "provenance"
     ]
 
     DEFAULT_VALUES = {

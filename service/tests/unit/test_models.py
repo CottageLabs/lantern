@@ -54,6 +54,13 @@ class TestModels(ESTestCase):
         r.confidence = "0.8"
         r.add_provenance("richard", "provenance 1")
         r.add_provenance("wellcome", "provenance 2")
+        r.publisher = "The Publisher"
+        r.preprint_self_archive = "can"
+        r.journal_preprint_embargo = "12 months"
+        r.postprint_self_archive = "may"
+        r.journal_postprint_embargo = "6 months"
+        r.publisher_self_archive = "cannot"
+        r.journal_publisher_embargo = "100 years"
 
         assert r.upload_id == "1234"
         assert r.upload_pos == 234
@@ -73,6 +80,12 @@ class TestModels(ESTestCase):
         assert r.licence_source == "epmc"
         assert r.journal_type == "hybrid"
         assert r.confidence == 0.8
+        assert r.preprint_self_archive == "can"
+        assert r.journal_preprint_embargo == "12 months"
+        assert r.postprint_self_archive == "may"
+        assert r.journal_postprint_embargo == "6 months"
+        assert r.publisher_self_archive == "cannot"
+        assert r.journal_publisher_embargo == "100 years"
 
         p = r.provenance
         assert len(p) == 2

@@ -89,6 +89,7 @@ class Record(RecordDAO, DataObj):
             "aam_from_epmc" : true|false,
             "issn" : ["<issn for this journal>"],
             "journal" : "<name of journal>",
+            "publisher" : "<name of publisher>",
             "currently_in_oag" : true|false,
             "oag_pmcid" : "not_sent|sent|success|fto|error",
             "oag_doi" : "not_sent|sent|success|fto|error",
@@ -107,6 +108,17 @@ class Record(RecordDAO, DataObj):
             "licence_source" : "epmc_xml|epmc|publisher",
             "journal_type" : "oa|hybrid",
             "confidence" : <out of 1>,
+            "in_core" : true|false,
+            "journal_embargo" : {
+                "preprint" : "<preprint embargo>",
+                "postprint" : "<postprint embargo>",
+                "publisher" : "<publisher's final copy embargo>"
+            },
+            "journal_self_archiving : {
+                "preprint" : "<preprint self archiving>",
+                "postprint" : "<postprint self archiving>",
+                "publisher" : "<publisher's final self archiving>"
+            }
         },
 
         "provenance" : [
@@ -230,6 +242,14 @@ class Record(RecordDAO, DataObj):
         self._add_to_list("supporting_info.issn", val, self._utf8_unicode())
 
     @property
+    def publisher(self):
+        return self._get_single("supporting_info.publisher", self._utf8_unicode())
+
+    @publisher.setter
+    def publisher(self, value):
+        self._set_single("supporting_info.publisher", value, self._utf8_unicode())
+
+    @property
     def in_oag(self):
         return self._get_single("supporting_info.currently_in_oag", bool)
 
@@ -336,6 +356,62 @@ class Record(RecordDAO, DataObj):
     @confidence.setter
     def confidence(self, val):
         self._set_single("compliance.confidence", val, float, allowed_range=(0.0, 1.0))
+
+    @property
+    def in_core(self):
+        return self._get_single("compliance.in_core", bool)
+
+    @in_core.setter
+    def in_core(self, value):
+        self._set_single("compliance.in_core", value, bool)
+
+    @property
+    def journal_preprint_embargo(self):
+        return self._get_single("compliance.journal_embargo.preprint", self._utf8_unicode())
+
+    @journal_preprint_embargo.setter
+    def journal_preprint_embargo(self, value):
+        self._set_single("compliance.journal_embargo.preprint", value, self._utf8_unicode())
+
+    @property
+    def journal_postprint_embargo(self):
+        return self._get_single("compliance.journal_embargo.postprint", self._utf8_unicode())
+
+    @journal_postprint_embargo.setter
+    def journal_postprint_embargo(self, value):
+        self._set_single("compliance.journal_embargo.postprint", value, self._utf8_unicode())
+
+    @property
+    def journal_publisher_embargo(self):
+        return self._get_single("compliance.journal_embargo.publisher", self._utf8_unicode())
+
+    @journal_publisher_embargo.setter
+    def journal_publisher_embargo(self, value):
+        self._set_single("compliance.journal_embargo.publisher", value, self._utf8_unicode())
+
+    @property
+    def preprint_self_archive(self):
+        return self._get_single("compliance.journal_self_archiving.preprint", self._utf8_unicode())
+
+    @preprint_self_archive.setter
+    def preprint_self_archive(self, value):
+        self._set_single("compliance.journal_self_archiving.preprint", value, self._utf8_unicode(), allow_none=False, ignore_none=True)
+
+    @property
+    def postprint_self_archive(self):
+        return self._get_single("compliance.journal_self_archiving.postprint", self._utf8_unicode())
+
+    @postprint_self_archive.setter
+    def postprint_self_archive(self, value):
+        self._set_single("compliance.journal_self_archiving.postprint", value, self._utf8_unicode(), allow_none=False, ignore_none=True)
+
+    @property
+    def publisher_self_archive(self):
+        return self._get_single("compliance.journal_self_archiving.publisher", self._utf8_unicode())
+
+    @publisher_self_archive.setter
+    def publisher_self_archive(self, value):
+        self._set_single("compliance.journal_self_archiving.publisher", value, self._utf8_unicode(), allow_none=False, ignore_none=True)
 
     @property
     def provenance(self):
