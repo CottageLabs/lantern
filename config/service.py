@@ -1,6 +1,6 @@
 # overrides for the webapp deployment
 DEBUG = True
-PORT = 5017
+PORT = 5022
 SSL = False
 THREADED = True
 
