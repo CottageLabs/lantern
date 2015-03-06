@@ -1,10 +1,11 @@
-<div class="container">
+<div>
 
 
+    <!--
     <div class="content" id="navigation">
 
         <div class="navbar-nav" id="main-nav">
-                <a class="navbar-brand" href="/"><img src="http://www.wellcome.ac.uk/stellent/groups/corporatesite/@policy_communications/documents/web_document/WTP051585.jpg" width="150"><img></a>
+                <a class="navbar-brand" href="/"><img src="http://cottagelabs.com/static/cottage.jpg" height="100"/></a>
                 <ul class="nav navbar-nav" id="main-nav-admin-menu" style="margin-bottom: 10px">
                     <li><a href="{{url_for('upload_csv')}}">Upload</a></li>
                     <li><a href="{{url_for('docs')}}">Documentation</a></li>
@@ -12,8 +13,12 @@
         </div>
         
     </div>
-    <div class="container" style="background-color: white;">
-         <div class="alert-messages" >
+    -->
+
+    <div id="top_spacer">&nbsp;</div>
+
+    <div class="container">
+         <div class="alert-messages">
 
             {% with messages = get_flashed_messages(with_categories=True) %}
                 {% if messages %}

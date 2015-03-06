@@ -8,7 +8,7 @@
 
 {% include 'header.html' %}
 
-<div class="container" style="margin-top:60px;">
+<div id="overall-body-container" style="margin-top:60px;">
     <div class="row">
         <div class="alert-messages">
         {% with messages = get_flashed_messages(with_categories=True) %}
@@ -24,24 +24,29 @@
         </div>
     </div>
 
-<div class="container" >
+    <div>
 
-    <div class="content" id="body">
-        <div class="row">
-            <div class="col-md-12">
-                {% block content %}{% endblock %}
+        <div class="content" id="body">
+            <div class="row">
+                <div class="container col-md-1">
+                    A menu can go here, that way we don't have to deal with scroll-spying to hide a horizontal overlaid menu, and we don't need this screen space right now for anything else.
+                </div>
+                <div class="col-md-11">
+                    {% block content %}{% endblock %}
+                </div>
             </div>
-        </div>
-    </div> <!-- /content -->
+        </div> <!-- /content -->
 
 
-    {% include 'footer.html' %}
-    {% include '_js_includes.html' %}
+        {% include 'footer.html' %}
+        {% include '_js_includes.html' %}
 
-    {% block extra_js_bottom %}
+        {% block extra_js_bottom %}
 
-    {% endblock extra_js_bottom %}
+        {% endblock extra_js_bottom %}
 
+    </div>
 </div> <!-- /container -->
+
 </body>
 </html>

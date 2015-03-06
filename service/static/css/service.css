@@ -6,8 +6,34 @@ body {
 .form-control {
     font-family: "Times New Roman";
 }
+/*
+#navigation {
+    background-color: #c9d3d5;
+    border-bottom: 10px solid #333;
+    margin: 0;
+    background-image: url("http://cottagelabs.com/static/cottage.jpg");
+    background-repeat: no-repeat;
+    background-position: bottom;
+    height: 288px;
+}*/
 
+#overall-body-container {
+    padding-right: 4em;
+}
 
+body {
+    background-image: url("../img/cottage_cropped.png");
+    background-repeat: no-repeat;
+    background-position: top-left;
+    background-color: #c9d3d5;
+    /*background-size: cover;*/
+}
+
+#top_spacer {
+    margin-top: 1em;
+}
+
+/*
 #navigation {
     background-color: transparent;
     border-style: solid;
@@ -16,7 +42,9 @@ body {
     border-left-width: 0px;
     border-right-width: 0px;
     border-color: grey;
+    height: 120px;
 }
+*/
 
 #navigation a {
     background-color: transparent;
@@ -41,10 +69,8 @@ body {
 }
 
 .navbar-brand {
-    height: 40px;
     font-size: 30px;
 }
-
 
 .panel {
   border-top-width: 5px;
