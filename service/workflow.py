@@ -681,20 +681,20 @@ def ou_core(msg):
 
     client = coreacuk.Core()
     try:
-        sr = client.search(msg.record.doi, count=1)
+        sr = client.by_doi(msg.record.doi) # set the page_size to 2 so we know if there is more than one record with this DOI or not
     except:
         msg.record.add_provenance("processor", "Was unable to communicate with the CORE service for this record")
         return
 
-    if sr.total_hits > 0:
+    if len(sr.records) > 0:
         msg.record.in_core = True
-        if sr.total_hits == 1:
-            msg.record.add_provenance("processor", "Exactly one record with DOI {x} in Core".format(x=msg.record.doi))
+        if len(sr.records) == 1:
+            msg.record.add_provenance("processor", "Exactly one record with DOI {x} in CORE".format(x=msg.record.doi))
         else:
-            msg.record.add_provenance("processor", "{y} records with DOI {x} in Core".format(y=sr.total_hits, x=msg.record.doi))
+            msg.record.add_provenance("processor", "More than one records with DOI {x} in CORE".format(y=sr.total_hits, x=msg.record.doi))
     else:
         msg.record.in_core = False
-        msg.record.add_provenance("processor", "DOI {x} was not found in Core".format(x=msg.record.doi))
+        msg.record.add_provenance("processor", "DOI {x} was not found in CORE".format(x=msg.record.doi))
 
 def populate_identifiers(msg, epmc_md):
     """
