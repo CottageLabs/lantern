@@ -13,14 +13,15 @@ setup(
         "newrelic==2.42.0.35",
         "gunicorn==19.1.1"
     ],
-    url = 'http://cottagelabs.com/',
-    author = 'Cottage Labs',
+    url = 'https://github.com/CottageLabs/lantern',
+    author = 'Cottage Labs LLP',
     author_email = 'us@cottagelabs.com',
     description = 'Lantern: Open Access Compliance',
     classifiers = [
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
         'Intended Audience :: Developers',
+        'License :: Apache2',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules'
