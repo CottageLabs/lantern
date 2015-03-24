@@ -12,25 +12,23 @@ If you provide any identifier as well as article title, the identifier will be u
 
 If it gets down to a title match, an exact title match will be attempted in EuropePMC. If that fails to find the article, a fuzzy EPMC title match will be attempted. If that also fails to find the article, a note will be left in the article’s record on the results spreadsheet and no compliance information will be available for it.
 
-    ```python
-    # example POST to https://lantern.cottagelabs.com/api/compliancejob
-	{
-		"webhook_callback": "url",  # optional
-		"articles": [
-            {
-            	"doi":"10.1/doi",
-                "pmid": "123456",
-                "pmcid": "PMC123456",
-                "title":"Article Title 1"
-            },
-            {
-                "doi":"10.2/doi"
-       	    }
-        ],
-        "sheet": # 
-                 # 
-	}
-	```
+```python
+# example POST to https://lantern.cottagelabs.com/api/compliancejob
+{
+    "webhook_callback": "url",  # optional
+    "articles": [
+        {
+            "doi":"10.1/doi",
+            "pmid": "123456",
+            "pmcid": "PMC123456",
+            "title":"Article Title 1"
+        },
+        {
+            "doi":"10.2/doi"
+        }
+    ]
+}
+```
 	
 You can also include multipart/form-data POST file data with your request. E.g. with curl you would do ```curl -F "metadata=<metadata.json" -F "sheet=@/path/to/file.csv" https://lantern.cottagelabs.com/api/compliancejob``` . metadata.json would contain the webhook_callback parameter, if you wanted to supply one. Otherwise you can skip metadata.json completely and only provide a spreadsheet file as multipart/form-data .
 	
@@ -42,17 +40,17 @@ The webhook_callback will be hit with a GET request when all your articles have 
 
 GET information on a compliance job ```https://lantern.cottagelabs.com/api/compliancejob/progress/:id``` . This will return JSON in this format:
     
-    ```python
-    # example response to a GET request to check on progress
-    {
-        "progress_url": https://lantern.cottagelabs.com/api/compliancejob/progress/:id,
-        "pc": Float (0.0 to 100.0), rounded to 2 decimal places,
-        "queue": Any number between 0 and 10, or the string "11 or more",
-        "results_url": http://compliance.cottagelabs.com/download_progress/:id,
-        "status": One of ["submitted", "processing", "complete", "error"],
-        "message": Will always be empty string for now. Eventually will contain human-readable details in English for developers.
-    }
-	```
+```python
+# example response to a GET request to check on progress
+{
+    "progress_url": https://lantern.cottagelabs.com/api/compliancejob/progress/:id,
+    "pc": Float (0.0 to 100.0), rounded to 2 decimal places,
+    "queue": Any number between 0 and 10, or the string "11 or more",
+    "results_url": http://compliance.cottagelabs.com/download_progress/:id,
+    "status": One of ["submitted", "processing", "complete", "error"],
+    "message": Will always be empty string for now. Eventually will contain human-readable details in English for developers.
+}
+```
 	
 You can hit this URL as often as you like to check on progress.
 
