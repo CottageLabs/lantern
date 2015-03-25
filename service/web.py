@@ -72,10 +72,11 @@ def status(job_id):
 
     if job.status_code == "submitted":
         obj["pc"] = 0.0
-        ql = models.SpreadsheetJob.queue_length(job.id, max=10)
-        obj["queue"] = str(ql) if ql < max else "10 or more"
+        max_ql = 10
+        ql = models.SpreadsheetJob.queue_length(job.id, max=max_ql)
+        obj["queue"] = str(ql) if ql < max_ql else "{0} or more".format(max_ql + 1)
     elif job.status_code == "processing":
-        obj["pc"] = job.pc_complete
+        obj["pc"] = float("{0:.2f}".format(job.pc_complete))
     elif job.status_code == "complete":
         obj["pc"] = 100.0
 
@@ -152,8 +153,8 @@ def health():
     # the Newrelic monitoring will get a 500 in response and we will be
     # alerted.
 
-    oacwellcome_daemon_status = check_background_process("oacwellcome-production-daemon")
-    oagr_daemon_status = check_background_process("oagr-production-daemon")
+    oacwellcome_daemon_status = check_background_process("lantern-test-daemon")
+    oagr_daemon_status = check_background_process("oagr-test-daemon")
 
     if not oacwellcome_daemon_status and not oagr_daemon_status:
         return "Both daemons have encountered a problem"
