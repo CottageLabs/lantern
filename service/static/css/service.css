@@ -25,6 +25,10 @@ h1, h2 {
     padding-right: 4em;
 }
 
+#footer {
+    margin-top: 2em;
+}
+
 body {
     background-image: url("../img/cottage_cropped.png");
     background-repeat: no-repeat;
