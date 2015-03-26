@@ -2,16 +2,11 @@
 
 {% block content %}
 
-
 <div class="row">
-    <div class="container col-md-6" style="padding: 20px; padding-top:0px;">
-        <h1 style="text-align:center;">Upload a CSV</h1>
+    <div class="container col-md-offset-3 col-md-6">
+        <h1>Upload a CSV</h1>
         <p>You can export a CSV from Excel, then upload it here.  See the <a href="{{ url_for('docs') }}">documentation</a> for more details.</p>
-    </div>
-</div>
 
-<div class="row">
-    <div class="container col-md-6">
         <form method="POST" enctype="multipart/form-data" role="form">
             <div class="panel col-md-12">
                 <div class="row">
@@ -50,17 +45,34 @@
             </div>
         </form>
     </div>
-
-    <div class="container col-md-6" style="margin-top: 3em;">
-        <h2>Shed some light on your articles</h2>
-
-        Lorem ipsum dolor sit amet, cras penatibus orci pretium auctor odio, phasellus ac. Quis tortor fusce vestibulum faucibus inceptos, mauris integer nullam morbi enim justo mi, sapien magna consectetuer ut feugiat sed dolor. Laoreet nostrum nec ante sollicitudin, consequat vulputate pede in fusce, eos a, aliquam pede amet. Cursus velit turpis, auctor sodales per varius morbi etiam praesent, ornare mi ut dolor.
-    </div>
 </div>
 
 <div class="row">
-    <div class="container col-md-12">
+    <div class="container col-md-offset-3 col-md-6" style="margin-top: 3em;">
+        <h1>Shed some light on your articles!</h1>
 
+        <p>Upload a spreadsheet with any combination of the DOIs, PMIDs, PMCIDs and titles of the articles you're interested in, and we will tell you if they are open access and what license they have. Information comes from <a href="http://europepmc.org" target="_blank">Europe PubMed Central</a> and <a href="http://howopenisit.org">OpenArticleGauge</a>.</p>
     </div>
 </div>
+
+
+<div class="row">
+    <div class="container col-md-12" style="margin-top: 2em; margin-bottom: 2em; text-align: center;">
+        <h2>Here goes a demo form with 4 columns: DOI, PMID, PMCID, Title</h2>
+        Converts it to a CSV internally and feeds to the rest of processing workflow.
+    </div>
+    <div class="col-md-12">
+        <div class="row">
+            <form method="POST" role="form" action="{{url_for('direct_demo_form')}}">
+                <div class="col-md-2"><h3>DOI</h3>{{demoform.doi}}</div>
+                <div class="col-md-2"><h3>PMID</h3>{{demoform.pmid}}</div>
+                <div class="col-md-2"><h3>PMCID</h3>{{demoform.pmcid}}</div>
+                <div class="col-md-6"><h3 style="text-align: left">Title</h3>{{demoform.title(class="col-md-6")}}
+                <button type="submit" class="btn col-md-3" style="color: black; margin-left: 1em;">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
