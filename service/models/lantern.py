@@ -155,7 +155,7 @@ class Record(RecordDAO, DataObj):
     def source(self):
         return self._get_single("source")
 
-    def set_source_data(self, pmcid=None, pmid=None, doi=None, article_title=None):
+    def set_source_data(self, pmcid=None, pmid=None, doi=None, article_title=None, **kwargs):
         if pmcid is not None: self._set_single("source.pmcid", pmcid, self._utf8_unicode())
         if pmid is not None: self._set_single("source.pmid", pmid, self._utf8_unicode())
         if doi is not None: self._set_single("source.doi", doi, self._utf8_unicode())
