@@ -14,14 +14,22 @@ from uuid import uuid1
 class WorkflowException(Exception):
     pass
 
-def csv_upload(flask_file_handle, filename, contact_email):
-    # make a record of the upload
-    s = models.SpreadsheetJob()
+def csv_upload_a_csvstring(contact_email, csvstring):
+    s = make_spreadsheet_job('demo form upload ' + uuid1().hex, contact_email)
 
-    s.filename = filename
-    s.contact_email = contact_email
-    s.status_code = "submitted"
-    s.id = s.makeid()
+    upload = app.config.get("UPLOAD_DIR")
+    if upload is None or upload == "":
+        raise WorkflowException("UPLOAD_DIR is not set")
+
+    with open(os.path.join(upload, s.id + ".csv"), 'wb') as o:
+        o.write(csvstring)
+
+    s.save()
+    return s
+
+def csv_upload_a_file(flask_file_handle, filename, contact_email):
+    # make a record of the upload
+    s = make_spreadsheet_job(filename, contact_email)
 
     # find out where to put the file
     upload = app.config.get("UPLOAD_DIR")
@@ -33,6 +41,16 @@ def csv_upload(flask_file_handle, filename, contact_email):
     s.save()
 
     # return the job that was created, in case the caller wants to do something with it
+    return s
+
+def make_spreadsheet_job(filename, contact_email):
+    s = models.SpreadsheetJob()
+
+    s.filename = filename
+    s.contact_email = contact_email
+    s.status_code = "submitted"
+    s.id = s.makeid()
+
     return s
 
 def email_submitter(contact_email, url):

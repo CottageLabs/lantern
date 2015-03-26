@@ -55,12 +55,24 @@
     </div>
 </div>
 
-<!--
+
 <div class="row">
     <div class="container col-md-12" style="margin-top: 2em; margin-bottom: 2em; text-align: center;">
         <h2>Here goes a demo form with 4 columns: DOI, PMID, PMCID, Title</h2>
         Converts it to a CSV internally and feeds to the rest of processing workflow.
     </div>
+    <div class="col-md-12">
+        <div class="row">
+            <form method="POST" role="form" action="{{url_for('direct_demo_form')}}">
+                <div class="col-md-2"><h3>DOI</h3>{{demoform.doi}}</div>
+                <div class="col-md-2"><h3>PMID</h3>{{demoform.pmid}}</div>
+                <div class="col-md-2"><h3>PMCID</h3>{{demoform.pmcid}}</div>
+                <div class="col-md-6"><h3 style="text-align: left">Title</h3>{{demoform.title(class="col-md-6")}}
+                <button type="submit" class="btn col-md-3" style="color: black; margin-left: 1em;">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
--->
+
 {% endblock %}

@@ -5,13 +5,13 @@ from wtforms import Form, StringField, validators, SelectField
 from wtforms.fields.html5 import EmailField
 from werkzeug import secure_filename
 from StringIO import StringIO
-import os, json
+import os, json, csv, uuid
 
 from service import models
 
 from octopus.core import app, initialise
 from octopus.lib.webapp import custom_static
-from workflow import csv_upload, email_submitter, output_csv
+from workflow import csv_upload_a_csvstring, csv_upload_a_file, email_submitter, output_csv
 from octopus.lib.webapp import jsonp
 
 import sys
@@ -26,6 +26,13 @@ class UploadForm(Form):
     spreadsheet_type = SelectField('Type', choices=app.config.get('SPREADSHEET_OPTIONS'))
 
 
+class DemoForm(Form):
+    doi = StringField('DOI', [validators.Optional()])
+    pmid = StringField('PMID', [validators.Optional()])
+    pmcid = StringField('PMCID', [validators.Optional()])
+    title = StringField('Title', [validators.Optional()])
+
+
 @app.route("/", methods=['GET', 'POST'])
 #@app.route("/upload_csv", methods=['GET', 'POST'])
 def upload_csv():
@@ -36,7 +43,7 @@ def upload_csv():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             contact_email = form.contact_email.data
-            job = csv_upload(file, filename, contact_email)
+            job = csv_upload_a_file(file, filename, contact_email)
             url_root = request.url_root
             if url_root.endswith("/"):
                 url_root = url_root[:-1]
@@ -44,7 +51,43 @@ def upload_csv():
             return redirect(url_for('progress', job_id=job.id))
         else:
             invalid_file = True
-    return render_template("upload_csv.html", form=form, invalid_file=invalid_file)
+
+    demoform = DemoForm()
+    return render_template("upload_csv.html", form=form, demoform=demoform, invalid_file=invalid_file)
+
+@app.route('/direct_demo_form', methods=['POST'])
+def direct_demo_form():
+    demoform = DemoForm(request.form)
+    if demoform.validate():
+        thecsv = ''
+        thecsv += get_csv_string(['DOI', 'PMID', 'PMCID', 'Title'])
+        if demoform.doi.data or demoform.pmid.data or demoform.pmcid.data or demoform.title.data:
+            thecsv += get_csv_string([demoform.doi.data, demoform.pmid.data, demoform.pmcid.data, demoform.title.data])
+            job = csv_upload_a_csvstring('test@example.org', thecsv)  # /dev/null for emails
+            return redirect(url_for('progress', job_id=job.id))
+
+    form = UploadForm()
+    invalid_file = False
+    render_template("upload_csv.html", form=form, demoform=demoform, invalid_file=invalid_file)
+
+
+def get_csv_string(csv_row):
+    '''
+    csv.writer only writes to files - it'd be a lot easier if it
+    could give us the string it generates, but it can't. This
+    function uses StringIO to capture every CSV row that csv.writer
+    produces and returns it.
+
+    :param csv_row: A list of strings, each representing a CSV cell.
+        This is the format required by csv.writer .
+    '''
+    csvstream = StringIO()
+    csvwriter = csv.writer(csvstream, quoting=csv.QUOTE_ALL)
+    # normalise the row - None -> "", and unicode > 128 to ascii
+    csvwriter.writerow([unicode(c).encode("utf8", "replace") if c is not None else "" for c in csv_row])
+    csvstring = csvstream.getvalue()
+    csvstream.close()
+    return csvstring
 
 @app.route("/docs")
 def docs():
