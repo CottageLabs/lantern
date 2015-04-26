@@ -132,14 +132,11 @@ def parse_csv(job):
         if obj.get("article_title") is not None and obj.get("article_title") != "":
             r.title = obj.get("article_title")
 
-        r.save()
+        r.save(blocking=True)
 
     app.logger.info("Loaded " + str(i) + " records from spreadsheet")
 
-    # FIXME: I'm not totally convinced this a/ works or b/ is a good idea
-    # Refresh can behave quite strangely, sometimes,
-    # refresh the index so the data is ready to use
-    models.Record.refresh()
+
 
 def output_csv(job):
     def serialise_provenance(r):
@@ -214,11 +211,13 @@ def process_jobs():
     Process all of the jobs in the index which are of status "submitted"
     :return:nothing
     """
-    app.logger.debug("Processing spreadsheet jobs")
     jobs = models.SpreadsheetJob.list_by_status("submitted")
-    for job in jobs:
-        process_job(job)
-    app.logger.debug("Processing run complete")
+    if len(jobs) > 0:
+        app.logger.debug("Processing spreadsheet jobs")
+        for job in jobs:
+            process_job(job)
+        app.logger.debug("Processing run complete")
+
 
 def process_job(job):
     """
@@ -232,7 +231,7 @@ def process_job(job):
         app.logger.info("Processing spreadsheet job " + job.id)
 
         job.status_code = "processing"
-        job.save()
+        job.save(blocking=True)
 
         # now we want to parse the csv itself to our record index
         try:
@@ -259,7 +258,7 @@ def process_job(job):
         # wait, or perhaps better have the duplicates build up during the above process, so that
         # we already know about them.  For the time being, including a time.sleep here as a weak
         # stop-gap
-        time.sleep(2)
+        # time.sleep(2)
 
         # at this point we have fleshed out all possible identifiers, so we need to check
         # for duplicates
@@ -271,7 +270,7 @@ def process_job(job):
         # FIXME: duplicate check saves changes to records which may subsequently get picked up by OAG.
         # Further down, OAG delays its start, but this is all a weak stop-gap.  Put in a time.sleep
         # for the moment, but bear in mind we need a better long-term solution
-        time.sleep(2)
+        #time.sleep(2)
 
         # the oag_register will now contain all the records that need to go on to OAG
         try:
@@ -306,7 +305,7 @@ def process_record(msg):
         msg.record.add_provenance("processor", note)
         msg.record.epmc_complete = True
         msg.record.oag_complete = True
-        msg.record.save()
+        msg.record.save(blocking=True)
         return
 
     # set the confidence that we have accurately identified this record
@@ -342,7 +341,7 @@ def process_record(msg):
     register_with_oag(msg)
 
     # finally, save the record in its current state, which is as far as we can go with it
-    msg.record.save()
+    msg.record.save(blocking=True)
 
     # after this, all additional work will be picked up by the OAG processing chain, asynchronously
     app.logger.info("Record processed")
@@ -365,7 +364,7 @@ def duplicate_check(job):
         matches = models.Record.get_by_identifier(id, job.id, "pmcid")
         for r in matches:
             r.add_provenance("processor", dupemsg.format(type="PMCID"))
-            r.save()
+            r.save(blocking=True)
             inmem[r.id] = r
 
     for id in dupes.get("pmid", []):
@@ -374,7 +373,7 @@ def duplicate_check(job):
             if r.id in inmem:
                 r = inmem[r.id]
             r.add_provenance("processor", dupemsg.format(type="PMID"))
-            r.save()
+            r.save(blocking=True)
             inmem[r.id] = r
 
     for id in dupes.get("doi", []):
@@ -383,7 +382,7 @@ def duplicate_check(job):
             if r.id in inmem:
                 r = inmem[r.id]
             r.add_provenance("processor", dupemsg.format(type="DOI"))
-            r.save()
+            r.save(blocking=True)
 
 def process_oag(oag_register, job):
     app.logger.info("Running " + str(len(oag_register)) + " identifiers through OAG")
@@ -434,7 +433,7 @@ def process_oag_direct(oag_register, job):
     # at this stage we now have a list of new identifiers which need to be re-run (or an empty list)
     if len(oag_rerun) == 0:
         job.status_code = "complete"
-        job.save()
+        job.save(blocking=True)
     else:
         # FIXME: note that this could result in exceeding the maximum stack depth if we aren't careful.
         # the full service won't be allowed to behave like this
@@ -559,7 +558,7 @@ def register_with_oag(msg):
                 msg.oag_register.append(obj)
             msg.record.in_oag = True
             msg.record.oag_pmcid = "sent"
-            msg.record.save()
+            msg.record.save(blocking=True)
             return
 
     # in all other cases, if the licence has already been detected, we don't need to do any more
@@ -576,7 +575,7 @@ def register_with_oag(msg):
             msg.oag_register.append(obj)
         msg.record.in_oag = True
         msg.record.oag_doi = "sent"
-        msg.record.save()
+        msg.record.save(blocking=True)
         return
 
     # lowest priority is to send the pmid if there is one
@@ -587,12 +586,13 @@ def register_with_oag(msg):
             msg.oag_register.append(obj)
         msg.record.in_oag = True
         msg.record.oag_pmid = "sent"
-        msg.record.save()
+        msg.record.save(blocking=True)
         return
 
     # if we get to here, then something is wrong with this record, and we can't send it to OAG
     app.logger.info("No need to process record with OAG " + msg.record.id)
     msg.record.oag_complete = True
+    msg.record.save(blocking=True)
     return
 
 
@@ -709,7 +709,7 @@ def ou_core(msg):
         if len(sr.records) == 1:
             msg.record.add_provenance("processor", "Exactly one record with DOI {x} in CORE".format(x=msg.record.doi))
         else:
-            msg.record.add_provenance("processor", "More than one records with DOI {x} in CORE".format(y=sr.total_hits, x=msg.record.doi))
+            msg.record.add_provenance("processor", "More than one records with DOI {x} in CORE".format(x=msg.record.doi))
     else:
         msg.record.in_core = False
         msg.record.add_provenance("processor", "DOI {x} was not found in CORE".format(x=msg.record.doi))
@@ -886,11 +886,11 @@ def oag_callback_closure():
 
             # it's possible that the spreadsheet job has finished, so we need
             # to check and update if so
-            time.sleep(2)   # just to give the index a bit of time to refresh
+            # time.sleep(2)   # just to give the index a bit of time to refresh
             pc = ssjob.pc_complete
             if int(pc) == 100:
                 ssjob.status_code = "complete"
-                ssjob.save()
+                ssjob.save(blocking=True)
                 send_complete_mail(ssjob)
 
         # if there is anything to reprocess, do that
@@ -906,7 +906,7 @@ def record_maxed(id, result, ssjob, oag_rerun):
         added = add_to_rerun(record, type, oag_rerun)
         if not added:
             record.oag_complete = True
-        record.save()
+        record.save(blocking=True)
 
     records = models.Record.get_by_identifier(id, ssjob.id)
     found = 0
@@ -998,7 +998,7 @@ def oag_record_callback(result, oag_rerun, ssjob):
         added = add_to_rerun(record, idtype, oag_rerun)
         if not added:
             record.oag_complete = True
-        record.save()
+        record.save(blocking=True)
 
     def handle_fto(record, idtype, oag_rerun):
         # first record an error status against the id type
@@ -1013,7 +1013,7 @@ def oag_record_callback(result, oag_rerun, ssjob):
         added = add_to_rerun(record, idtype, oag_rerun)
         if not added:
             record.oag_complete = True
-        record.save()
+        record.save(blocking=True)
 
     def handle_success(result, record, idtype):
         # first record an error status against the id type
@@ -1029,7 +1029,7 @@ def oag_record_callback(result, oag_rerun, ssjob):
 
         record.licence_type = translate_licence_type(result.get("license", [{}])[0].get("type"))
         record.oag_complete = True
-        record.save()
+        record.save(blocking=True)
         return
 
     def handle_aam(result, record):
@@ -1043,7 +1043,7 @@ def oag_record_callback(result, oag_rerun, ssjob):
         # if the record already has a licence, we don't do anything
         if record.licence_type is not None:
             record.oag_complete = True
-            record.save()
+            record.save(blocking=True)
             return
 
         # get the id that resulted in the success
@@ -1100,7 +1100,7 @@ def oag_record_callback(result, oag_rerun, ssjob):
 
         # set its in_oag flag and re-save it
         record.in_oag = False
-        record.save()
+        record.save(blocking=True)
 
         # by this point we must know the type
         if type is None:
