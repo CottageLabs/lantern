@@ -14,6 +14,7 @@ If it gets down to a title match, an exact title match will be attempted in Euro
 
 ```python
 # example POST to https://lantern.cottagelabs.com/api/compliancejob
+# note that /api/compliancejob/ (with trailing slash) won't work - take care to POST to endpoint above
 {
     "webhook_callback": "url",  # optional
     "articles": [

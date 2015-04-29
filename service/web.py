@@ -16,6 +16,8 @@ from octopus.lib.webapp import jsonp
 
 import sys
 
+from service.view.api import blueprint as api
+app.register_blueprint(api, url_prefix='/api')
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -34,8 +36,7 @@ class DemoForm(Form):
 
 
 @app.route("/", methods=['GET', 'POST'])
-#@app.route("/upload_csv", methods=['GET', 'POST'])
-def upload_csv():
+def root():  # do not rename this function - the octopus 404 page refers to "root" with url_for to get people back to a known area of the site
     form = UploadForm(request.form)
     invalid_file = False
     if request.method == "POST" and form.validate():
