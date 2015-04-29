@@ -56,6 +56,13 @@ class SpreadsheetJob(SpreadsheetJobDAO, DataObj):
         self.status_code = code
         self.status_message = message
 
+    @property
+    def webhook_callback(self):
+        return self._get_single("webhook_callback", self._utf8_unicode())
+
+    @webhook_callback.setter
+    def webhook_callback(self, val):
+        self._set_single("webhook_callback", val, self._utf8_unicode())
 
 class Record(RecordDAO, DataObj):
     """

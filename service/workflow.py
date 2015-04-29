@@ -5,6 +5,7 @@ from octopus.modules.identifiers import pmid, doi, pmcid
 from octopus.modules.coreacuk import client as coreacuk
 from octopus.modules.romeo import client as romeo
 from octopus.lib import mail
+from octopus.lib.requests_get_with_retries import http_get_with_backoff_retries
 from service import models, sheets, licences
 import os, time, traceback
 from StringIO import StringIO
@@ -14,8 +15,12 @@ from uuid import uuid1
 class WorkflowException(Exception):
     pass
 
-def csv_upload_a_csvstring(contact_email, csvstring):
-    s = make_spreadsheet_job('demo form upload ' + uuid1().hex, contact_email)
+def csv_upload_a_csvstring(filename, contact_email, csvstring, webhook_callback=None):
+    """
+    Just record the origin in the filename parameter. Obviously no actual
+    file is present. E.g. filename="demo form upload " + uuid1().hex.
+    """
+    s = make_spreadsheet_job(filename, contact_email, webhook_callback=webhook_callback)
 
     upload = app.config.get("UPLOAD_DIR")
     if upload is None or upload == "":
@@ -27,9 +32,9 @@ def csv_upload_a_csvstring(contact_email, csvstring):
     s.save()
     return s
 
-def csv_upload_a_file(flask_file_handle, filename, contact_email):
+def csv_upload_a_file(flask_file_handle, filename, contact_email, webhook_callback=None):
     # make a record of the upload
-    s = make_spreadsheet_job(filename, contact_email)
+    s = make_spreadsheet_job(filename, contact_email, webhook_callback=webhook_callback)
 
     # find out where to put the file
     upload = app.config.get("UPLOAD_DIR")
@@ -43,12 +48,13 @@ def csv_upload_a_file(flask_file_handle, filename, contact_email):
     # return the job that was created, in case the caller wants to do something with it
     return s
 
-def make_spreadsheet_job(filename, contact_email):
+def make_spreadsheet_job(filename, contact_email, webhook_callback=None):
     s = models.SpreadsheetJob()
 
     s.filename = filename
     s.contact_email = contact_email
     s.status_code = "submitted"
+    s.webhook_callback = webhook_callback
     s.id = s.makeid()
 
     return s
@@ -434,6 +440,7 @@ def process_oag_direct(oag_register, job):
     if len(oag_rerun) == 0:
         job.status_code = "complete"
         job.save(blocking=True)
+        http_get_with_backoff_retries(job.webhook_callback)
     else:
         # FIXME: note that this could result in exceeding the maximum stack depth if we aren't careful.
         # the full service won't be allowed to behave like this
@@ -891,6 +898,7 @@ def oag_callback_closure():
             if int(pc) == 100:
                 ssjob.status_code = "complete"
                 ssjob.save(blocking=True)
+                http_get_with_backoff_retries(ssjob.webhook_callback)
                 send_complete_mail(ssjob)
 
         # if there is anything to reprocess, do that
@@ -959,7 +967,7 @@ def send_complete_mail(job):
         ctx.pop()
 
     try:
-        mail.send_mail(to=[job.contact_email], subject="[oac] Processing complete", template_name="emails/complete_email_template.txt", url=url)
+        mail.send_mail(to=[job.contact_email], subject="[lantern] Processing complete", template_name="emails/complete_email_template.txt", url=url)
     except:
         app.logger.warn("Problem sending email")
 
