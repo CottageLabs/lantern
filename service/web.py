@@ -1,11 +1,17 @@
 import subprocess
+import argparse
+import logging
+import sys
+import os
+import json
+from uuid import uuid1
+
 from flask import Flask, request, abort, render_template, redirect, make_response, jsonify, send_file, \
     send_from_directory, url_for
 from wtforms import Form, StringField, validators, SelectField
 from wtforms.fields.html5 import EmailField
 from werkzeug import secure_filename
 from StringIO import StringIO
-import os, json, csv, uuid
 
 from service import models
 
@@ -13,9 +19,11 @@ from octopus.core import app, initialise
 from octopus.lib.webapp import custom_static
 from workflow import csv_upload_a_csvstring, csv_upload_a_file, email_submitter, output_csv
 from octopus.lib.webapp import jsonp
+from service.lib import spreadsheetjob
+from octopus.lib.clcsv import get_csv_string
 
-import sys
-
+from service.view.api import blueprint as api
+app.register_blueprint(api, url_prefix='/api')
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -34,8 +42,7 @@ class DemoForm(Form):
 
 
 @app.route("/", methods=['GET', 'POST'])
-#@app.route("/upload_csv", methods=['GET', 'POST'])
-def upload_csv():
+def root():  # do not rename this function - the octopus 404 page refers to "root" with url_for to get people back to a known area of the site
     form = UploadForm(request.form)
     invalid_file = False
     if request.method == "POST" and form.validate():
@@ -63,31 +70,12 @@ def direct_demo_form():
         thecsv += get_csv_string(['DOI', 'PMID', 'PMCID', 'Title'])
         if demoform.doi.data or demoform.pmid.data or demoform.pmcid.data or demoform.title.data:
             thecsv += get_csv_string([demoform.doi.data, demoform.pmid.data, demoform.pmcid.data, demoform.title.data])
-            job = csv_upload_a_csvstring('test@example.org', thecsv)  # /dev/null for emails
+            job = csv_upload_a_csvstring("demo form upload " + uuid1().hex, 'test@example.org', thecsv)  # /dev/null for emails
             return redirect(url_for('progress', job_id=job.id))
 
     form = UploadForm()
     invalid_file = False
     render_template("upload_csv.html", form=form, demoform=demoform, invalid_file=invalid_file)
-
-
-def get_csv_string(csv_row):
-    '''
-    csv.writer only writes to files - it'd be a lot easier if it
-    could give us the string it generates, but it can't. This
-    function uses StringIO to capture every CSV row that csv.writer
-    produces and returns it.
-
-    :param csv_row: A list of strings, each representing a CSV cell.
-        This is the format required by csv.writer .
-    '''
-    csvstream = StringIO()
-    csvwriter = csv.writer(csvstream, quoting=csv.QUOTE_ALL)
-    # normalise the row - None -> "", and unicode > 128 to ascii
-    csvwriter.writerow([unicode(c).encode("utf8", "replace") if c is not None else "" for c in csv_row])
-    csvstring = csvstream.getvalue()
-    csvstream.close()
-    return csvstring
 
 @app.route("/docs")
 def docs():
@@ -108,20 +96,9 @@ def percentage(job_id):
 @jsonp
 def status(job_id):
     job = models.SpreadsheetJob.pull(job_id)
-
-    obj = {"pc" : 0.0, "queue" : "0"}
-    obj["status"] = job.status_code
-    obj["message"] = job.status_message
-
-    if job.status_code == "submitted":
-        obj["pc"] = 0.0
-        max_ql = 10
-        ql = models.SpreadsheetJob.queue_length(job.id, max=max_ql)
-        obj["queue"] = str(ql) if ql < max_ql else "{0} or more".format(max_ql + 1)
-    elif job.status_code == "processing":
-        obj["pc"] = float("{0:.2f}".format(job.pc_complete))
-    elif job.status_code == "complete":
-        obj["pc"] = 100.0
+    if not job:
+        abort(404)
+    obj = spreadsheetjob.progress2json(job)
 
     resp = make_response(json.dumps(obj))
     resp.mimetype = "application/json"
@@ -247,10 +224,18 @@ def page_not_found(e):
 
 
 if __name__ == "__main__":
-    pycharm_debug = app.config.get('DEBUG_PYCHARM', False)
-    if len(sys.argv) > 1:
-        if sys.argv[1] == '-d':
-            pycharm_debug = True
+    parser = argparse.ArgumentParser(description='Lantern')
+    parser.add_argument("--port", type=int, help="Port to start the app on. Default from settings: {0}".format(app.config['PORT']))
+    parser.add_argument("-d", "--debug", action="store_true", help="Activate PyCharm debugging. Default from settings: {0}".format(app.config.get('DEBUG_PYCHARM', False)))
+    parser.add_argument('--no-logging', dest='logging', action='store_false')
+    parser.add_argument("--index", help="Elasticsearch index to use.")
+    parser.set_defaults(port=app.config['PORT'], debug=app.config.get('DEBUG_PYCHARM', False), logging=True, index=app.config['ELASTIC_SEARCH_INDEX'])
+
+    args = parser.parse_args(sys.argv[1:])
+
+    pycharm_debug = args.debug
+    port = args.port
+    app.config['ELASTIC_SEARCH_INDEX'] = args.index  # need to override config when running as separate process for testing
 
     if pycharm_debug:
         app.config['DEBUG'] = False
@@ -258,8 +243,11 @@ if __name__ == "__main__":
         pydevd.settrace(app.config.get('DEBUG_SERVER_HOST', 'localhost'), port=app.config.get('DEBUG_SERVER_PORT', 51234), stdoutToServer=True, stderrToServer=True)
         print "STARTED IN REMOTE DEBUG MODE"
 
+    if not args.logging:
+        logger = logging.getLogger('werkzeug')
+        logger.setLevel(logging.ERROR)
+
     initialise()
-    app.run(host='0.0.0.0', debug=app.config['DEBUG'], port=app.config['PORT'], threaded=False)
-    # app.run(host=app.config.get("HOST", "0.0.0.0"), debug=app.config.get("DEBUG", False), port=app.config.get("PORT", 5000), threaded=True)
-    # start_from_main(app)
+
+    app.run(host='0.0.0.0', debug=app.config['DEBUG'], port=port, threaded=False)
 

@@ -5,15 +5,13 @@ SSL = False
 THREADED = True
 
 MAIL_FROM_ADDRESS = "sysadmin@cottagelabs.com"
+MAIL_SUBJECT_PREFIX = ""
 
 # important overrides for the ES module
 
 # elasticsearch back-end connection settings
 ELASTIC_SEARCH_HOST = "http://localhost:9200"
 ELASTIC_SEARCH_INDEX = "lantern"
-
-# FIXME: shortcut for testing with OAGR
-# ELASTIC_SEARCH_TEST_INDEX = "wellcome"
 
 ELASTIC_SEARCH_VERSION = "1.4.2"
 
@@ -62,7 +60,7 @@ CORE_API_KEY = ""
 ##########################################
 # service specific config
 
-SERVICE_BASE_URL = "http://lantern.cottagelabs.com"
+SERVICE_BASE_URL = "https://lantern.cottagelabs.com"
 UPLOAD_DIR = "upload"
 ALLOWED_EXTENSIONS = ['csv']
 SPREADSHEET_OPTIONS = [('None', 'Type:'), ('Excel', 'Excel'), ('Google Docs', 'Google Docs'), ('Libre Office', 'Libre Office')]

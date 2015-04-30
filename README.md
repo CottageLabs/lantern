@@ -14,6 +14,7 @@ If it gets down to a title match, an exact title match will be attempted in Euro
 
 ```python
 # example POST to https://lantern.cottagelabs.com/api/compliancejob
+# note that /api/compliancejob/ (with trailing slash) won't work - take care to POST to endpoint above
 {
     "webhook_callback": "url",  # optional
     "articles": [
@@ -30,7 +31,7 @@ If it gets down to a title match, an exact title match will be attempted in Euro
 }
 ```
 	
-You can also include multipart/form-data POST file data with your request. E.g. with curl you would do ```curl -F "metadata=<metadata.json" -F "sheet=@/path/to/file.csv" https://lantern.cottagelabs.com/api/compliancejob``` . metadata.json would contain the webhook_callback parameter, if you wanted to supply one. Otherwise you can skip metadata.json completely and only provide a spreadsheet file as multipart/form-data .
+You can also include multipart/form-data POST file data with your request. E.g. with curl you would do ```curl -F "metadata=@metadata.json" -F "sheet=@/path/to/file.csv" https://lantern.cottagelabs.com/api/compliancejob``` . metadata.json would contain the webhook_callback parameter, if you wanted to supply one. Otherwise you can skip metadata.json completely and only provide a spreadsheet file as multipart/form-data .
 	
 In any of the cases above (JSON request, multipart/form-data with JSON and file, or just file) you will receive a redirect to a GET route detailing overall progress of the job. You can poll this URL as often as you like - it’s the GET route documented below.
 
@@ -46,7 +47,7 @@ GET information on a compliance job ```https://lantern.cottagelabs.com/api/compl
     "progress_url": https://lantern.cottagelabs.com/api/compliancejob/progress/:id,
     "pc": Float (0.0 to 100.0), rounded to 2 decimal places,
     "queue": Any number between 0 and 10, or the string "11 or more",
-    "results_url": http://compliance.cottagelabs.com/download_progress/:id,
+    "results_url": https://lantern.cottagelabs.com/download_progress/:id,
     "status": One of ["submitted", "processing", "complete", "error"],
     "message": Will always be empty string for now. Eventually will contain human-readable details in English for developers.
 }
