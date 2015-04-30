@@ -95,7 +95,10 @@ def percentage(job_id):
 @app.route("/progress/<job_id>/status")
 @jsonp
 def status(job_id):
-    obj = spreadsheetjob.progress2json(job_id)
+    job = models.SpreadsheetJob.pull(job_id)
+    if not job:
+        abort(404)
+    obj = spreadsheetjob.progress2json(job)
 
     resp = make_response(json.dumps(obj))
     resp.mimetype = "application/json"
