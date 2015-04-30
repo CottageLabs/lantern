@@ -62,7 +62,7 @@ class SpreadsheetJob(SpreadsheetJobDAO, DataObj):
 
     @webhook_callback.setter
     def webhook_callback(self, val):
-        self._set_single("webhook_callback", val, self._utf8_unicode())
+        self._set_single("webhook_callback", val, self._utf8_unicode(), ignore_none=True)
 
 class Record(RecordDAO, DataObj):
     """

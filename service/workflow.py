@@ -4,12 +4,10 @@ from octopus.modules.doaj import client as doaj
 from octopus.modules.identifiers import pmid, doi, pmcid
 from octopus.modules.coreacuk import client as coreacuk
 from octopus.modules.romeo import client as romeo
-from octopus.lib import mail
-from octopus.lib.requests_get_with_retries import http_get_with_backoff_retries
+from octopus.lib import mail, http
 from service import models, sheets, licences
-import os, time, traceback
+import os, traceback
 from StringIO import StringIO
-from copy import deepcopy
 from uuid import uuid1
 
 class WorkflowException(Exception):
@@ -440,7 +438,8 @@ def process_oag_direct(oag_register, job):
     if len(oag_rerun) == 0:
         job.status_code = "complete"
         job.save(blocking=True)
-        http_get_with_backoff_retries(job.webhook_callback)
+        if job.webhook_callback:
+            http.get(job.webhook_callback)
     else:
         # FIXME: note that this could result in exceeding the maximum stack depth if we aren't careful.
         # the full service won't be allowed to behave like this
@@ -898,7 +897,8 @@ def oag_callback_closure():
             if int(pc) == 100:
                 ssjob.status_code = "complete"
                 ssjob.save(blocking=True)
-                http_get_with_backoff_retries(ssjob.webhook_callback)
+                if ssjob.webhook_callback:
+                    http.get(ssjob.webhook_callback)
                 send_complete_mail(ssjob)
 
         # if there is anything to reprocess, do that
