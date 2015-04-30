@@ -5,6 +5,7 @@ SSL = False
 THREADED = True
 
 MAIL_FROM_ADDRESS = "sysadmin@cottagelabs.com"
+MAIL_SUBJECT_PREFIX = ""
 
 # important overrides for the ES module
 
