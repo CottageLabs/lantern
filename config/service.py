@@ -1,3 +1,5 @@
+import os
+
 # overrides for the webapp deployment
 DEBUG = True
 PORT = 5022
@@ -60,7 +62,7 @@ CORE_API_KEY = ""
 # service specific config
 
 SERVICE_BASE_URL = "https://lantern.cottagelabs.com"
-UPLOAD_DIR = "upload"
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "upload")
 ALLOWED_EXTENSIONS = ['csv']
 SPREADSHEET_OPTIONS = [('None', 'Type:'), ('Excel', 'Excel'), ('Google Docs', 'Google Docs'), ('Libre Office', 'Libre Office')]
 OACWELLCOME_JOBS_POLL_TIME = 2  # seconds

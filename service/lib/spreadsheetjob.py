@@ -4,7 +4,10 @@ from service import models
 def progress2json(job):
     obj = {"pc" : 0.0, "queue" : "0"}
     obj["status"] = job.status_code
-    obj["message"] = job.status_message
+    if job.status_message:
+        obj["message"] = job.status_message
+    if job.webhook_callback:
+        obj["webhook_callback"] = job.webhook_callback
 
     if job.status_code == "submitted":
         obj["pc"] = 0.0

@@ -4,6 +4,7 @@ from uuid import uuid1
 import requests
 from simplejson import JSONDecodeError
 from time import sleep
+import json
 
 from octopus.core import app
 from octopus.modules.es import testindex
@@ -25,28 +26,47 @@ class TestApi(testindex.ESTestCase):
         super(TestApi, self).tearDown()
         self.test_server.terminate()
 
-    # def test_01_get_progress(self):
-    #     job = workflow.make_spreadsheet_job('test task ' + uuid1().hex, "test@example.org")
-    #     job.save()
-    #     sleep(1)
-    #     progress_url = self.apibase + '/compliancejob/progress/{0}'.format(job.id)
-    #     expected_results = {
-    #         "progress_url": progress_url,
-    #         "pc": 0.0,
-    #         "queue": 0,
-    #         "results_url": self.apibase + '/download_progress/{0}'.format(job.id),
-    #         "status": "submitted",
-    #         "message": ""
-    #     }
-    #
-    #     r = requests.get(progress_url)
-    #     assert r.status_code == requests.codes.ok
-    #     try:
-    #         results = r.json()
-    #     except JSONDecodeError:
-    #         self.fail("The API did not return a JSON response as expected.")
-    #
-    #     assert expected_results == results, diff_dicts(expected_results, results, d1_label="Expected results", d2_label="Actual results")
+    def test_01_get_progress(self):
+        job = workflow.make_spreadsheet_job('test task ' + uuid1().hex, "test@example.org")
+        job.save(blocking=True)
+        expected_results = {
+            "progress_url": app.config['SERVICE_BASE_URL'] + '/api/compliancejob/progress/{0}'.format(job.id),
+            "pc": 0.0,
+            "queue": 0,
+            "results_url": app.config['SERVICE_BASE_URL'] + '/download_progress/{0}'.format(job.id),
+            "status": "submitted"
+        }
 
-    # def test_02_create_job(self):
-    #     pass
+        r = requests.get(self.apibase + '/compliancejob/progress/{0}'.format(job.id))
+        assert r.status_code == requests.codes.ok, r.status_code
+        try:
+            results = r.json()
+        except JSONDecodeError:
+            self.fail("The API did not return a JSON response as expected.")
+
+        assert expected_results == results, diff_dicts(expected_results, results, d1_label="Expected results", d2_label="Actual results")
+
+    def test_02_create_job(self):
+        obj = {
+            "webhook_callback": "http://your_url.com",
+            "articles": [
+                {
+                    "doi":"10.1/doi",
+                    "pmid": "123456",
+                    "pmcid": "PMC123456",
+                    "title":"Article Title 1"
+                },
+                {
+                    "doi":"10.2/doi"
+                }
+            ]
+        }
+
+        r = requests.post(self.apibase + '/compliancejob', data=json.dumps(obj))
+        assert r.status_code == requests.codes.ok, r.status_code
+        assert '/api/compliancejob/progress/' in r.json()['progress_url']
+        assert r.json()['pc'] == 0.0
+        assert r.json()['queue'] == 1, r.json()['queue']
+        assert '/download_progress/' in r.json()['results_url'], r.json()['results_url']
+        assert r.json()['status'] == 'submitted'
+
