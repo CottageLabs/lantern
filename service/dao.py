@@ -17,7 +17,10 @@ class SpreadsheetJobDAO(dao.ESDAO):
         q = SpreadsheetStatusQuery("submitted", size=max)
         first_x = cls.object_query(q.query())
 
-        pos = 0
+        if len(first_x) == 0:
+            return 1
+
+        pos = 1
         for s in first_x:
             if s.id == sheet_id:
                 return pos
@@ -194,7 +197,7 @@ class RecordsCompleteQuery(object):
             },
             "size" : 0,
             "facets" : {
-                "epmc" : {"terms" : {"field" : "supporting_info.epmc_complete"}},
+                "epmc" : {"terms" : {"field" : "supporting_info.synchronous_processing_complete"}},
                 "oag" : {"terms" : {"field" : "supporting_info.oag_complete"}},
             }
         }

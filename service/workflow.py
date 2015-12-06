@@ -307,10 +307,10 @@ def process_record(msg):
         # if no metadata, then we have to give up
         note = "unable to locate any metadata record in EPMC for the combination of identifiers/title; giving up"
         msg.record.add_provenance("processor", note)
-        msg.record.epmc_complete = True
+        msg.record.synchronous_processing_complete = True
         msg.record.oag_complete = True
         msg.record.save(blocking=True)
-        return
+        return  # TODO don't return if not in EPMC
 
     # set the confidence that we have accurately identified this record
     msg.record.confidence = confidence
@@ -322,7 +322,7 @@ def process_record(msg):
     extract_metadata(msg, epmc_md)
 
     # obtain the fulltext, and if found, extract metadata and licence information from it
-    fulltext = get_epmc_fulltext(msg)
+    fulltext = get_epmc_fulltext(msg)  # TODO may be affected by change above to continue if not in EPMC
     if fulltext is not None:
         extract_fulltext_info(msg, fulltext)
         extract_fulltext_licence(msg, fulltext)
@@ -330,7 +330,7 @@ def process_record(msg):
         msg.record.has_ft_xml = False
 
     # lookup the issn in the DOAJ, and record whether the journal is OA or hybrid
-    hybrid_or_oa(msg)
+    hybrid_or_oa(msg)  # TODO use DOAJ discovery API instead of /query
 
     # lookup the issn in Sherpa Romeo for embargo information
     embargo(msg)
@@ -339,7 +339,7 @@ def process_record(msg):
     ou_core(msg)
 
     # at this stage, all the epmc lookup work has completed
-    msg.record.epmc_complete = True
+    msg.record.synchronous_processing_complete = True
 
     # if necessary, register an identifier to be looked up in OAG
     register_with_oag(msg)
