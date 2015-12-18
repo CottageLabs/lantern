@@ -65,7 +65,7 @@ class SpreadsheetJob(SpreadsheetJobDAO, DataObj):
     def webhook_callback(self, val):
         self._set_single("webhook_callback", val, self._utf8_unicode(), ignore_none=True)
 
-class Record(RecordDAO, DataObj):
+class Record(DataObj, RecordDAO):
     """
     {
         "id" : "<opaque id of this record>",
@@ -142,6 +142,9 @@ class Record(RecordDAO, DataObj):
     OAG_STATES = [u"not_sent", u"sent", u"success", u"fto", u"error"]
     LICENCE_SOURCES = [u"epmc_xml", u"epmc", u"publisher"]
     JOURNAL_TYPES = [u"oa", u"hybrid"]
+
+    def __init__(self, raw=None):
+        super(Record, self).__init__(raw)
 
     @property
     def upload_id(self):

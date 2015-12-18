@@ -32,7 +32,7 @@ class TestApi(testindex.ESTestCase):
         expected_results = {
             "progress_url": app.config['SERVICE_BASE_URL'] + '/api/compliancejob/progress/{0}'.format(job.id),
             "pc": 0.0,
-            "queue": 0,
+            "queue": 1,
             "results_url": app.config['SERVICE_BASE_URL'] + '/download_progress/{0}'.format(job.id),
             "status": "submitted"
         }
@@ -43,6 +43,8 @@ class TestApi(testindex.ESTestCase):
             results = r.json()
         except JSONDecodeError:
             self.fail("The API did not return a JSON response as expected.")
+
+        print results
 
         assert expected_results == results, diff_dicts(expected_results, results, d1_label="Expected results", d2_label="Actual results")
 

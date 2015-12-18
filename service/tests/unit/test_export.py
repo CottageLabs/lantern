@@ -95,7 +95,7 @@ class TestImport(testindex.ESTestCase):
         assert rows[2] == [
             "PMC9876", "", "", "",
             "", "", "unknown", "", "", "unknown",
-            "", "unknown", "", "",
+            "", "unknown", "", "unknown",
             "", "", "", "",
             "", "",
             "", ""
@@ -103,7 +103,7 @@ class TestImport(testindex.ESTestCase):
         assert rows[3] == [
             "", "9876", "", "",
             "", "", "unknown", "", "", "unknown",
-            "", "unknown", "", "",
+            "", "unknown", "", "unknown",
             "", "", "", "",
             "", "",
             "", '[' + now + ' test] provenance\n\n[' + now + ' test] more']
