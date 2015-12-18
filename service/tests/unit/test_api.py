@@ -16,7 +16,7 @@ class TestApi(testindex.ESTestCase):
     def setUp(self):
         super(TestApi, self).setUp()
         self.port = get_first_free_port()
-        self.test_server = TestServer(port=self.port, index=app.config['ELASTIC_SEARCH_INDEX'], python_app_module_path=os.path.abspath(web.__file__))
+        self.test_server = TestServer(port=self.port, index=app.config['ELASTIC_SEARCH_TEST_INDEX'], python_app_module_path=os.path.abspath(web.__file__))
         self.test_server.spawn()
         self.appurl = self.test_server.get_server_url()
 
