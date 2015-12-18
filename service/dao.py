@@ -197,7 +197,7 @@ class RecordsCompleteQuery(object):
             },
             "size" : 0,
             "facets" : {
-                "epmc" : {"terms" : {"field" : "supporting_info.synchronous_processing_complete"}},
+                "epmc" : {"terms" : {"field" : "supporting_info.epmc_complete"}},
                 "oag" : {"terms" : {"field" : "supporting_info.oag_complete"}},
             }
         }

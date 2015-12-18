@@ -102,7 +102,7 @@ class Record(RecordDAO, DataObj):
             "oag_pmcid" : "not_sent|sent|success|fto|error",
             "oag_doi" : "not_sent|sent|success|fto|error",
             "oag_pmid" : "not_sent|sent|success|fto|error",
-            "synchronous_processing_complete" : true|false,
+            "epmc_complete" : true|false,
             "oag_complete" : true|false
         },
 
@@ -291,11 +291,11 @@ class Record(RecordDAO, DataObj):
 
     @property
     def epmc_complete(self):
-        return self._get_single("supporting_info.synchronous_processing_complete", bool, default=False)
+        return self._get_single("supporting_info.epmc_complete", bool, default=False)
 
     @epmc_complete.setter
     def epmc_complete(self, val):
-        self._set_single("supporting_info.synchronous_processing_complete", val, bool)
+        self._set_single("supporting_info.epmc_complete", val, bool)
 
     @property
     def oag_complete(self):
@@ -435,7 +435,7 @@ class Record(RecordDAO, DataObj):
         self._add_to_list("provenance", obj)
 
     def prep(self):
-        # ensure that both the synchronous_processing_complete and oag_complete fields are truly set
+        # ensure that both the epmc_complete and oag_complete fields are truly set
         # (this weird bit of code will ensure that they are set to their current values
         # or their default value)
         self.epmc_complete = self.epmc_complete

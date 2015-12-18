@@ -307,7 +307,7 @@ def process_record(msg):
         # if no metadata, then we have to give up
         note = "unable to locate any metadata record in EPMC for the combination of identifiers/title; giving up"
         msg.record.add_provenance("processor", note)
-        msg.record.synchronous_processing_complete = True
+        msg.record.epmc_complete = True
         msg.record.oag_complete = True
         msg.record.save(blocking=True)
         return  # TODO don't return if not in EPMC
@@ -339,7 +339,7 @@ def process_record(msg):
     ou_core(msg)
 
     # at this stage, all the epmc lookup work has completed
-    msg.record.synchronous_processing_complete = True
+    msg.record.epmc_complete = True
 
     # if necessary, register an identifier to be looked up in OAG
     register_with_oag(msg)
